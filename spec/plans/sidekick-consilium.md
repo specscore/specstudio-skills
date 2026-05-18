@@ -1748,21 +1748,21 @@ EOF
 ## Task 10: Construct the 20-seed calibration set
 
 **Files:**
-- Create: `spec/features/sidekick-consilium/calibration/README.md`
-- Create: 5 strong seeds at `spec/features/sidekick-consilium/calibration/strong/<slug>.md`
-- Create: 5 weak seeds at `spec/features/sidekick-consilium/calibration/weak/<slug>.md`
-- Create: 5 out-of-domain seeds at `spec/features/sidekick-consilium/calibration/out-of-domain/<slug>.md`
-- Create: 5 ambiguous seeds at `spec/features/sidekick-consilium/calibration/ambiguous/<slug>.md`
+- Create: `spec/features/sidekick-consilium/_calibration/README.md`
+- Create: 5 strong seeds at `spec/features/sidekick-consilium/_calibration/strong/<slug>.md`
+- Create: 5 weak seeds at `spec/features/sidekick-consilium/_calibration/weak/<slug>.md`
+- Create: 5 out-of-domain seeds at `spec/features/sidekick-consilium/_calibration/out-of-domain/<slug>.md`
+- Create: 5 ambiguous seeds at `spec/features/sidekick-consilium/_calibration/ambiguous/<slug>.md`
 
 **Why:** REQ `calibration-set-20-verdicts` requires this set before Phase 1 can be declared "Done" (and before Phase 2 is specified). The set is data; constructing it is its own work.
 
 - [ ] **Step 1: Create the directory tree**
 
 ```bash
-mkdir -p spec/features/sidekick-consilium/calibration/{strong,weak,out-of-domain,ambiguous}
+mkdir -p spec/features/sidekick-consilium/_calibration/{strong,weak,out-of-domain,ambiguous}
 ```
 
-- [ ] **Step 2: Write `spec/features/sidekick-consilium/calibration/README.md`**
+- [ ] **Step 2: Write `spec/features/sidekick-consilium/_calibration/README.md`**
 
 ```markdown
 # Sidekick Consilium Calibration Set
@@ -1784,7 +1784,7 @@ After the cross-repo arbiter and task type ship (see Task 11), run:
 
 ```bash
 # Capture each calibration seed as a sidekick (against this calibration directory as captured_during)
-for seed in spec/features/sidekick-consilium/calibration/*/*.md; do
+for seed in spec/features/sidekick-consilium/_calibration/*/*.md; do
   /sidekick "$(grep -A1 '^# ' "$seed" | tail -1)"
 done
 
@@ -1821,7 +1821,7 @@ type: sidekick-seed
 slug: add-test-for-event-emission-failure-path
 captured_at: 2026-05-18T00:00:00Z
 captured_by: calibration-fixture
-captured_during: spec/features/sidekick-consilium/calibration/strong
+captured_during: spec/features/sidekick-consilium/_calibration/strong
 trigger: explicit
 status: queued
 synchestra_task: null
@@ -1868,11 +1868,11 @@ Each has reasonable arguments both ways:
 specscore spec lint --severity warning
 # Will likely report violations for the calibration seeds (same as the dogfood seed —
 # spec/ideas/seeds/ rule treats them as misplaced Ideas). Calibration seeds live UNDER
-# spec/features/sidekick-consilium/calibration/, NOT spec/ideas/seeds/, so the rule may
+# spec/features/sidekick-consilium/_calibration/, NOT spec/ideas/seeds/, so the rule may
 # not apply. Verify; if it does apply, add an explicit lint exclusion in specscore.yaml
-# scoped to spec/features/sidekick-consilium/calibration/.
+# scoped to spec/features/sidekick-consilium/_calibration/.
 
-git add spec/features/sidekick-consilium/calibration/
+git add spec/features/sidekick-consilium/_calibration/
 git commit -m "$(cat <<'EOF'
 test(features/sidekick-consilium): construct 20-seed calibration set
 
@@ -1956,7 +1956,7 @@ EOF
 
 ```bash
 # Capture each calibration seed
-for seed in spec/features/sidekick-consilium/calibration/*/*.md; do
+for seed in spec/features/sidekick-consilium/_calibration/*/*.md; do
   one_liner=$(grep -A1 '^# ' "$seed" | tail -1)
   /sidekick "$one_liner"
 done
@@ -2077,7 +2077,7 @@ Expected: matches only for self-referential mentions in the self-review section 
 - `skills/consilium/roles/<role>.md` × 11
 - `skills/consilium/references/{role-file-contract.md, consilium-config-example.md}`
 - `spec/features/sidekick-consilium/_tests/<slug>.md` × 27 (25 stubs + skip + README)
-- `spec/features/sidekick-consilium/calibration/{strong,weak,out-of-domain,ambiguous}/<slug>.md` × 20
+- `spec/features/sidekick-consilium/_calibration/{strong,weak,out-of-domain,ambiguous}/<slug>.md` × 20
 - `spec/plans/sidekick-consilium-{arbiter,task}-companion.md`
 
 If any task references a path that doesn't match the plan-wide convention, fix it.

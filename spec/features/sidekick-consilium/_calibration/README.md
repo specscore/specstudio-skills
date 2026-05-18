@@ -17,7 +17,7 @@ After the cross-repo arbiter and task type ship (see Task 11), run:
 
 ```bash
 # Capture each calibration seed as a sidekick (against this calibration directory as captured_during)
-for seed in spec/features/sidekick-consilium/calibration/*/*.md; do
+for seed in spec/features/sidekick-consilium/_calibration/*/*.md; do
   /sidekick "$(grep -A1 '^# ' "$seed" | tail -1)"
 done
 
@@ -29,6 +29,10 @@ synchestra task list --type consilium-review --status complete
 ```
 
 For each verdict, the human reviewer notes whether they would have made the same call. Calibration passes if ≥ 95% match.
+
+## Outstanding Questions
+
+- None at this time.
 
 ---
 *This document follows the https://specscore.md/calibration-specification*

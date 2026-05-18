@@ -3,7 +3,7 @@ type: sidekick-seed
 slug: fix-incorrect-relative-link-in-readme-after-restructure
 captured_at: 2026-05-18T00:00:00Z
 captured_by: calibration-fixture
-captured_during: spec/features/sidekick-consilium/calibration/strong
+captured_during: spec/features/sidekick-consilium/_calibration/strong
 trigger: explicit
 status: queued
 synchestra_task: null

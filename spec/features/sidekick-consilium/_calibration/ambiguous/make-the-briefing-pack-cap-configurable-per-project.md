@@ -3,7 +3,7 @@ type: sidekick-seed
 slug: make-the-briefing-pack-cap-configurable-per-project
 captured_at: 2026-05-18T00:00:00Z
 captured_by: calibration-fixture
-captured_during: spec/features/sidekick-consilium/calibration/ambiguous
+captured_during: spec/features/sidekick-consilium/_calibration/ambiguous
 trigger: explicit
 status: queued
 synchestra_task: null
