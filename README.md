@@ -1,10 +1,10 @@
-# SpecStudio Skills
+# SpecScore Studio Skills
 
 **Spec-driven development, by Synchestra.**
 
 AI skills (and a coming Web UI) for efficient spec-driven development — the full lifecycle: **specify, plan, build, verify, recap, review, ship.** SpecStudio turns vague ideas into lintable, testable specifications and gates implementation on those specifications being clear, complete, and approved.
 
-This repo (`specstudio-skills`) is the Claude Code plugin surface of SpecStudio: skills, commands, and supporting tooling for AI coding agents. The web client lives at [`specstudio-web`](https://github.com/synchestra-io/specstudio-web) (planned).
+This repo (`specstudio-skills`) is the Claude Code plugin surface of SpecScore Studio: skills, commands, and supporting tooling for AI coding agents. The web client lives at [`specstudio-web`](https://github.com/specscore/specstudio-web) (planned) and will deploy to [`specscore.studio`](https://specscore.studio).
 
 ## Why a studio
 
@@ -16,27 +16,27 @@ Alongside it:
   - [**Rehearse**](https://rehearse.synchestra.io/) — the markdown-native test framework for SpecScore specs. SpecStudio scaffolds Rehearse test stubs from acceptance criteria.
 - [**Synchestra**](https://synchestra.io/) — the engine that runs dispatched work. Headless; you never really "use" it directly.
 - [**Synchestra Hub**](https://hub.synchestra.io/) — the portfolio view. When you want to step back from this project and see all your projects and runners, that's Hub.
-- [**Sneat AI Marketplace**](https://github.com/sneat-co/ai-marketplace) — the plugin marketplace where SpecStudio and related Synchestra plugins are published for Claude Code and compatible clients.
+- [**SpecScore AI Marketplace**](https://github.com/specscore/ai-marketplace) — the dedicated Claude Code marketplace for SpecScore-aligned plugins (`specstudio` and `specscore`). The companion [Sneat AI Marketplace](https://github.com/sneat-co/ai-marketplace) hosts the `synchestra` orchestrator plugin and other unrelated tooling.
 
 ## Install
 
-Published on the [Sneat AI Marketplace](https://github.com/sneat-co/ai-marketplace). Install into Claude Code in two steps:
+Published on the [SpecScore AI Marketplace](https://github.com/specscore/ai-marketplace). Install into Claude Code in two steps:
 
 ```
-/plugin marketplace add sneat-co/ai-marketplace
-/plugin install specstudio@sneat-co
+/plugin marketplace add specscore/ai-marketplace
+/plugin install specstudio@specscore
 ```
 
 The first command registers the marketplace once; the second installs (and later updates) the plugin. Run `/plugin uninstall specstudio` to remove it.
 
 ### Dependencies
 
-The `specstudio` plugin declares two dependencies on sibling plugins in the same marketplace:
+The `specstudio` plugin declares two dependencies on sibling plugins. Note the dependencies live in different marketplaces:
 
-- **`specscore@sneat-co`** — wraps the `specscore` CLI as agent skills for SpecScore lint, navigation, and lifecycle operations. Repo: [`ai-plugin-specscore`](https://github.com/synchestra-io/ai-plugin-specscore).
-- **`synchestra@sneat-co`** — wraps the `synchestra` CLI as agent skills for task and session orchestration. Repo: [`ai-plugin-synchestra`](https://github.com/synchestra-io/ai-plugin-synchestra).
+- **`specscore`** — wraps the `specscore` CLI as agent skills for SpecScore lint, navigation, and lifecycle operations. Lives in the same SpecScore marketplace (`/plugin install specscore@specscore`). Repo: [`ai-plugin-specscore`](https://github.com/specscore/ai-plugin-specscore).
+- **`synchestra`** — wraps the `synchestra` CLI as agent skills for task and session orchestration. Lives in the Sneat AI Marketplace (`/plugin install synchestra@sneat-co`; requires `/plugin marketplace add sneat-co/ai-marketplace` first). Repo: [`ai-plugin-synchestra`](https://github.com/synchestra-io/ai-plugin-synchestra).
 
-Both are **installed automatically** when you install `specstudio` — Claude Code resolves the dependency graph and reports each transitive install at the end of the install output. Uninstalling `specstudio` does not remove them; run `claude plugin prune` (or `claude plugin uninstall specstudio --prune`) to clean them up if you don't want them around.
+Both are **installed automatically** when you install `specstudio` — Claude Code resolves the dependency graph by plugin name across any marketplaces the user has registered. If the `synchestra` plugin is not yet resolvable, Claude Code will surface the failure with a clear "add `sneat-co/ai-marketplace`" hint. Uninstalling `specstudio` does not remove the dependencies; run `claude plugin prune` (or `claude plugin uninstall specstudio --prune`) to clean them up if you don't want them around.
 
 Once installed, the three plugins coexist as independent slash-command namespaces:
 
@@ -55,7 +55,7 @@ Once installed, the three plugins coexist as independent slash-command namespace
 | `specstudio:ideate` | Refine raw ideas into SpecScore Idea artifacts through structured divergent/convergent thinking. Gates on a lint-clean `spec/ideas/<slug>.md` that the user has approved. |
 | `specstudio:specify` | Turn an approved Idea into a SpecScore Feature with requirements and `Given / When / Then` acceptance criteria at `spec/features/<slug>/`. Gates implementation until the Feature is lint-clean and approved. |
 
-More skills covering the rest of the lifecycle (plan, build, verify, recap, review, ship) are on the roadmap, alongside a web authoring UI at [`specstudio.synchestra.io`](https://specstudio.synchestra.io/).
+More skills covering the rest of the lifecycle (plan, build, verify, recap, review, ship) are on the roadmap, alongside a web authoring UI at [`specscore.studio`](https://specscore.studio).
 
 ## Principles
 
@@ -88,9 +88,9 @@ The SpecStudio family follows the `specstudio-<role>` stem — every repo in the
 - `specstudio-web` — web client (planned)
 - `specstudio-api` — backend, if not folded into `synchestra-cloud` (TBD)
 
-The wrapper-prefix `ai-plugin-*` (used by [`ai-plugin-synchestra`](https://github.com/synchestra-io/ai-plugin-synchestra) and [`ai-plugin-specscore`](https://github.com/synchestra-io/ai-plugin-specscore)) is reserved for thin CLI wrappers — SpecStudio is a product, not a wrapper.
+The wrapper-prefix `ai-plugin-*` (used by [`ai-plugin-synchestra`](https://github.com/synchestra-io/ai-plugin-synchestra) and [`ai-plugin-specscore`](https://github.com/specscore/ai-plugin-specscore)) is reserved for thin CLI wrappers — SpecScore Studio is a product, not a wrapper.
 
-Brand spelling: `SpecStudio` in copy, `specstudio` in identifiers (no hyphen, no space).
+Brand spelling: `SpecScore Studio` (formal copy, first mention, contexts where the SpecScore relationship matters) · `SpecStudio` (casual copy, subsequent mentions, in-product) · `specstudio` (identifier token — repos, namespaces, plugin manifest `name`).
 
 ## Dogfooding
 
