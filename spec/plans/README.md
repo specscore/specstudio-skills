@@ -12,6 +12,7 @@ Plans here are authored by `superpowers:writing-plans` today and will be authore
 |---|---|---|
 | [sidekick-capture](sidekick-capture.md) | [sidekick-capture](../features/sidekick-capture/README.md) | Phase 0 of the sidekick-ideas Idea: capture infrastructure. 9 tasks. |
 | [sidekick-capture-lint-rule-companion](sidekick-capture-lint-rule-companion.md) | — | Cross-repo companion stub: the `sidekick-seed` lint rule lives in `synchestra-io/specscore-cli`. |
+| [sidekick-consilium](sidekick-consilium.md) | [sidekick-consilium](../features/sidekick-consilium/README.md) | Phase 1 of the sidekick-ideas Idea: the consilium worker. 11 tasks. Cross-repo dependencies tracked via companion stubs (arbiter + task type) authored in Task 1. |
 
 ## Outstanding Questions
 
