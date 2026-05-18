@@ -5,8 +5,8 @@
   "author": {
     "name": "Alexander Trakhimenok"
   },
-  "homepage": "https://github.com/synchestra-io/specstudio-skills",
-  "repository": "https://github.com/synchestra-io/specstudio-skills",
+  "homepage": "https://github.com/specscore/specstudio-skills",
+  "repository": "https://github.com/specscore/specstudio-skills",
   "license": "MIT",
   "keywords": [
     "spec-driven-development",
