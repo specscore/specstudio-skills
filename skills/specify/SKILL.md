@@ -62,6 +62,7 @@ Create a task for each and complete in order:
 12. **User review gate** — user reviews the written Feature; wait for approval.
 13. **Emit events** — `feature.specified` on reviewer approval; `feature.approved` on user approval. See [synchestra-events.md](../shared/synchestra-events.md).
 14. **Transition to `writing-plans`.**
+15. **Throughout** — watch for sidekick ideas per [sidekick-capture.md](../shared/sidekick-capture.md). When an out-of-scope improvement surfaces, invoke `specstudio:sidekick` with a one-liner, acknowledge in one line, and return to the current checklist step immediately. Do not derail to discuss the sideline idea.
 
 ## Spec Sections (scale to complexity)
 
