@@ -162,6 +162,34 @@ payload:
 
 **Consumer:** the Phase 1 consilium subscribes here. It dedupes by `content_hash` over a rolling window, then enqueues a `consilium-review` task for the seed. Consumers that want a flat 8-field view (per Feature `sidekick-capture` REQ `event-payload-schema`) project: `event`, `seed_path` (from `artifact.path`), `slug`, `captured_at` (from `timestamp`), `captured_by` (from `actor.id`), `captured_during`, `trigger`, `content_hash`.
 
+## Events Emitted by `specstudio:consilium`
+
+### `sidekick-idea.reviewed`
+Fired exactly once per successful `consilium-review` task completion (transition to `complete`). On `failed` or `aborted` transitions, no event is emitted.
+
+```yaml
+event: sidekick-idea.reviewed
+version: 1
+uuid: <generated>
+timestamp: <ISO-8601 of review completion>
+actor:
+  kind: skill
+  id: skill:specstudio:consilium
+artifact:
+  type: consilium-review
+  id: <task-id>
+  path: <seed_path>                          # path to the seed file
+  revision: <git SHA at emission>
+payload:
+  slug: <seed slug>
+  content_hash: <seed content_hash at review time>
+  verdict: should-implement | should-not-implement | needs-human-review
+  roster_snapshot: [<role slugs in active roster>]
+  tokens_total: <int>
+```
+
+**Consumer:** `synchestra:whats-next` reads this event to surface `consilium-review` tasks with `needs-human-review` verdicts at the top of the prioritization report. Phase 2 auto-promote (future Feature) will subscribe to `verdict: should-implement` events.
+
 ## Events Emitted by Synchestra (consumed by skills)
 
 ### `idea.implementing`
@@ -214,3 +242,4 @@ This is a stricter event than the previous `idea.specified` (which fired on firs
 | `feature.approved` | `specstudio:specify` | User approves the written Feature (exactly once) |
 | `feature.updated` | `specstudio:specify` | Every successful lint pass while `status` ∈ {Approved, Implementing, Stable} after approval |
 | `sidekick-idea.captured` | `specstudio:sidekick` | Successful seed write at `spec/ideas/seeds/<slug>.md` (exactly once per seed) |
+| `sidekick-idea.reviewed` | `specstudio:consilium` | Successful `consilium-review` task completion (exactly once per task) |
