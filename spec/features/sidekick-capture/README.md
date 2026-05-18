@@ -2,7 +2,7 @@
 
 > [View in SpecStudio](https://specstudio.synchestra.io/project/features?id=specstudio-skills@synchestra-io@github.com&path=spec%2Ffeatures%2Fsidekick-capture) — graph, discussions, approvals
 
-**Status:** Draft
+**Status:** Approved
 **Source Ideas:** sidekick-ideas
 
 ## Summary
@@ -37,11 +37,11 @@ The skill MUST support exactly one operational mode: *capture-and-exit*. It MUST
 
 #### REQ: input-validation
 
-The skill MUST accept a non-empty one-liner of at most 280 characters after trimming leading and trailing whitespace. It MUST reject empty, whitespace-only, or over-length invocations with a clear error message and a remediation hint ("provide a one-line description, max 280 chars"). It MUST NOT silently truncate over-length input. Unknown flags (e.g., `--review`) MUST be rejected with "unknown flag" rather than silently folded into the one-liner.
+The skill MUST accept a non-empty one-liner of at most 500 characters after trimming leading and trailing whitespace. It MUST reject empty, whitespace-only, or over-length invocations with a clear error message and a remediation hint ("provide a one-line description, max 500 chars"). It MUST NOT silently truncate over-length input. Unknown flags (e.g., `--review`) MUST be rejected with "unknown flag" rather than silently folded into the one-liner.
 
 #### REQ: writes-seed-artifact
 
-On valid input, the skill MUST write a new seed file at `spec/ideas/seeds/<slug>.md` containing (a) the YAML frontmatter defined in REQ `seed-frontmatter-schema` and (b) a body containing at least the one-liner verbatim. It MUST create `spec/ideas/seeds/` lazily if absent. On slug collision (per REQ `seed-slug-derivation`), the skill MUST disambiguate by appending `-2`, `-3`, … to the slug; it MUST NOT overwrite an existing seed file under any circumstance, even on collision. The skill MUST return the relative seed path to the caller.
+On valid input, the skill MUST write a new seed file at `spec/ideas/seeds/<slug>.md` containing (a) the YAML frontmatter defined in REQ `seed-frontmatter-schema` and (b) a body whose first non-blank line is an H1 heading (`# <one-liner>`) containing the verbatim one-liner as the heading text. The skill MAY accept an optional `--body <markdown>` argument (or its programmatic equivalent) that places additional markdown content below the H1; if absent, only the H1 is written. The total body length (everything after the closing `---` of the frontmatter, inclusive of the H1 line) MUST NOT exceed 2000 characters; over-length bodies MUST be rejected at the skill layer with a clear error, the same way over-length one-liners are. The skill MUST create `spec/ideas/seeds/` lazily if absent. On slug collision (per REQ `seed-slug-derivation`), the skill MUST disambiguate by appending `-2`, `-3`, … to the slug; it MUST NOT overwrite an existing seed file under any circumstance, even on collision. The skill MUST return the relative seed path to the caller.
 
 #### REQ: emits-captured-event
 
@@ -59,7 +59,7 @@ The directive MUST enumerate at least the following cues as signals of a sidelin
 
 #### REQ: write-and-continue-discipline
 
-When a host skill captures a sideline idea (heuristic or explicit), it MUST: (1) invoke `specstudio:sidekick` with the one-liner, (2) acknowledge the capture in a single short line that references the seed path (e.g., `"Captured: <slug> at spec/ideas/seeds/<slug>.md"`), (3) return to the primary task immediately without further discussion of the sideline idea. The host MUST NOT pause to deliberate the merits of the sideline idea, ask the user about it, or branch into a discussion. Within the same conversation, the host MUST NOT re-invoke `/sidekick` for a one-liner it has already captured in that conversation; cross-session and cross-agent dedupe is explicitly *not* a Phase 0 concern and belongs to the Phase 1 consilium via content-hash on the event payload.
+When a host skill captures a sideline idea (heuristic or explicit), it MUST: (1) invoke `specstudio:sidekick` with the one-liner, (2) acknowledge the capture in a single short line that references the seed path (e.g., `"Captured: <slug> at spec/ideas/seeds/<slug>.md"`), (3) return to the primary task immediately without further discussion of the sideline idea. The host MUST NOT pause to deliberate the merits of the sideline idea, ask the user about it, or branch into a discussion. The host SHOULD invoke `/sidekick` with just the one-liner; the optional body argument is reserved for cases where a single line genuinely cannot capture the idea (e.g., when a specific code snippet is the seed's point). Filling in a long body for routine captures defeats the write-and-continue discipline. Within the same conversation, the host MUST NOT re-invoke `/sidekick` for a one-liner it has already captured in that conversation; cross-session and cross-agent dedupe is explicitly *not* a Phase 0 concern and belongs to the Phase 1 consilium via content-hash on the event payload.
 
 #### REQ: host-skill-references
 
@@ -80,8 +80,14 @@ Each seed file MUST begin with a YAML frontmatter block containing exactly the f
 type: sidekick-seed                   # literal string; never any other value
 slug: <kebab-case-string>             # matches filename without .md
 captured_at: <ISO-8601 with timezone> # UTC preferred (e.g., 2026-05-18T14:32:00Z)
-captured_by: <string>                 # invoking skill id (e.g., "specstudio:specify") or "user"
-captured_during: <string or null>     # active spec path (e.g., "spec/features/skills/init") or null
+captured_by: <string>                 # convention: "<plugin>:<skill>" for skills
+                                      # (e.g., "specstudio:specify"); literal "user"
+                                      # for direct user invocation. Free-form; the
+                                      # skill does not validate the format.
+captured_during: <string or null>     # spec path of the active artifact at capture
+                                      # time (e.g., "spec/features/skills/init"),
+                                      # or null when no active spec context (e.g.,
+                                      # a direct /sidekick outside a host session).
 trigger: heuristic                    # one of: heuristic | explicit
 status: queued                        # literal at capture time; populated downstream by Phase 1
 synchestra_task: null                 # literal null at capture time; populated downstream by Phase 1
@@ -96,7 +102,7 @@ The slug MUST be derived deterministically from the one-liner by: (a) lowercasin
 
 #### REQ: seed-lint-rule
 
-`specscore spec lint` MUST recognize files matching `spec/ideas/seeds/*.md` as the `sidekick-seed` document type and validate them against REQ `seed-frontmatter-schema`. The rule MUST: (a) reject unknown frontmatter keys, (b) reject missing required keys, (c) reject `type` values other than `sidekick-seed`, (d) reject `trigger` values outside the enumerated set, (e) require the body to be non-empty (at least the one-liner). The rule's CLI implementation may land cross-repo in `specscore`; this Feature specifies the rule contract and behavior, not its source location.
+`specscore spec lint` MUST recognize files matching `spec/ideas/seeds/*.md` as the `sidekick-seed` document type and validate them against REQ `seed-frontmatter-schema`. The rule MUST: (a) reject unknown frontmatter keys, (b) reject missing required keys, (c) reject `type` values other than `sidekick-seed`, (d) reject `trigger` values outside the enumerated set, (e) require the body's first non-blank line to be an H1 heading (`# <text>`), (f) reject body content (after the frontmatter, inclusive of the H1 line) exceeding 2000 characters. The rule's CLI implementation may land cross-repo in `specscore`; this Feature specifies the rule contract and behavior, not its source location.
 
 ### The event contract
 
@@ -145,7 +151,7 @@ The five components are loosely coupled. The skill produces the seed and the eve
 
 - **`specstudio:specify`** ([feature](../skills/specify/)) — same shape: adds the checklist link. Specify's primary output (the Feature spec) is unchanged. Heuristic capture during specify writes a seed; the active Feature path becomes `captured_during`.
 
-- **`specstudio:plan`** ([idea](../../ideas/specstudio-plan-skill.md)) — when this skill ships, its SKILL.md MUST include the same shared-directive reference (REQ `host-skill-references`).
+- **`specstudio:plan`** ([feature](../skills/plan/)) — when this skill ships, its SKILL.md MUST include the same shared-directive reference (REQ `host-skill-references`).
 
 - **`specstudio:init`** ([feature](../skills/init/)) — no change required for Phase 0. The `spec/ideas/seeds/` directory is created lazily by the sidekick skill on first capture; init does not need to pre-create it. If a future revision wants `init` to pre-create the directory for discoverability, that is an additive change to the `init` Feature, not this one.
 
@@ -161,19 +167,25 @@ The five components are loosely coupled. The skill produces the seed and the eve
 
 **Given** a Claude Code session in a project where `specstudio:sidekick` is installed and `spec/ideas/seeds/` may or may not exist
 **When** the user invokes `/sidekick We should persist debug logs across restarts`
-**Then** a file is written at `spec/ideas/seeds/we-should-persist-debug-logs-across-restarts.md` with frontmatter containing exactly the eight keys from REQ `seed-frontmatter-schema`, `type: sidekick-seed`, `trigger: explicit`, `status: queued`, `synchestra_task: null`, and a body containing the verbatim one-liner; a `sidekick-idea.captured` event is emitted; the skill returns the relative seed path.
+**Then** a file is written at `spec/ideas/seeds/we-should-persist-debug-logs-across-restarts.md` with frontmatter containing exactly the eight keys from REQ `seed-frontmatter-schema`, `type: sidekick-seed`, `trigger: explicit`, `status: queued`, `synchestra_task: null`; the body's first non-blank line is an H1 (`# We should persist debug logs across restarts`) containing the verbatim one-liner; the total body length is ≤ 2000 characters; a `sidekick-idea.captured` event is emitted; the skill returns the relative seed path.
 
 ### AC: empty-or-whitespace-input-rejected
 
 **Given** a Claude Code session
 **When** the user invokes `/sidekick` with no argument, or with only whitespace
-**Then** the skill exits with a clear error indicating an empty one-liner and the 1–280-character constraint; no seed file is created; no event is emitted.
+**Then** the skill exits with a clear error indicating an empty one-liner and the 1–500-character constraint; no seed file is created; no event is emitted.
 
 ### AC: over-length-input-rejected
 
 **Given** a Claude Code session
-**When** the user invokes `/sidekick` with a one-liner of 281 or more characters (after trimming)
-**Then** the skill exits with an error indicating the 280-character limit; the over-length text is not silently truncated; no seed file is created; no event is emitted.
+**When** the user invokes `/sidekick` with a one-liner of 501 or more characters (after trimming)
+**Then** the skill exits with an error indicating the 500-character limit; the over-length text is not silently truncated; no seed file is created; no event is emitted.
+
+### AC: over-length-body-rejected
+
+**Given** a Claude Code session
+**When** the user invokes `/sidekick` with a valid one-liner and an optional body that, combined with the H1 line, produces total body content of 2001 or more characters
+**Then** the skill exits with an error indicating the 2000-character body limit; the over-length body is not silently truncated; no seed file is created; no event is emitted.
 
 ### AC: unknown-flag-rejected
 
@@ -197,7 +209,7 @@ The five components are loosely coupled. The skill produces the seed and the eve
 
 **Given** a successful capture
 **When** the emitted `sidekick-idea.captured` event payload is inspected
-**Then** it contains exactly the eight fields specified in REQ `event-payload-schema`, no more and no less; `content_hash` is the SHA-256 hex digest (lowercase) of the trimmed lowercase one-liner; the four mirrored fields (`captured_at`, `captured_by`, `captured_during`, `trigger`) match the seed frontmatter exactly.
+**Then** it contains exactly the eight fields specified in REQ `event-payload-schema`, no more and no less; `content_hash` is the SHA-256 hex digest (lowercase) of the trimmed lowercase one-liner; the five mirrored fields (`slug`, `captured_at`, `captured_by`, `captured_during`, `trigger`) match the seed frontmatter exactly.
 
 ### AC: host-skill-references-directive
 
@@ -219,9 +231,9 @@ The five components are loosely coupled. The skill produces the seed and the eve
 
 ### AC: lint-rejects-malformed-seed
 
-**Given** a seed file with any of: (a) an unknown frontmatter key, (b) a missing required key, (c) `type` other than `sidekick-seed`, (d) `trigger` outside the enumerated set, (e) an empty body
+**Given** a seed file with any of: (a) an unknown frontmatter key, (b) a missing required key, (c) `type` other than `sidekick-seed`, (d) `trigger` outside the enumerated set, (e) a body whose first non-blank line is not an H1 heading, (f) a body exceeding 2000 characters
 **When** `specscore spec lint` is run on the project
-**Then** lint reports a violation pointing at the offending file and key (or the missing-key absence); exit code is non-zero (per the SpecScore CLI exit-code contract).
+**Then** lint reports a violation pointing at the offending file and the specific rule fired; exit code is non-zero (per the SpecScore CLI exit-code contract).
 
 ### AC: slug-is-url-safe-lowercase
 
@@ -245,7 +257,7 @@ The following are deliberately deferred to later Features or rejected outright:
 - **Hook ergonomics (auto-drain on `Stop`, `loop`-based scheduling).** Phase 3 Feature.
 - **Modifications to third-party skill files** (`agent-skills:build` SKILL.md, `superpowers:brainstorming` SKILL.md, etc.). Adoption is opt-in via the documented contract; this Feature does not edit foreign repos.
 - **Pre-creation of `spec/ideas/seeds/` by `specstudio:init`.** Lazy creation by the sidekick skill is sufficient; revisit only if discoverability complaints surface.
-- **Free-form prose in the seed body beyond the one-liner.** The body MUST contain the one-liner; whether longer context is permitted is an Outstanding Question (see below). Phase 0 ships with one-liner-only semantics.
+- **Long-form prose, design docs, or essays in the seed body.** The body cap is 2000 characters (REQ `writes-seed-artifact`), enforced by lint (REQ `seed-lint-rule`). The optional body is for cases where a one-liner genuinely cannot capture the idea (a specific code snippet, a short list of affected places). Routine captures SHOULD use the H1-only form (REQ `write-and-continue-discipline`). Seeds that need more than 2000 characters of context have outgrown "seed" status and belong as a full SpecScore Idea via `specstudio:ideate`.
 - **Roster configuration for the consilium.** Not applicable at this layer; Phase 1.
 
 ## Rehearse Integration
@@ -255,6 +267,7 @@ Most ACs are testable via filesystem and event-payload observation; per the rehe
 - `invocation-with-valid-one-liner-captures` — write + event observable
 - `empty-or-whitespace-input-rejected` — exit code + absence-of-write observable
 - `over-length-input-rejected` — exit code + absence-of-write observable
+- `over-length-body-rejected` — exit code + absence-of-write observable
 - `unknown-flag-rejected` — exit code + error string
 - `slug-collision-disambiguates-without-overwriting` — fixture seed dir, observe second-write path
 - `event-emitted-only-on-successful-write` — induce write failure (read-only fs), observe absence of event
@@ -273,10 +286,7 @@ Rehearse stubs are scaffolded with `**Status:** pending` per the rehearse-heuris
 
 ## Outstanding Questions
 
-- **One-liner length cap (280 chars).** Borrowed from the social-post conventions of similar capture tools; not anchored to a concrete constraint. If real captures routinely brush the cap, raise it; if real captures average ≤ 80 chars, leave it. Validate after a week of use.
-- **Seed body beyond the one-liner.** Phase 0 requires the body to contain at least the one-liner; it does not constrain longer prose. Open: should the body be strictly the one-liner (lint enforces), or should hosts be allowed to add a short "why it surfaced" paragraph at capture time? Cost: looser body widens lint surface and may invite hosts to derail into context-writing. Default: allow longer prose but do not require it; revisit if hosts start writing essays.
-- **`captured_by` format.** Currently a free-form string (e.g., `"specstudio:specify"`, `"user"`). Open: should this be a constrained enum drawn from a registry of known skill IDs, or remain free-form to accommodate third-party adopters? Default: free-form; revisit if downstream consumers (Phase 1) need a stable enum for routing.
-- **`captured_during` semantics.** Currently a string referencing the active spec path (e.g., `"spec/features/skills/init"`). Open: should this instead be a Synchestra task ID, a Feature slug, or a free-form context label? Default: spec path; revisit when Phase 1 needs to correlate seeds to active tasks.
+- **One-liner length cap (500 chars).** Picked to comfortably fit a "what + brief context" capture (e.g., "persist debug logs across restarts so post-mortems don't lose context — three places we wished we had session-level logs that survived a `/clear`") while still discouraging full paragraphs that should be the body, not the one-liner. Not anchored to a concrete external constraint. If real captures routinely brush the cap, raise it; if real captures average ≤ 80 chars, leave it. Validate after a week of use.
 - **Seeds-directory pre-creation by `init`.** Deferred per Not Doing. If a future adopter is surprised by the directory appearing only on first capture, revisit and add to `specstudio:init`'s scaffolding.
 - **Event transport mechanism.** REQ `emits-captured-event` requires emission via the Synchestra event-bus convention but does not constrain how. Open: does Synchestra currently provide an in-process emission helper, or do skills emit by writing to a known path that a watcher consumes? Resolve when implementing the skill — likely by reading the existing convention from `skills/shared/synchestra-events.md` (not yet authored; tracked by the source Idea).
 
