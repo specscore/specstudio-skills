@@ -135,6 +135,55 @@ Total length of the body region (everything after the closing `---`, inclusive o
 
 3. The skill MUST return the relative seed path on success.
 
+## Source-artifact back-link (REQs `writes-back-link-to-source-artifact`, `source-artifact-path-resolution`, `back-link-section-format`, `back-link-best-effort`)
+
+After the seed file is written but **before** emitting the event, the skill updates the source artifact's back-link section so reviewers see the generated seed alongside the source. The skill performs the back-link write only when the resolved `captured_during` path points at an existing markdown file; otherwise it skips and proceeds to event emission. Back-link write failures do not block the seed or the event.
+
+### Resolving `captured_during` to a markdown file
+
+Apply these rules in order:
+
+1. If `captured_during` is `null`, skip the back-link write.
+2. If the value ends in `.md` and that file exists, use it directly.
+3. If the value is a directory and `<value>/README.md` exists, use that file.
+4. Otherwise, treat as non-existent and skip (not an error).
+
+Reject (skip back-link write, no error) for paths that:
+- resolve outside the repo root via symlinks
+- traverse into hidden directories (any path component starting with `.`)
+
+### Locating the section
+
+In the source artifact's markdown body:
+
+1. Search for an existing `## Sidekick Seeds Generated` H2 heading anywhere in the file.
+2. If found, append the new entry as the last bullet in that section, **in place**. Do NOT relocate the section.
+3. If not found, create the section. Placement:
+   - If the file contains a SpecScore footer line (begins with `*This document follows the https://specscore.md/`), place the new section immediately before that footer line.
+   - Otherwise, place at end-of-file.
+
+### Entry format
+
+Each entry is a single bullet line:
+
+    - [<slug>](<relative path from source artifact to seed file>) — captured <YYYY-MM-DD> by <captured_by>
+
+- `<slug>` matches the seed's frontmatter `slug` (after any `-N` disambiguator).
+- The relative path is computed from the source artifact's directory to `spec/ideas/seeds/<slug>.md`. For a source at `spec/features/foo/README.md`, the relative path is `../../ideas/seeds/<slug>.md`.
+- The date is the date portion of `captured_at` (YYYY-MM-DD only, no time).
+- `<captured_by>` is the verbatim frontmatter value.
+
+Append-only: newest entry at the bottom of the section. The skill MUST NOT reorder existing entries, remove entries, or modify any content in the source artifact outside this section.
+
+### Failure semantics
+
+If the back-link write fails (filesystem error, parse error, concurrent modification, write permission denied on the source artifact), the skill:
+
+1. MUST NOT roll back the seed write.
+2. MUST proceed with event emission as if the back-link write had succeeded.
+3. MUST report the back-link write failure to the caller as a warning, e.g., `Warning: back-link write to <source-path> failed: <error>; seed and event are recorded.`
+4. MUST exit 0 (success). The seed and event are the load-bearing artifacts; the back-link is a discoverability convenience that a future `specscore spec lint --fix` rule will reconcile (deferred per the Feature's Outstanding Questions).
+
 ## Event emission (REQ `emits-captured-event`, REQ `event-payload-schema`)
 
 On successful write — and only on successful write — emit `sidekick-idea.captured` via the convention in [`shared/synchestra-events.md`](../shared/synchestra-events.md).
