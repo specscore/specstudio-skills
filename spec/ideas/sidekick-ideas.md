@@ -1,9 +1,9 @@
 # Idea: Sidekick Ideas
 
-**Status:** Draft
+**Status:** Implementing
 **Date:** 2026-05-18
 **Owner:** alexandertrakhimenok
-**Promotes To:** —
+**Promotes To:** sidekick-capture
 **Supersedes:** —
 **Related Ideas:** —
 
