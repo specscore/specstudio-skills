@@ -1,9 +1,9 @@
 # Idea: Sidekick Consilium
 
-**Status:** Approved
+**Status:** Implementing
 **Date:** 2026-05-18
 **Owner:** alexandertrakhimenok
-**Promotes To:** —
+**Promotes To:** sidekick-consilium
 **Supersedes:** —
 **Related Ideas:** extends:sidekick-ideas
 

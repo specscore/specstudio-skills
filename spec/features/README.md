@@ -10,6 +10,7 @@ Feature specifications for the SpecStudio plugin. This index lists every top-lev
 |---------|--------|-------------|
 | [`skills/`](skills/README.md) | Approved | Umbrella feature for the per-skill sub-features that specify each Claude Code skill's purpose, gates, inputs, outputs, and lifecycle position. |
 | [sidekick-capture](sidekick-capture/README.md) | Approved | Phase 0 of the [`sidekick-ideas`](../ideas/sidekick-ideas.md) Idea: the `specstudio:sidekick` skill, shared capture directive, seed artifact format, lint rule, and `sidekick-idea.captured` event. Establishes the write-and-continue capture loop for sideline ideas without any deliberation or auto-promotion. |
+| [sidekick-consilium](sidekick-consilium/README.md) | Approved | Phase 1 of the [`sidekick-ideas`](../ideas/sidekick-ideas.md) Idea: the `specstudio:consilium` skill that drains captured *sidekick* (sideline-idea) seeds and produces deterministic verdicts via a 5-stage pipeline (CLI gather → researcher → 9-role parallel expert panel → CLI arbiter → scribe). Per-project configurable roster + gate via `specscore.yaml`. |
 | [third-party-integration](third-party-integration/README.md) | Defines the contract for integrating third-party agent skills with SpecScore artifacts via three shapes (Producer, Reviewer, Capability), with explicit non-goal for Shape-3 third-party Producers. |
 
 ### skills
