@@ -51,5 +51,5 @@ rm spec/ideas/seeds/_test.md
 
 ## Tracking
 
-- Open an issue in `synchestra-io/specscore-cli` titled "Add `sidekick-seed` lint rule" with a link to this stub and to REQ `seed-lint-rule`.
+- **Upstream issue:** [`synchestra-io/specscore-cli#6`](https://github.com/synchestra-io/specscore-cli/issues/6) — "Add `sidekick-seed` lint rule"
 - Until the rule ships, the contract is enforceable only by visual review; Phase 0 still functions because the sidekick skill enforces frontmatter and body shape at write time (defense-in-depth per the directive).
