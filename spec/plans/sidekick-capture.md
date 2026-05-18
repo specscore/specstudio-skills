@@ -21,7 +21,7 @@ This plan implements the Approved Feature at [`spec/features/sidekick-capture/RE
 - Seed template at `skills/sidekick/references/seed-template.md`
 - Event-shape addendum to `skills/shared/synchestra-events.md` (extend with `sidekick-idea.captured`)
 - Wiring of `specstudio:ideate` and `specstudio:specify` checklists to reference the directive (REQ `host-skill-references`)
-- 17 Rehearse stubs at `spec/features/sidekick-capture/tests/<slug>.md` (12 original + 5 new for back-link ACs)
+- 17 Rehearse stubs at `spec/features/sidekick-capture/_tests/<slug>.md` (12 original + 5 new for back-link ACs)
 - Companion plan stub for the cross-repo lint rule
 
 ## Out of Scope (deferred to later phases or companion plans)
@@ -931,15 +931,15 @@ Per REQ host-skill-references (Feature sidekick-capture).
 ## Task 7: Scaffold the 17 Rehearse stubs + 1 skip-reason
 
 **Files:**
-- Create: `spec/features/sidekick-capture/tests/<ac-slug>.md` × 12
-- Create: `spec/features/sidekick-capture/tests/_skipped.md` × 1
+- Create: `spec/features/sidekick-capture/_tests/<ac-slug>.md` × 12
+- Create: `spec/features/sidekick-capture/_tests/_skipped.md` × 1
 
 **Why bundled into one task:** the stubs follow a uniform template; writing them one-by-one would be repetitive. Each stub is small (~15 lines). They commit as a unit.
 
 - [ ] **Step 1: Create the tests directory**
 
 ```bash
-mkdir -p spec/features/sidekick-capture/tests
+mkdir -p spec/features/sidekick-capture/_tests
 ```
 
 - [ ] **Step 2: Define the stub template**
@@ -1033,7 +1033,7 @@ That is 17 testable stubs + 1 skip-reason record (`_skipped.md` for `heuristic-c
 
 The Feature's Rehearse Integration explicitly skips `heuristic-capture-does-not-derail-host`. Document the skip:
 
-Create `spec/features/sidekick-capture/tests/_skipped.md`:
+Create `spec/features/sidekick-capture/_tests/_skipped.md`:
 
 ```markdown
 ---
@@ -1058,7 +1058,7 @@ Expected: `0 violations found`
 - [ ] **Step 6: Commit**
 
 ```bash
-git add spec/features/sidekick-capture/tests/
+git add spec/features/sidekick-capture/_tests/
 git commit -m "test(features/sidekick-capture): scaffold 17 Rehearse stubs + 1 skip
 
 One stub per testable AC, status: pending, scenario copied verbatim from
@@ -1193,9 +1193,9 @@ Expected: empty output (everything from Tasks 1–8 committed).
 ls skills/sidekick/SKILL.md \
    skills/sidekick/references/seed-template.md \
    skills/shared/sidekick-capture.md \
-   spec/features/sidekick-capture/tests/_skipped.md \
+   spec/features/sidekick-capture/_tests/_skipped.md \
    spec/plans/sidekick-capture-lint-rule-companion.md
-ls spec/features/sidekick-capture/tests/*.md | wc -l
+ls spec/features/sidekick-capture/_tests/*.md | wc -l
 ```
 
 Expected: all five files list; the wc shows `18` (17 stubs + 1 skip record).
@@ -1327,7 +1327,7 @@ Expected: no matches (the only allowed `TODO`-shaped references are in the seed-
 - `skills/sidekick/SKILL.md` (singular, lowercase, matches the convention of `skills/ideate/SKILL.md`)
 - `skills/shared/sidekick-capture.md` (singular hyphenated)
 - `spec/ideas/seeds/<slug>.md` (subdirectory of `spec/ideas/`)
-- `spec/features/sidekick-capture/tests/<ac-slug>.md` (sibling of the Feature's README)
+- `spec/features/sidekick-capture/_tests/<ac-slug>.md` (sibling of the Feature's README)
 - `spec/plans/sidekick-capture-lint-rule-companion.md` (sibling of this plan)
 
 If any task references a path that doesn't match the plan-wide convention, fix it now.

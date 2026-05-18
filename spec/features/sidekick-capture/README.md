@@ -328,7 +328,7 @@ The following are deliberately deferred to later Features or rejected outright:
 
 ## Rehearse Integration
 
-Most ACs are testable via filesystem and event-payload observation; per the rehearse heuristic, those scaffold to Rehearse stubs at `spec/features/sidekick-capture/tests/<req-or-ac-slug>.md` with `status: pending`. Stubs scaffold for:
+Most ACs are testable via filesystem and event-payload observation; per the rehearse heuristic, those scaffold to Rehearse stubs at `spec/features/sidekick-capture/_tests/<req-or-ac-slug>.md` with `status: pending`. Stubs scaffold for:
 
 - `invocation-with-valid-one-liner-captures` — write + event observable
 - `empty-or-whitespace-input-rejected` — exit code + absence-of-write observable
