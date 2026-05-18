@@ -21,7 +21,7 @@ This plan implements the Approved Feature at [`spec/features/sidekick-capture/RE
 - Seed template at `skills/sidekick/references/seed-template.md`
 - Event-shape addendum to `skills/shared/synchestra-events.md` (extend with `sidekick-idea.captured`)
 - Wiring of `specstudio:ideate` and `specstudio:specify` checklists to reference the directive (REQ `host-skill-references`)
-- 12 Rehearse stubs at `spec/features/sidekick-capture/tests/<slug>.md`
+- 17 Rehearse stubs at `spec/features/sidekick-capture/tests/<slug>.md` (12 original + 5 new for back-link ACs)
 - Companion plan stub for the cross-repo lint rule
 
 ## Out of Scope (deferred to later phases or companion plans)
@@ -111,7 +111,7 @@ skills/
 └── shared/synchestra-events.md      # add sidekick-idea.captured section
 ```
 
-13 Rehearse stub files = 12 testable ACs + 1 skipped (`heuristic-capture-does-not-derail-host`) — actually the spec says 12 scaffolded + 1 skipped. The skipped AC gets a different artifact: a `_skipped.md` file documenting why. Total = 13 files (12 stubs + 1 skip-reason). Confirmed in Task 7.
+18 Rehearse stub files = 17 testable ACs + 1 skipped (`heuristic-capture-does-not-derail-host`). The skipped AC gets a separate `_skipped.md` file documenting the reason. Total = 18 files (17 stubs + 1 skip-reason). Updated post-spec-revision per Task 7.
 
 ---
 
@@ -639,6 +639,130 @@ section.
 
 ---
 
+## Task 3.5: Extend the skill with source-artifact back-link logic
+
+**Added after Task 3 was already committed**, in response to a spec revision (`spec(features): revise sidekick-capture with source-artifact back-links`, commit `4eb4b89`). The spec now requires that when a seed's `captured_during` resolves to an existing source artifact (Feature/Idea/Plan), the skill update that artifact's `## Sidekick Seeds Generated` section so reviewers see the generated seed alongside the source. This task adds the corresponding logic to the already-committed `skills/sidekick/SKILL.md` and inserts a new behavior section into it.
+
+**Files:**
+- Modify: `skills/sidekick/SKILL.md`
+
+**Why a separate task:** Task 3 is already committed against the previous spec. Rather than amend that commit (which would obscure history), add a delta commit that brings the SKILL.md into compliance with the revised spec. The new behavior section is inserted between "Writing the seed file" and "Event emission" — that ordering matches the runtime sequence (validate → derive slug → write seed → update back-link → emit event).
+
+- [ ] **Step 1: Locate the insertion point**
+
+Open `skills/sidekick/SKILL.md`. Find the existing `## Writing the seed file (REQ writes-seed-artifact)` section and the `## Event emission (REQ emits-captured-event, REQ event-payload-schema)` section that follows it. The new section goes between them.
+
+- [ ] **Step 2: Insert the source-artifact back-link section**
+
+Insert this content between the "Writing the seed file" section and the "Event emission" section:
+
+````
+## Source-artifact back-link (REQs `writes-back-link-to-source-artifact`, `source-artifact-path-resolution`, `back-link-section-format`, `back-link-best-effort`)
+
+After the seed file is written but **before** emitting the event, the skill updates the source artifact's back-link section so reviewers see the generated seed alongside the source. The skill performs the back-link write only when the resolved `captured_during` path points at an existing markdown file; otherwise it skips and proceeds to event emission. Back-link write failures do not block the seed or the event.
+
+### Resolving `captured_during` to a markdown file
+
+Apply these rules in order:
+
+1. If `captured_during` is `null`, skip the back-link write.
+2. If the value ends in `.md` and that file exists, use it directly.
+3. If the value is a directory and `<value>/README.md` exists, use that file.
+4. Otherwise, treat as non-existent and skip (not an error).
+
+Reject (skip back-link write, no error) for paths that:
+- resolve outside the repo root via symlinks
+- traverse into hidden directories (any path component starting with `.`)
+
+### Locating the section
+
+In the source artifact's markdown body:
+
+1. Search for an existing `## Sidekick Seeds Generated` H2 heading anywhere in the file.
+2. If found, append the new entry as the last bullet in that section, **in place**. Do NOT relocate the section.
+3. If not found, create the section. Placement:
+   - If the file contains a SpecScore footer line (begins with `*This document follows the https://specscore.md/`), place the new section immediately before that footer line.
+   - Otherwise, place at end-of-file.
+
+### Entry format
+
+Each entry is a single bullet line:
+
+    - [<slug>](<relative path from source artifact to seed file>) — captured <YYYY-MM-DD> by <captured_by>
+
+- `<slug>` matches the seed's frontmatter `slug` (after any `-N` disambiguator).
+- The relative path is computed from the source artifact's directory to `spec/ideas/seeds/<slug>.md`. For a source at `spec/features/foo/README.md`, the relative path is `../../ideas/seeds/<slug>.md`.
+- The date is the date portion of `captured_at` (YYYY-MM-DD only, no time).
+- `<captured_by>` is the verbatim frontmatter value.
+
+Append-only: newest entry at the bottom of the section. The skill MUST NOT reorder existing entries, remove entries, or modify any content in the source artifact outside this section.
+
+### Failure semantics
+
+If the back-link write fails (filesystem error, parse error, concurrent modification, write permission denied on the source artifact), the skill:
+
+1. MUST NOT roll back the seed write.
+2. MUST proceed with event emission as if the back-link write had succeeded.
+3. MUST report the back-link write failure to the caller as a warning, e.g., `Warning: back-link write to <source-path> failed: <error>; seed and event are recorded.`
+4. MUST exit 0 (success). The seed and event are the load-bearing artifacts; the back-link is a discoverability convenience that a future `specscore spec lint --fix` rule will reconcile (deferred per the Feature's Outstanding Questions).
+````
+
+- [ ] **Step 3: Lint passes**
+
+Run: `specscore spec lint --severity warning`
+Expected: `0 violations found`
+
+- [ ] **Step 4: Manual section-order check**
+
+Confirm the SKILL.md section order is now:
+1. (frontmatter)
+2. # Sidekick (H1 + intro)
+3. ## When to Use
+4. ## Anti-Pattern: Deliberation at Capture
+5. ## Input
+6. ## Validation rules
+7. ## Slug derivation
+8. ## Collision disambiguation
+9. ## Frontmatter assembly
+10. ## Body assembly
+11. ## Writing the seed file
+12. **## Source-artifact back-link** ← new
+13. ## Event emission
+14. ## Output (success)
+15. ## Output (error)
+16. ## Red Flags
+17. ## References
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add skills/sidekick/SKILL.md
+git commit -m "$(cat <<'EOF'
+feat(skills/sidekick): add source-artifact back-link logic
+
+Extends the already-committed specstudio:sidekick skill with the back-
+link writing behavior introduced in the spec revision at commit 4eb4b89.
+After writing the seed and before emitting the event, the skill resolves
+captured_during to a markdown file (via the .md-direct or directory-
+README.md rule) and appends an entry to the source artifact's
+## Sidekick Seeds Generated section, creating the section if absent.
+
+Implements 4 new REQs from the revised Feature sidekick-capture:
+- writes-back-link-to-source-artifact
+- source-artifact-path-resolution
+- back-link-section-format
+- back-link-best-effort
+
+Failure semantics: best-effort. Back-link write failure does not roll
+back the seed, does not block event emission, and exits 0 with a warning.
+
+Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>
+EOF
+)"
+```
+
+---
+
 ## Task 4: Extend `synchestra-events.md` with `sidekick-idea.captured`
 
 **Files:**
@@ -804,7 +928,7 @@ Per REQ host-skill-references (Feature sidekick-capture).
 
 ---
 
-## Task 7: Scaffold the 12 Rehearse stubs + 1 skip-reason
+## Task 7: Scaffold the 17 Rehearse stubs + 1 skip-reason
 
 **Files:**
 - Create: `spec/features/sidekick-capture/tests/<ac-slug>.md` × 12
@@ -843,7 +967,7 @@ feature: sidekick-capture
 <2–4 sentences describing how to actually run this scenario: what command, what fixture, what assertion against what observable.>
 ```
 
-- [ ] **Step 3: Write all 12 stubs**
+- [ ] **Step 3: Write all 17 stubs**
 
 Create one file per AC. For each, copy the Given/When/Then verbatim from `spec/features/sidekick-capture/README.md`'s Acceptance Criteria section, then write a 2–4-sentence verification approach.
 
@@ -888,7 +1012,22 @@ Create one file per AC. For each, copy the Given/When/Then verbatim from `spec/f
 13. `third-party-skill-can-invoke.md`
     - Verification: from a fixture third-party skill (mocked), invoke `specstudio:sidekick` with `captured_by="agent-skills:build"`; assert the seed's frontmatter `captured_by` is verbatim `agent-skills:build`; assert the emitted event's `actor.id` reflects the same value.
 
-Wait — that's 13 numbered items but only 12 stubs because the 13th is `host-skill-references-directive` (item 9) and `same-session-no-double-capture` (item 10) and the count includes them. Recount: 12 stubs. (The skipped AC is separate; see Step 4.)
+14. `back-link-appended-on-capture.md`
+    - Verification: pre-create a fixture Feature at `spec/features/foo/README.md` containing a SpecScore footer line and no existing back-link section. Invoke the skill with `captured_during=spec/features/foo` and a known one-liner. Assert: (a) the seed file exists, (b) the Feature's README now contains a `## Sidekick Seeds Generated` section positioned immediately before the footer line, (c) the section contains exactly one entry in the format `- [<slug>](../../ideas/seeds/<slug>.md) — captured <YYYY-MM-DD> by <captured_by>`, (d) no other content in the Feature's README has changed (diff outside the new section is empty).
+
+15. `back-link-section-created-when-absent.md`
+    - Verification: pre-create two fixtures: (a) a source artifact with a footer and no existing section, (b) a source artifact with no footer and no existing section. Invoke against each. Assert: in case (a), the new section is immediately before the footer; in case (b), the new section is at end-of-file. In both cases, the section heading is exactly `## Sidekick Seeds Generated` and contains exactly one bullet beneath it.
+
+16. `back-link-skipped-on-null-captured-during.md`
+    - Verification: invoke with `captured_during=null`. Assert: seed exists, `.synchestra/events.jsonl` line added, NO other file modified, exit code 0, no warning about a missing source artifact.
+
+17. `back-link-skipped-on-nonexistent-path.md`
+    - Verification: invoke with `captured_during=spec/features/this-feature-does-not-exist`. Assert: seed exists, event emitted, exit code 0, no back-link write attempted, no error reported.
+
+18. `back-link-write-failure-does-not-roll-back-seed.md`
+    - Verification: pre-create a fixture Feature and `chmod 0444` its README.md (or otherwise make it unwritable while the parent dir remains writable). Invoke the skill pointing at it. Assert: seed file exists, event emitted, warning surfaced about back-link failure (substring "back-link write to <source-path> failed"), exit code 0. Reset permissions after the test.
+
+That is 17 testable stubs + 1 skip-reason record (`_skipped.md` for `heuristic-capture-does-not-derail-host`). The skipped AC is documented in Step 4.
 
 - [ ] **Step 4: Write the skip-reason file**
 
@@ -920,7 +1059,7 @@ Expected: `0 violations found`
 
 ```bash
 git add spec/features/sidekick-capture/tests/
-git commit -m "test(features/sidekick-capture): scaffold 12 Rehearse stubs + 1 skip
+git commit -m "test(features/sidekick-capture): scaffold 17 Rehearse stubs + 1 skip
 
 One stub per testable AC, status: pending, scenario copied verbatim from
 the Feature's Acceptance Criteria, plus a 2–4-sentence verification
@@ -1059,7 +1198,7 @@ ls skills/sidekick/SKILL.md \
 ls spec/features/sidekick-capture/tests/*.md | wc -l
 ```
 
-Expected: all five files list; the wc shows `13` (12 stubs + 1 skip record).
+Expected: all five files list; the wc shows `18` (17 stubs + 1 skip record).
 
 - [ ] **Step 3: Verify host-skill wiring**
 
@@ -1087,18 +1226,23 @@ Expected: `0 violations found`
 
 - [ ] **Step 6: Live invocation rehearsal** (manual)
 
-In a Claude Code session in this repo, invoke `/sidekick We should test the sidekick skill end-to-end` and verify:
+In a Claude Code session in this repo, invoke `/sidekick --captured-during=spec/features/sidekick-capture We should test the sidekick skill end-to-end` (with `captured_during` pointing at this Feature) and verify:
 
-- A file appears at `spec/ideas/seeds/we-should-test-the-sidekick-skill-end-to-end.md` with the 8-key frontmatter and an H1 line.
+- A file appears at `spec/ideas/seeds/we-should-test-the-sidekick-skill-end-to-end.md` with the 8-key frontmatter (note `captured_during: spec/features/sidekick-capture`) and an H1 line containing the verbatim one-liner.
 - A line is appended to `.synchestra/events.jsonl` (create the file with `touch .synchestra/events.jsonl` first; ensure `.synchestra/` is in `.gitignore` if it isn't already — check `cat .gitignore | grep synchestra`).
+- **The source artifact (`spec/features/sidekick-capture/README.md`) now contains a `## Sidekick Seeds Generated` section** positioned immediately before the SpecScore footer line, containing one entry: `- [we-should-test-...](../../ideas/seeds/we-should-test-the-sidekick-skill-end-to-end.md) — captured <YYYY-MM-DD> by user`. This is the back-link in action — verifies REQs `writes-back-link-to-source-artifact`, `source-artifact-path-resolution`, `back-link-section-format`.
 - The skill's output is one short line: `Captured: ... at spec/ideas/seeds/...`.
 
-After verifying, remove the test seed:
+After verifying, revert the test changes (both the seed and the back-link entry):
 
 ```bash
 rm spec/ideas/seeds/we-should-test-the-sidekick-skill-end-to-end.md
-git status --short  # confirm seed is gone, no other changes
+# Revert the Feature README's back-link section
+git checkout -- spec/features/sidekick-capture/README.md
+git status --short  # confirm seed gone, README restored, no other changes
 ```
+
+(Alternative: keep the back-link entry as a dogfood example committed; the user decides at rehearsal time.)
 
 - [ ] **Step 7: Update the Feature's status if appropriate**
 
@@ -1158,6 +1302,10 @@ After implementing all 9 tasks, run through this list:
 | `seed-lint-rule` | T8 (contract); cross-repo implementation | T7 stub 11 |
 | `event-payload-schema` | T3 step 7, T4 | T7 stub 8 |
 | `third-party-adoption-contract` | T1 (adoption section) | T7 stub 13 |
+| `writes-back-link-to-source-artifact` | T3.5 (back-link section) | T7 stubs 14, 16, 17 |
+| `source-artifact-path-resolution` | T3.5 (resolution rules) | T7 stubs 14, 17 |
+| `back-link-section-format` | T3.5 (locating + entry format) | T7 stubs 14, 15 |
+| `back-link-best-effort` | T3.5 (failure semantics) | T7 stub 18 |
 
 **2. Placeholder scan** — search the plan for forbidden patterns:
 
@@ -1200,4 +1348,6 @@ The 9 tasks have no inter-task dependencies that prevent ordering changes beyond
 - T2 (template) before T3 if you want the skill's references link to resolve at commit time
 - T4 (event addendum) can be before or after T3 — the link is documentary
 
-Suggested execution order (matches the task numbering): **T1 → T2 → T3 → T4 → T5 → T6 → T7 → T8 → T9.**
+Suggested execution order (matches the task numbering): **T1 → T2 → T3 → T3.5 → T4 → T5 → T6 → T7 → T8 → T9.**
+
+(T3.5 was added post-T3-commit when the spec was revised to include source-artifact back-links; it extends the already-committed skill and must land before T4 so the end-to-end rehearsal in T9 can verify the back-link path.)
