@@ -56,6 +56,7 @@ Create a task for each and complete in order:
 8. **Inline self-review** — placeholders, contradictions, ambiguity, scope.
 9. **User review** — ask the user to review and approve the Recommended Direction. Recognize explicit approval phrases (`approve`, `approved`, `accept`, `accepted`, `lgtm`, plus their semantic equivalents in the user's language); treat vague positive signals as soft and ask one explicit confirmation question.
 10. **Emit events** — `idea.drafted` on every successful lint pass while `**Status:** Draft`; `idea.approved` exactly once on approval; `idea.updated` on every successful lint pass while `**Status:** Approved`. Both `drafted` and `updated` payloads carry `changed_sections`, `previous_revision`, and a factual `change_summary` (≤2 sentences). See [synchestra-events.md](../shared/synchestra-events.md).
+11. **Throughout** — watch for sidekick ideas per [sidekick-capture.md](../shared/sidekick-capture.md). When an out-of-scope improvement surfaces, invoke `specstudio:sidekick` with a one-liner, acknowledge in one line, and return to the current checklist step immediately. Do not derail to discuss the sideline idea.
 
 ## Phase 1 — Understand & Expand (Divergent)
 
