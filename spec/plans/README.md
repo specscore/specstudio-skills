@@ -1,0 +1,21 @@
+# SpecStudio Plans
+
+> [View in SpecStudio](https://specstudio.synchestra.io/project/plans?id=specstudio-skills@synchestra-io@github.com&path=spec%2Fplans) — graph, discussions, approvals
+
+Implementation plans for Approved SpecScore Features. Each plan breaks a Feature's REQs and ACs into ordered, verifiable tasks that an engineer (human or agent) can execute task-by-task.
+
+Plans here are authored by `superpowers:writing-plans` today and will be authored by `specstudio:plan` once that skill ships ([Approved Idea](../ideas/specstudio-plan-skill.md)).
+
+## Contents
+
+| Plan | Feature | Notes |
+|---|---|---|
+| [sidekick-capture](sidekick-capture.md) | [sidekick-capture](../features/sidekick-capture/README.md) | Phase 0 of the sidekick-ideas Idea: capture infrastructure. 9 tasks. |
+| [sidekick-capture-lint-rule-companion](sidekick-capture-lint-rule-companion.md) | — | Cross-repo companion stub: the `sidekick-seed` lint rule lives in `synchestra-io/specscore-cli`. |
+
+## Outstanding Questions
+
+- None at this time.
+
+---
+*This document follows the https://specscore.md/plans-index-specification*
