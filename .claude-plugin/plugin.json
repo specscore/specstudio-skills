@@ -1,7 +1,7 @@
 {
   "name": "specstudio",
   "description": "SpecStudio — AI skills for spec-driven development: specify, plan, build, verify, review, ship.",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "author": {
     "name": "Alexander Trakhimenok"
   },
