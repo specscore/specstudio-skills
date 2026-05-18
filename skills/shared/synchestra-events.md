@@ -133,6 +133,35 @@ payload:
 
 **Consumer:** Synchestra typically triggers `writing-plans` after `feature.approved`, and notifies downstream consumers (Plans, dependent Features, Hub) on `feature.updated`.
 
+## Events Emitted by `specstudio:sidekick`
+
+### `sidekick-idea.captured`
+Fired exactly once per successful seed write at `spec/ideas/seeds/<slug>.md`. The skill writes the seed file before emitting; if emission fails after a successful write, the seed remains on disk and is recoverable by re-emission (see the skill's failure semantics). The event is not fired on validation or write failure.
+
+```yaml
+event: sidekick-idea.captured
+version: 1
+uuid: <generated>
+timestamp: <ISO-8601 of capture moment; mirrors seed frontmatter `captured_at`>
+actor:
+  kind: skill | user
+  id: <invoker — "<plugin>:<skill>" form for skills, "user:<username>" for direct user invocation>
+artifact:
+  type: idea-seed
+  id: <slug>                         # matches the seed's frontmatter `slug` and filename
+  path: <seed_path>                  # e.g., spec/ideas/seeds/persist-debug-logs.md
+  revision: <git SHA at emission, or "uncommitted">
+payload:
+  slug: <slug>                       # duplicated for direct consumer access
+  captured_during: <string or null>  # mirrors seed frontmatter; spec path or null
+  trigger: heuristic | explicit       # mirrors seed frontmatter
+  content_hash: <SHA-256 lowercase hex of normalized one-liner>
+```
+
+**Normalization for `content_hash`:** the one-liner is trimmed (leading/trailing whitespace removed) and lowercased via Unicode default casefolding before hashing. Different emitters compute the same hash for the same idea, which lets the Phase 1 consilium dedupe panel runs across sessions.
+
+**Consumer:** the Phase 1 consilium subscribes here. It dedupes by `content_hash` over a rolling window, then enqueues a `consilium-review` task for the seed. Consumers that want a flat 8-field view (per Feature `sidekick-capture` REQ `event-payload-schema`) project: `event`, `seed_path` (from `artifact.path`), `slug`, `captured_at` (from `timestamp`), `captured_by` (from `actor.id`), `captured_during`, `trigger`, `content_hash`.
+
 ## Events Emitted by Synchestra (consumed by skills)
 
 ### `idea.implementing`
@@ -184,3 +213,4 @@ This is a stricter event than the previous `idea.specified` (which fired on firs
 | `feature.specified` | `specstudio:specify` | Reviewer-approved, lint-clean Feature write |
 | `feature.approved` | `specstudio:specify` | User approves the written Feature (exactly once) |
 | `feature.updated` | `specstudio:specify` | Every successful lint pass while `status` ∈ {Approved, Implementing, Stable} after approval |
+| `sidekick-idea.captured` | `specstudio:sidekick` | Successful seed write at `spec/ideas/seeds/<slug>.md` (exactly once per seed) |
