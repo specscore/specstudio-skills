@@ -57,6 +57,19 @@ Once installed, the three plugins coexist as independent slash-command namespace
 
 More skills covering the rest of the lifecycle (implement, verify, recap, review, ship) are on the roadmap, alongside a web authoring UI at [`specscore.studio`](https://specscore.studio).
 
+## For AI agents working on this repo
+
+> **Read [`PRINCIPLES.md`](./PRINCIPLES.md) before starting any task — especially before invoking `specstudio:ideate` or `specstudio:specify`.**
+
+These are the two slowest, highest-leverage phases of the lifecycle: bad decisions here propagate into every downstream Plan, commit, and review. The principles in that document orient *how we work* on this repo — which decisions involve the user, how to batch questions, how to use the user's idle time productively, how to push back honestly. They override skill defaults where they conflict.
+
+Two-document split, read both in order:
+
+1. [`PRINCIPLES.md`](./PRINCIPLES.md) — **how we work** (user attention economy, question cadence, parallel work). Project-wide; applies to every task.
+2. [`skills/shared/philosophy.md`](./skills/shared/philosophy.md) — **how skills behave** (lint discipline, hard gates, scope decomposition, YAGNI). Skill-specific; applies to skill authoring and skill execution.
+
+If you're a human reader, the same documents tell you what to expect from the AI agents working alongside you on this repo.
+
 ## Principles
 
 SpecStudio's skills share a common philosophy:
