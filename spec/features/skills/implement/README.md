@@ -318,7 +318,7 @@ After the final batch's `implement.batch-completed` event fires (the dependency 
 
 #### REQ: implement-status-transition
 
-When the final task transitions to `**Status:** done`, the skill MUST update the Plan's body-metadata `**Status:**` from `Approved` → `Implementing` on first task dispatch (if not already there), and from `Implementing` → `Completed` when the final task lands. The transition Completed → (any further state) is user-driven (e.g., the user superseding the Plan with a follow-on).
+When the final task transitions to `**Status:** done`, the skill MUST update the Plan's body-metadata `**Status:**` from `Approved` → `Implementing` on first task dispatch (if not already there), and from `Implementing` → `Completed` when the final task lands. The transition Completed → (any further state) is user-driven (e.g., the user superseding the Plan with a follow-on). The `Approved → Implementing` transition is owned by checklist step 4b (first task dispatch); the `Implementing → Completed` transition is owned by step 18 (final-task hand-off).
 
 ### Posture immutability
 
