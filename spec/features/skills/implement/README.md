@@ -543,7 +543,7 @@ The skill MUST NOT yes-machine weak Plans or silently retry blocked subagents. W
 - [implement-skill-checklist-missing-plan-body-status-transition](../../../ideas/seeds/implement-skill-checklist-missing-plan-body-status-transition.md) — captured 2026-05-19 by user
 - [implement-preflight-should-require-source-feature-in-git-h](../../../ideas/seeds/implement-preflight-should-require-source-feature-in-git-h.md) — captured 2026-05-19 by user
 - [implement-subagent-tdd-discipline-pointer-needs-adapter-clau](../../../ideas/seeds/implement-subagent-tdd-discipline-pointer-needs-adapter-clau.md) — captured 2026-05-19 by user
-- *Moved to sibling repo `ai-plugin-specscore`:* `docs/ideas/dedicated-lifecycle-status-skill.md` (was: `specscore-plugin-should-expose-a-dedicated-skill-for`, captured 2026-05-19 by user) — the change lives in that plugin.
+- *Shipped in sibling repo `ai-plugin-specscore`* as `skills/change-status/` (specced at `spec/features/lifecycle-status-skill/`; idea at `spec/ideas/lifecycle-status-skill.md`). Was: sidekick seed `specscore-plugin-should-expose-a-dedicated-skill-for`, captured 2026-05-19 by user. The shipped design is a single cross-kind skill (Feature + Idea) rather than the seed's original two-skill proposal.
 
 ---
 *This document follows the https://specscore.md/feature-specification*
