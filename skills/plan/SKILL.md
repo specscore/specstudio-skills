@@ -19,14 +19,14 @@ Turn an approved SpecScore Feature into a lint-clean, AC-mapped, ordered task li
 ## Hard Gate
 
 <HARD-GATE>
-Do NOT invoke `specstudio:build`, `writing-plans`, `frontend-design`, `mcp-builder`, or ANY implementation skill until ALL of the following are true:
+Do NOT invoke `specstudio:implement`, `writing-plans`, `frontend-design`, `mcp-builder`, or ANY implementation skill until ALL of the following are true:
   1. The Plan artifact exists at `spec/plans/<slug>.md` and contains at least one `### Task N: <name>` task inside the `## Tasks` section.
   2. Every acceptance criterion in the source Feature is either covered by ≥1 task (via the task's `**Verifies:**` line) OR explicitly listed under `## Deferred AC Coverage` with a concrete one-sentence reason.
   3. `specscore spec lint` passes.
   4. The plan-document reviewer subagent returned `Approved`.
   5. The user has explicitly approved the written Plan.
 
-The only skill invoked after `specstudio:plan` is `specstudio:build` (or — while `build` is unshipped — a hand-back to the user with that recommendation).
+The only skill invoked after `specstudio:plan` is `specstudio:implement` (or — while `implement` is unshipped — a hand-back to the user with that recommendation).
 </HARD-GATE>
 
 ## When to Use
@@ -67,7 +67,7 @@ Create a task for each and complete in order:
 12. **Emit `plan.drafted`** event after all reviewers Approved + lint passes.
 13. **User review gate** — present the Plan with the summary of deferred ACs (if any) and explicitly ask for approval.
 14. **On user approval** — status Under Review → Approved, re-run lint, emit `plan.approved`.
-15. **Transition to `specstudio:build`** — or, while `build` is unshipped, hand back with the recommendation that the user implement task-by-task using a general-purpose skill.
+15. **Transition to `specstudio:implement`** — or, while `implement` is unshipped, hand back with the recommendation that the user implement task-by-task using a general-purpose skill.
 16. **Throughout** — watch for sidekick ideas. When an out-of-scope improvement surfaces (e.g., a Feature change), invoke `specstudio:sidekick` with a one-liner, acknowledge in one line, and return to the current checklist step immediately. Do not derail.
 
 ## Artifact Layout
@@ -232,7 +232,7 @@ When `specscore.yaml` does not contain a `reviewers:` key, only the baseline run
 
 After all reviewers return `Approved`:
 
-> "Plan written and lint-clean at `spec/plans/<slug>.md`. Reviewer subagent approved. [N tasks covering M ACs; K ACs deferred — list them here if any.] Please review and let me know if you want changes before we move to `specstudio:build`."
+> "Plan written and lint-clean at `spec/plans/<slug>.md`. Reviewer subagent approved. [N tasks covering M ACs; K ACs deferred — list them here if any.] Please review and let me know if you want changes before we move to `specstudio:implement`."
 
 Wait. If the user requests changes, fix, re-lint, re-review, re-gate. Only proceed once the user approves.
 
@@ -266,11 +266,11 @@ Every file the skill creates — bootstrapped `spec/plans/`, `spec/plans/README.
 
 ## Transition to Build
 
-After `plan.approved`, transition only to `specstudio:build`. Do **not** invoke any other downstream skill — no `frontend-design`, no `mcp-builder`, no implementation skill of any kind.
+After `plan.approved`, transition only to `specstudio:implement`. Do **not** invoke any other downstream skill — no `frontend-design`, no `mcp-builder`, no implementation skill of any kind.
 
-While `specstudio:build` is unshipped, hand back to the user with:
+While `specstudio:implement` is unshipped, hand back to the user with:
 
-> "Plan approved. The `specstudio:build` skill is not yet shipped — implement task-by-task using a general-purpose implementation skill. Each commit should reference the AC IDs from the satisfied task's `**Verifies:**` line."
+> "Plan approved. The `specstudio:implement` skill is not yet shipped — implement task-by-task using a general-purpose implementation skill. Each commit should reference the AC IDs from the satisfied task's `**Verifies:**` line."
 
 ## Revise vs Supersede
 
@@ -302,7 +302,7 @@ The skill MUST NOT yes-machine weak Plans. When a task is vague, an AC is uncove
 
 ## Red Flags
 
-- Proceeding to `specstudio:build` without user approval
+- Proceeding to `specstudio:implement` without user approval
 - Tasks without `**Verifies:**` lines
 - ACs neither covered nor deferred
 - Defer-reasons like "later" or "TBD"
@@ -311,7 +311,7 @@ The skill MUST NOT yes-machine weak Plans. When a task is vague, an AC is uncove
 - Planning against a Draft or Under Review Feature
 - Writing to `docs/plans/` instead of `spec/plans/`
 - Skipping the reviewer subagent or a registered third-party reviewer
-- Invoking any skill other than `specstudio:build` on transition
+- Invoking any skill other than `specstudio:implement` on transition
 
 ## References
 

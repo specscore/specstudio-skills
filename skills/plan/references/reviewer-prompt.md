@@ -2,7 +2,7 @@
 
 **Status:** Adapted from `skills/specify/references/reviewer-prompt.md` for SpecScore Plan artifacts.
 
-Use this template when dispatching a plan-document reviewer subagent from `specstudio:plan`. Purpose: verify the Plan is structurally and semantically ready for user review and downstream `specstudio:build`.
+Use this template when dispatching a plan-document reviewer subagent from `specstudio:plan`. Purpose: verify the Plan is structurally and semantically ready for user review and downstream `specstudio:implement`.
 
 **Dispatch after:** Plan artifact is written, lint passes, and inline self-review is done.
 
@@ -13,7 +13,7 @@ Agent tool (subagent_type: general-purpose):
   description: "Review SpecScore Plan"
   prompt: |
     You are a SpecScore Plan reviewer. Verify the Plan at <PLAN_FILE>
-    is complete and ready for specstudio:build.
+    is complete and ready for specstudio:implement.
 
     **Plan file:** spec/plans/<slug>.md
     **Source Feature:** spec/features/<feature-slug>/README.md
@@ -51,7 +51,7 @@ Agent tool (subagent_type: general-purpose):
 
     ## Calibration
 
-    Only flag issues that would cause real problems for downstream `build`
+    Only flag issues that would cause real problems for downstream `implement`
     or for the user's ability to verify the Plan against the source
     Feature. A genuinely uncovered AC, a stale AC reference, an
     AC-wrapper task, an ordering that demonstrably violates a stated

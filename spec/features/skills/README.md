@@ -15,7 +15,7 @@ SpecStudio ships as a set of Claude Code skills, one per phase of the spec-drive
 | [`ideate/`](ideate/README.md) | Refine raw ideas into lint-clean SpecScore Idea artifacts. |
 | [`specify/`](specify/README.md) | Turn an approved Idea (or a clear buildable intent) into a SpecScore Feature with G/W/T acceptance criteria. |
 | [`plan/`](plan/README.md) | Turn an approved Feature into an ordered, AC-mapped Plan artifact. |
-| [`build/`](build/README.md) | Implement Plan tasks one at a time, mapping each commit back to AC IDs. |
+| [`implement/`](implement/README.md) | Implement Plan tasks one at a time, mapping each commit back to AC IDs. |
 | [`verify/`](verify/README.md) | Run a Feature's Rehearse tests and report per-AC coverage. |
 | [`recap/`](recap/README.md) | Summarize what was built against what was specified; surface spec↔code drift. |
 | [`review/`](review/README.md) | Multi-axis code review of an implementation against the Feature it claims to satisfy. |
@@ -33,9 +33,9 @@ The `specstudio:specify` skill produces a lint-clean SpecScore Feature at `spec/
 
 The `specstudio:plan` skill is intended to produce a lint-clean `spec/plans/<slug>.md` of ordered tasks where each task references one or more AC IDs from its source Feature. Currently scoped as an Approved Idea (`specstudio-plan-skill`), not yet implemented.
 
-### build
+### implement
 
-The `build` skill is intended to consume a Plan and write code one task at a time, mapping each commit back to the AC IDs the task claims to satisfy. Scope not yet defined — first step is to `ideate` it.
+The `implement` skill is intended to consume a Plan and write code one task at a time, mapping each commit back to the AC IDs the task claims to satisfy. Scope not yet defined — first step is to `ideate` it.
 
 ### verify
 
@@ -76,13 +76,13 @@ The status column in this Feature's Contents table (and on each sub-feature) ref
 
 ### Lifecycle ordering
 
-Sub-features are listed in lifecycle order (`ideate` → `specify` → `plan` → `build` → `verify` → `recap` → `review` → `ship`):
+Sub-features are listed in lifecycle order (`ideate` → `specify` → `plan` → `implement` → `verify` → `recap` → `review` → `ship`):
 
 ```mermaid
 flowchart LR
     intent([clear intent]):::input
     intent --> specify
-    ideate([ideate]):::shipped --> specify([specify]):::shipped --> plan([plan]):::defined --> build([build]):::roadmap --> verify([verify]):::roadmap --> recap([recap]):::roadmap --> review([review]):::roadmap --> ship([ship]):::roadmap
+    ideate([ideate]):::shipped --> specify([specify]):::shipped --> plan([plan]):::defined --> implement([implement]):::roadmap --> verify([verify]):::roadmap --> recap([recap]):::roadmap --> review([review]):::roadmap --> ship([ship]):::roadmap
 
     classDef shipped fill:#d4f4dd,stroke:#2d7a3e,color:#1a3d1f
     classDef defined fill:#fff4cc,stroke:#a07a00,color:#3d3000

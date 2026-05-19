@@ -31,7 +31,7 @@ Not defined yet.
 - Does `recap` compare against the Feature at Plan-approval time, or against the current Feature (which may have been updated mid-implementation)?
 - Should `recap` automatically draft Proposals for incorporated drift, or always require human authorship?
 - How does `recap` handle implementation choices that were never specified (under-specification) vs. choices that contradict the spec (over-specification)?
-- Should `recap` run automatically after `build`/`verify`, or always be invoked explicitly?
+- Should `recap` run automatically after `implement`/`verify`, or always be invoked explicitly?
 
 ---
 *This document follows the https://specscore.md/feature-specification*

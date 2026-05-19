@@ -31,4 +31,4 @@ The MVP is intentionally narrow: single Feature per Plan, strict linear task ord
 - Plan across multiple Features in one artifact (single-Feature scope).
 - Write DAG / parallel-branch plans (linear-only in MVP).
 - Generate code or commit on the user's behalf (auto-stages only).
-- Invoke any skill other than `specstudio:build` on transition.
+- Invoke any skill other than `specstudio:implement` on transition.

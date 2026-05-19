@@ -8,7 +8,7 @@
 
 ## Summary
 
-The `specstudio:plan` skill turns an approved SpecScore Feature into a lint-clean Plan artifact at `spec/plans/<slug>.md` — an ordered list of tasks, each mapped to one or more AC IDs from its source Feature. Its output is the gating input for `specstudio:build`. Like `ideate` and `specify`, the skill hard-gates on lint-clean output, a reviewer-subagent verdict, and explicit user approval. Implementation will live at `skills/plan/` once approved.
+The `specstudio:plan` skill turns an approved SpecScore Feature into a lint-clean Plan artifact at `spec/plans/<slug>.md` — an ordered list of tasks, each mapped to one or more AC IDs from its source Feature. Its output is the gating input for `specstudio:implement`. Like `ideate` and `specify`, the skill hard-gates on lint-clean output, a reviewer-subagent verdict, and explicit user approval. Implementation will live at `skills/plan/` once approved.
 
 **Provenance.** This skill mirrors the shape of `specstudio:specify`: same `<HARD-GATE>` pattern, same body-metadata schema, same lint → reviewer → user gate sequence, same CLI-preferred / fallback-direct-write contract, same auto-stage-on-create discipline. What is *new* in `plan` is the AC-coverage contract — every acceptance criterion in the source Feature must be covered by at least one task, or explicitly deferred with a reason.
 
@@ -34,11 +34,11 @@ The skill MUST refuse to proceed unless its input is a Feature at `spec/features
 
 ### Hard gate
 
-The skill enforces a hard gate downstream — once invoked, it must produce a complete, lint-clean, reviewer-approved, user-approved Plan before any build skill can run.
+The skill enforces a hard gate downstream — once invoked, it must produce a complete, lint-clean, reviewer-approved, user-approved Plan before any implement skill can run.
 
 #### REQ: hard-gate
 
-The skill MUST NOT invoke `specstudio:build`, `writing-plans`, or ANY implementation skill until ALL FIVE conditions hold:
+The skill MUST NOT invoke `specstudio:implement`, `writing-plans`, or ANY implementation skill until ALL FIVE conditions hold:
 
 1. The Plan artifact exists at `spec/plans/<slug>.md` and contains at least one `### Task N: <name>` task inside the `## Tasks` section.
 2. Every acceptance criterion in the source Feature is either covered by at least one task (via the task's `**Verifies:**` line) or explicitly deferred under `## Deferred AC Coverage` with a reason.
@@ -78,7 +78,7 @@ The Plan `.md` MUST follow the SpecScore Plan template: `# Plan: <Title>` headin
 
 #### REQ: plan-status-domain
 
-The `**Status:**` body-metadata value MUST be one of: `Draft`, `Under Review`, `Approved`, `Implementing`, `Completed`. The skill MUST set `**Status:** Draft` on initial write and manage transitions through `Under Review` and `Approved`. The skill does NOT manage transitions to `Implementing` or `Completed` — those are owned by `specstudio:build` (or user-driven).
+The `**Status:**` body-metadata value MUST be one of: `Draft`, `Under Review`, `Approved`, `Implementing`, `Completed`. The skill MUST set `**Status:** Draft` on initial write and manage transitions through `Under Review` and `Approved`. The skill does NOT manage transitions to `Implementing` or `Completed` — those are owned by `specstudio:implement` (or user-driven).
 
 #### REQ: source-feature-field
 
@@ -215,7 +215,7 @@ When the skill dispatches the reviewer subagent (and/or first presents the Plan 
 
 #### REQ: status-transition-on-approval
 
-On confirmed user approval (after reviewer subagent returned `Approved` AND the user explicitly approved), the skill MUST update the Plan's `**Status:**` body-metadata line from `Under Review` to `Approved`, re-run lint, and emit `plan.approved`. The transition Approved → Implementing is owned by `specstudio:build`, not by `plan`.
+On confirmed user approval (after reviewer subagent returned `Approved` AND the user explicitly approved), the skill MUST update the Plan's `**Status:**` body-metadata line from `Under Review` to `Approved`, re-run lint, and emit `plan.approved`. The transition Approved → Implementing is owned by `specstudio:implement`, not by `plan`.
 
 ### Auto-stage in git
 
@@ -247,11 +247,11 @@ After `plan.approved` has fired, on every successful lint pass after a subsequen
 
 ### Promotion boundary
 
-The next skill is `specstudio:build`, and only `specstudio:build`.
+The next skill is `specstudio:implement`, and only `specstudio:implement`.
 
-#### REQ: transition-to-build
+#### REQ: transition-to-implement
 
-After `plan.approved`, the skill MUST transition only to `specstudio:build` (or, while `build` is not yet shipped, hand back to the user with the recommendation to use a general-purpose implementation skill manually). The skill MUST NOT invoke `specify`, `ideate`, `frontend-design`, `mcp-builder`, or any other skill.
+After `plan.approved`, the skill MUST transition only to `specstudio:implement` (or, while `implement` is not yet shipped, hand back to the user with the recommendation to use a general-purpose implementation skill manually). The skill MUST NOT invoke `specify`, `ideate`, `frontend-design`, `mcp-builder`, or any other skill.
 
 #### REQ: revise-vs-supersede
 
@@ -268,10 +268,10 @@ The skill MUST NOT yes-machine weak Plans. When a task is too vague, an AC is un
 | Feature | Interaction |
 |---|---|
 | [Specify Skill](../specify/README.md) | `plan` is the downstream gate of `specify`. `plan` consumes the approved Feature via `**Source Feature:**` linkage and reads the Feature's AC list. The `feature.approved` event triggers `plan` (with user confirmation). |
-| [Build Skill](../build/README.md) | `plan` is the upstream gate of `build`. `build` consumes the approved Plan one task at a time; `plan` never invokes `build` itself — `transition-to-build` is the explicit handoff. |
+| [Implement Skill](../implement/README.md) | `plan` is the upstream gate of `implement`. `implement` consumes the approved Plan one task at a time; `plan` never invokes `implement` itself — `transition-to-implement` is the explicit handoff. |
 | [Third-Party Integration](../../third-party-integration/README.md) | Plan reviewers register via the same `reviewers:` extension key in `specscore.yaml` that `specify` uses. The contract (entry shape, prompt-location constraints, AND-composition) is shared. |
 | SpecScore Plan schema | The schema, lint rules, and lifecycle of the produced Plan artifact are owned by SpecScore. `plan` is a producer, not a definer of that schema. The Plan-specific lint rules (`P-001`, `P-002`, …) are reserved by this Feature and defined in the SpecScore lint contract. |
-| Synchestra Events | Emits `plan.drafted`, `plan.approved`, and `plan.updated`, all with change-context payloads. Consumers (including Hub and a future `build` skill) observe these to advance their own state. |
+| Synchestra Events | Emits `plan.drafted`, `plan.approved`, and `plan.updated`, all with change-context payloads. Consumers (including Hub and a future `implement` skill) observe these to advance their own state. |
 | `specscore` CLI | Preferred crystallization path when `specscore new plan` is available. The skill probes for the CLI once per invocation and falls back to direct write only when absent. |
 
 ## Acceptance Criteria
@@ -279,7 +279,7 @@ The skill MUST NOT yes-machine weak Plans. When a task is too vague, an AC is un
 ### AC: hard-gate-enforced (verifies REQ:hard-gate, REQ:lint-pass, REQ:reviewer-subagent-required, REQ:user-approval-required, REQ:requires-approved-feature)
 
 **Given** an approved Feature at `spec/features/<slug>/` with two ACs (one covered by a task, one not covered and not deferred),
-**When** the skill is invoked and asked to hand off to `build`,
+**When** the skill is invoked and asked to hand off to `implement`,
 **Then** the skill refuses the handoff, names the uncovered AC, and does not emit `plan.approved`.
 
 ### AC: refuse-unapproved-feature (verifies REQ:requires-approved-feature)
@@ -368,11 +368,11 @@ The skill MUST NOT yes-machine weak Plans. When a task is too vague, an AC is un
 **When** each gate completes,
 **Then** the skill emits `plan.drafted` after reviewer-subagent approval (with all three of `previous_revision`, `changed_sections`, and `change_summary` set to `null` on the very first emission, non-null thereafter), `plan.approved` exactly once on user approval, and `plan.updated` on each later successful lint pass — each payload carrying `changed_sections`, `previous_revision`, and a factual `change_summary`.
 
-### AC: promotion-boundary-held (verifies REQ:transition-to-build, REQ:revise-vs-supersede)
+### AC: promotion-boundary-held (verifies REQ:transition-to-implement, REQ:revise-vs-supersede)
 
 **Given** an approved Plan,
 **When** the skill completes its work,
-**Then** the only transition the skill offers is to `specstudio:build` (or, while `build` is unshipped, a hand-back to the user with that recommendation); the skill MUST NOT invoke `specify`, `ideate`, `frontend-design`, or any other skill. When the user later wants to change the Plan, revise-in-place is the default; `**Supersedes:**` is reserved for changes that invalidate the existing task list wholesale.
+**Then** the only transition the skill offers is to `specstudio:implement` (or, while `implement` is unshipped, a hand-back to the user with that recommendation); the skill MUST NOT invoke `specify`, `ideate`, `frontend-design`, or any other skill. When the user later wants to change the Plan, revise-in-place is the default; `**Supersedes:**` is reserved for changes that invalidate the existing task list wholesale.
 
 ### AC: honest-pushback (verifies REQ:honest-pushback)
 

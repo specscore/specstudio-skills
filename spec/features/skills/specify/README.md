@@ -192,7 +192,7 @@ When the skill dispatches the reviewer subagent (and/or first presents the Featu
 
 #### REQ: status-transition-on-approval
 
-On confirmed user approval (after reviewer subagent returned `Approved` AND the user explicitly approved per `approval-explicit-phrase` / `approval-vague-confirmation`), the skill MUST update the Feature's `**Status:**` body-metadata line from `Under Review` to `Approved`, re-run lint, and emit `feature.approved`. The transition Approved → Implementing is owned by `writing-plans` (when build work begins), not by `specify`.
+On confirmed user approval (after reviewer subagent returned `Approved` AND the user explicitly approved per `approval-explicit-phrase` / `approval-vague-confirmation`), the skill MUST update the Feature's `**Status:**` body-metadata line from `Under Review` to `Approved`, re-run lint, and emit `feature.approved`. The transition Approved → Implementing is owned by `writing-plans` (when implementation work begins), not by `specify`.
 
 ### Rehearse stub decision
 

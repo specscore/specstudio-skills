@@ -11,7 +11,7 @@ flowchart LR
     init([init]):::shipped -.bootstrap.-> ideate
     intent([clear intent]):::input
     intent --> specify
-    ideate([ideate]):::shipped --> specify([specify]):::shipped --> plan([plan]):::shipped --> build([build]):::roadmap --> verify([verify]):::roadmap --> recap([recap]):::roadmap --> review([review]):::roadmap --> ship([ship]):::roadmap
+    ideate([ideate]):::shipped --> specify([specify]):::shipped --> plan([plan]):::shipped --> implement([implement]):::roadmap --> verify([verify]):::roadmap --> recap([recap]):::roadmap --> review([review]):::roadmap --> ship([ship]):::roadmap
 
     classDef shipped fill:#d4f4dd,stroke:#2d7a3e,color:#1a3d1f
     classDef defined fill:#fff4cc,stroke:#a07a00,color:#3d3000
@@ -29,7 +29,7 @@ Each in-line phase consumes the previous phase's lint-clean artifact and gates t
 | [`ideate`](./ideate/SKILL.md) | Shipped | Refine raw ideas into lint-clean SpecScore Idea artifacts. |
 | [`specify`](./specify/SKILL.md) | Shipped | Turn an approved Idea into a lint-clean SpecScore Feature with G/W/T acceptance criteria. |
 | [`plan`](./plan/SKILL.md) | Shipped | Turn an approved Feature into an ordered, AC-mapped Plan artifact at `spec/plans/<slug>.md`. |
-| `build` | Roadmap | Implement Plan tasks one at a time, gated on AC coverage. |
+| `implement` | Roadmap | Implement Plan tasks one at a time, gated on AC coverage. |
 | `verify` | Roadmap | Run Rehearse tests against acceptance criteria; report coverage. |
 | `recap` | Roadmap | Summarize what was built against what was specified; surface drift. |
 | `review` | Roadmap | Multi-axis review of code against the Feature it claims to satisfy. |
@@ -79,10 +79,10 @@ Turns an approved Feature into a single-file Plan at `spec/plans/<slug>.md` — 
 
 - **Output:** lint-clean `spec/plans/<slug>.md` with tasks numbered 1..N, each bound to ≥1 AC ID from the source Feature.
 - **Triggers:** `plan`, `/plan`, `specstudio:plan`, "plan this feature", or the `feature.approved` Synchestra event.
-- **Gate:** AC coverage (every AC covered or explicitly deferred, lint rule `P-001`), lint, baseline reviewer + any third-party reviewers (AND composition), user approval. No transition to `specstudio:build` until all five hold.
+- **Gate:** AC coverage (every AC covered or explicitly deferred, lint rule `P-001`), lint, baseline reviewer + any third-party reviewers (AND composition), user approval. No transition to `specstudio:implement` until all five hold.
 - **Source:** [`plan/SKILL.md`](./plan/SKILL.md)
 
-### `build` — Roadmap
+### `implement` — Roadmap
 
 The skill that consumes a Plan and writes code one task at a time, mapping each commit back to AC IDs.
 

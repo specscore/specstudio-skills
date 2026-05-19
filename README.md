@@ -2,7 +2,7 @@
 
 **Spec-driven development, by Synchestra.**
 
-AI skills (and a coming Web UI) for efficient spec-driven development — the full lifecycle: **specify, plan, build, verify, recap, review, ship.** SpecStudio turns vague ideas into lintable, testable specifications and gates implementation on those specifications being clear, complete, and approved.
+AI skills (and a coming Web UI) for efficient spec-driven development — the full lifecycle: **specify, plan, implement, verify, recap, review, ship.** SpecStudio turns vague ideas into lintable, testable specifications and gates implementation on those specifications being clear, complete, and approved.
 
 This repo (`specstudio-skills`) is the Claude Code plugin surface of SpecScore Studio: skills, commands, and supporting tooling for AI coding agents. The web client lives at [`specstudio-web`](https://github.com/specscore/specstudio-web) (planned) and will deploy to [`specscore.studio`](https://specscore.studio).
 
@@ -55,7 +55,7 @@ Once installed, the three plugins coexist as independent slash-command namespace
 | `specstudio:ideate` | Refine raw ideas into SpecScore Idea artifacts through structured divergent/convergent thinking. Gates on a lint-clean `spec/ideas/<slug>.md` that the user has approved. |
 | `specstudio:specify` | Turn an approved Idea into a SpecScore Feature with requirements and `Given / When / Then` acceptance criteria at `spec/features/<slug>/`. Gates implementation until the Feature is lint-clean and approved. |
 
-More skills covering the rest of the lifecycle (plan, build, verify, recap, review, ship) are on the roadmap, alongside a web authoring UI at [`specscore.studio`](https://specscore.studio).
+More skills covering the rest of the lifecycle (implement, verify, recap, review, ship) are on the roadmap, alongside a web authoring UI at [`specscore.studio`](https://specscore.studio).
 
 ## Principles
 
@@ -98,7 +98,7 @@ Brand spelling: `SpecScore Studio` (formal copy, first mention, contexts where t
 
 **Specified in SpecScore.** Every feature, idea, and acceptance criterion in this repo lives under [`spec/`](./spec/README.md) as a SpecScore artifact:
 
-- [`spec/features/`](./spec/features/README.md) — Feature specs for each skill (`ideate`, `specify`, planned `plan`/`build`/etc.) with `Given / When / Then` acceptance criteria and Rehearse test stubs.
+- [`spec/features/`](./spec/features/README.md) — Feature specs for each skill (`ideate`, `specify`, `plan`, planned `implement`/etc.) with `Given / When / Then` acceptance criteria and Rehearse test stubs.
 - [`spec/ideas/`](./spec/ideas/README.md) — Pre-spec one-pagers for skills that haven't been promoted to Features yet.
 - [`spec/research/`](./spec/research/README.md) — Long-form analyses that informed key design decisions (e.g., the comparison between SpecStudio's `ideate`/`specify` and `obra/superpowers`'s `brainstorming`).
 

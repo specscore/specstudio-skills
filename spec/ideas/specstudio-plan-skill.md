@@ -40,7 +40,7 @@ A two-week spike: implement `specstudio:plan` as a single skill folder under `sk
 
 ## Not Doing (and Why)
 
-- Automatic code generation from plan tasks — belongs in a future `build` skill, not `plan`.
+- Automatic code generation from plan tasks — belongs in a future `implement` skill, not `plan`.
 - Rehearse test-stub scaffolding — separate Idea; couples to an evolving format.
 - Dispatch of tasks to Synchestra runners or subagents — premature until plan format stabilizes and Hub matures.
 - Cross-Feature or roadmap-level planning — different problem, different Idea.
@@ -53,7 +53,7 @@ A two-week spike: implement `specstudio:plan` as a single skill folder under `sk
 |------|------------|-----------------|
 | Must-be-true | The Feature → Plan handoff is the actually-painful gap, and users want an opinionated plan format rather than free-form tasks. | Dogfood on one real Feature in this repo; ask two external early users to run `plan` on an approved Feature and compare to their current flow. |
 | Should-be-true | Ordered tasks mapped to AC IDs matches how engineers actually decompose SpecScore Features. | Review the first three plan artifacts; check whether every AC has at least one task and whether task order survived implementation unchanged. |
-| Might-be-true | A future `build` skill will consume plan tasks one-at-a-time, so plan ordering must be execution-ready, not just human-readable. | Defer validation until `build` is designed; design plan schema to allow it but don't optimize for it yet. |
+| Might-be-true | A future `implement` skill will consume plan tasks one-at-a-time, so plan ordering must be execution-ready, not just human-readable. | Defer validation until `implement` is designed; design plan schema to allow it but don't optimize for it yet. |
 
 ## SpecScore Integration
 
