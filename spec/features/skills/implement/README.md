@@ -529,6 +529,7 @@ The skill MUST NOT yes-machine weak Plans or silently retry blocked subagents. W
 ## Sidekick Seeds Generated
 
 - [specscore-plugin-should-expose-a-dedicated-skill-for](../../../ideas/seeds/specscore-plugin-should-expose-a-dedicated-skill-for.md) — captured 2026-05-19 by user
+- [implement-skill-checklist-missing-plan-body-status-transition](../../../ideas/seeds/implement-skill-checklist-missing-plan-body-status-transition.md) — captured 2026-05-19 by user
 
 ---
 *This document follows the https://specscore.md/feature-specification*
