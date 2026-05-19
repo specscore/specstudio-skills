@@ -1,6 +1,6 @@
 # Research
 
-> [View in SpecStudio](https://specstudio.synchestra.io/project/features?id=specstudio-skills@synchestra-io@github.com&path=spec%2Fresearch) — graph, discussions, approvals
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/p/github.com/synchestra-io/specstudio-skills/spec/research?op=explore) | [Edit](https://specscore.studio/app/p/github.com/synchestra-io/specstudio-skills/spec/research?op=edit) | [Ask question](https://specscore.studio/app/p/github.com/synchestra-io/specstudio-skills/spec/research?op=ask) | [Request change](https://specscore.studio/app/p/github.com/synchestra-io/specstudio-skills/spec/research?op=request-change) |
 
 Long-form research notes informing SpecStudio's design. These are not Features — they are comparative analyses, ecosystem surveys, and structured thinking that surface alternatives, prior art, and assumptions that later become Idea or Feature artifacts elsewhere in [`../`](../README.md).
 

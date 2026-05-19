@@ -1,6 +1,6 @@
 # Ideas
 
-> [View in SpecStudio](https://specstudio.synchestra.io/project/features?id=specstudio-skills@synchestra-io@github.com&path=spec%2Fideas) — graph, discussions, approvals
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/p/github.com/synchestra-io/specstudio-skills/spec/ideas?op=explore) | [Edit](https://specscore.studio/app/p/github.com/synchestra-io/specstudio-skills/spec/ideas?op=edit) | [Ask question](https://specscore.studio/app/p/github.com/synchestra-io/specstudio-skills/spec/ideas?op=ask) | [Request change](https://specscore.studio/app/p/github.com/synchestra-io/specstudio-skills/spec/ideas?op=request-change) |
 
 Pre-spec one-pagers for SpecStudio. Each Idea is the output of `specstudio:ideate` — a lint-clean problem-direction-MVP one-pager that may later promote into one or more SpecScore Features under [`../features/`](../features/README.md). The format is defined by [SpecScore Idea specification](https://specscore.md/idea-specification).
 

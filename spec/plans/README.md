@@ -1,6 +1,6 @@
 # SpecStudio Plans
 
-> [View in SpecStudio](https://specstudio.synchestra.io/project/plans?id=specstudio-skills@synchestra-io@github.com&path=spec%2Fplans) — graph, discussions, approvals
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/p/github.com/synchestra-io/specstudio-skills/spec/plans?op=explore) | [Edit](https://specscore.studio/app/p/github.com/synchestra-io/specstudio-skills/spec/plans?op=edit) | [Ask question](https://specscore.studio/app/p/github.com/synchestra-io/specstudio-skills/spec/plans?op=ask) | [Request change](https://specscore.studio/app/p/github.com/synchestra-io/specstudio-skills/spec/plans?op=request-change) |
 
 Implementation plans for Approved SpecScore Features. Each plan breaks a Feature's REQs and ACs into ordered, verifiable tasks that an engineer (human or agent) can execute task-by-task.
 

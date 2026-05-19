@@ -1,6 +1,6 @@
 # Competitors & Adjacent Tools
 
-> [View in SpecStudio](https://specstudio.synchestra.io/project/features?id=specstudio-skills@synchestra-io@github.com&path=spec%2Fresearch%2Fcompetitors) — graph, discussions, approvals
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/p/github.com/synchestra-io/specstudio-skills/spec/research/competitors?op=explore) | [Edit](https://specscore.studio/app/p/github.com/synchestra-io/specstudio-skills/spec/research/competitors?op=edit) | [Ask question](https://specscore.studio/app/p/github.com/synchestra-io/specstudio-skills/spec/research/competitors?op=ask) | [Request change](https://specscore.studio/app/p/github.com/synchestra-io/specstudio-skills/spec/research/competitors?op=request-change) |
 
 How **SpecStudio skills** (`specstudio:ideate`, `specstudio:specify`, …) sit alongside other tools in the Spec-Driven Development (SDD) and AI-engineering-discipline space.
 
