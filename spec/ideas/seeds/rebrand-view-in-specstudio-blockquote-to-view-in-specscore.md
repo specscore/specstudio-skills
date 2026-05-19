@@ -5,7 +5,7 @@ captured_at: 2026-05-18T21:30:00Z
 captured_by: specstudio:specify
 captured_during: spec/features/sidekick-consilium
 trigger: heuristic
-status: completed
+status: queued
 synchestra_task: null
 ---
 
