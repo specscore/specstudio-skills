@@ -13,28 +13,22 @@ synchestra_task: null
 
 ## Observed problem (dogfood finding #2)
 
-During the first end-to-end dogfood of `specstudio:implement` (against `spec/plans/dogfood-test.md`), the agent missed the Plan body-metadata `**Status:**` transition `Approved → Implementing` that should have fired on first-task dispatch (batch 1, task 1). The Plan body-metadata Status stayed `Approved` through batch 1's commit and was only transitioned to `Completed` in batch 2 — skipping `Implementing` entirely.
+First end-to-end dogfood of `specstudio:implement` (against `spec/plans/dogfood-test.md`): the agent missed the Plan body-metadata `**Status:** Approved → Implementing` transition that should fire on first-task dispatch. The Status stayed `Approved` through batch 1 and was only flipped to `Completed` in batch 2 — skipping `Implementing` entirely.
 
 ## Root cause
 
-`REQ:implement-status-transition` in `spec/features/skills/implement/README.md` specifies the transitions correctly:
-> Update the Plan's body-metadata `**Status:**` from `Approved → Implementing` on first task dispatch (if not already there), and from `Implementing → Completed` when the final task lands.
-
-But the operational checklist in `skills/implement/SKILL.md` step 4 says only:
-> "Stage Status writes. As each subagent is dispatched, transition that task's `**Status:** pending → in-progress` on the Plan file."
-
-The checklist mentions **task** Status writes but does NOT explicitly call out the **Plan body-metadata** Status transition as a discrete step. The contract is in the REQ but the where-in-the-flow operationalization is missing.
+`REQ:implement-status-transition` specifies both transitions correctly. But `skills/implement/SKILL.md` step 4 says only "Stage Status writes. As each subagent is dispatched, transition that task's `**Status:** pending → in-progress`." — it covers **task** Status writes but NOT the **Plan body-metadata** Status transition. The contract is in the REQ; the where-in-the-flow step is missing from the operational checklist.
 
 ## Suggested fix
 
 In `skills/implement/SKILL.md`:
 
-1. Split step 4 into 4a (task Status writes) and 4b (Plan body-metadata Status: `Approved → Implementing` if and only if this is the first task dispatch in the current invocation AND the Plan is currently at `Approved`).
-2. Add a new final-batch step after step 17 (loop back): "When all tasks reach `**Status:** done`, transition Plan body-metadata `**Status:** Implementing → Completed` and stage."
-3. Tighten `REQ:implement-status-transition` in `spec/features/skills/implement/README.md` to reference the specific checklist steps that own each transition.
+1. Split step 4 into 4a (task Status) and 4b (Plan body Status: `Approved → Implementing` iff first task dispatch AND Plan currently `Approved`).
+2. Add a final-batch step: "When all tasks reach `**Status:** done`, transition Plan body `**Status:** Implementing → Completed`."
+3. Tighten `REQ:implement-status-transition` to reference the checklist steps owning each transition.
 
 ## Why this matters
 
-The Plan body-metadata Status field is the at-a-glance signal for outside observers (Hub, future verify/review skills, humans browsing `spec/plans/`). Skipping intermediate states makes the Plan's history less debuggable and breaks the "every state-change is observable" discipline the rest of the SpecScore lifecycle maintains.
+Plan body Status is the at-a-glance signal for outside observers (Hub, future verify/review). Skipping intermediates makes history less debuggable.
 
-Captured during the dogfood of implement against `spec/plans/dogfood-test.md`; see commit messages `52c4a80` and `46612aa` for the missing and remedial transitions respectively.
+See commits `52c4a80` (missed) and `46612aa` (remedial).
