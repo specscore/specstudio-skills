@@ -530,6 +530,8 @@ The skill MUST NOT yes-machine weak Plans or silently retry blocked subagents. W
 
 - [specscore-plugin-should-expose-a-dedicated-skill-for](../../../ideas/seeds/specscore-plugin-should-expose-a-dedicated-skill-for.md) — captured 2026-05-19 by user
 - [implement-skill-checklist-missing-plan-body-status-transition](../../../ideas/seeds/implement-skill-checklist-missing-plan-body-status-transition.md) — captured 2026-05-19 by user
+- [implement-preflight-should-require-source-feature-in-git-h](../../../ideas/seeds/implement-preflight-should-require-source-feature-in-git-h.md) — captured 2026-05-19 by user
+- [implement-subagent-tdd-discipline-pointer-needs-adapter-clau](../../../ideas/seeds/implement-subagent-tdd-discipline-pointer-needs-adapter-clau.md) — captured 2026-05-19 by user
 
 ---
 *This document follows the https://specscore.md/feature-specification*
