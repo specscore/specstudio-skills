@@ -3,7 +3,7 @@
 > [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/p/github.com/synchestra-io/specstudio-skills/spec/features/skills/plan?op=explore) | [Edit](https://specscore.studio/app/p/github.com/synchestra-io/specstudio-skills/spec/features/skills/plan?op=edit) | [Ask question](https://specscore.studio/app/p/github.com/synchestra-io/specstudio-skills/spec/features/skills/plan?op=ask) | [Request change](https://specscore.studio/app/p/github.com/synchestra-io/specstudio-skills/spec/features/skills/plan?op=request-change) |
 
 **Status:** Approved
-**Source Ideas:** specstudio-plan-skill
+**Source Ideas:** specstudio-plan-skill, specstudio-implement-skill
 **Supersedes:** —
 
 ## Summary
@@ -11,6 +11,8 @@
 The `specstudio:plan` skill turns an approved SpecScore Feature into a lint-clean Plan artifact at `spec/plans/<slug>.md` — an ordered list of tasks, each mapped to one or more AC IDs from its source Feature. Its output is the gating input for `specstudio:implement`. Like `ideate` and `specify`, the skill hard-gates on lint-clean output, a reviewer-subagent verdict, and explicit user approval. Implementation will live at `skills/plan/` once approved.
 
 **Provenance.** This skill mirrors the shape of `specstudio:specify`: same `<HARD-GATE>` pattern, same body-metadata schema, same lint → reviewer → user gate sequence, same CLI-preferred / fallback-direct-write contract, same auto-stage-on-create discipline. What is *new* in `plan` is the AC-coverage contract — every acceptance criterion in the source Feature must be covered by at least one task, or explicitly deferred with a reason.
+
+**Revision history.** This Feature was revised in-place to support `specstudio:implement` per the [`specstudio-implement-skill`](../../../ideas/specstudio-implement-skill.md) Idea. The revision is **additive in every direction** — existing approved Plans (without any of the new fields described below) continue to lint and run unchanged. The seven additions: (a) `**Depends-On:**` task field for dependency graphs, (b) `**Status:**` task field for per-task progress, (c) `**Mode:** <full|stub>` Plan body-metadata for plan posture, (d) placeholder-body permission for stub-mode tasks, (e) softened `REQ:linear-presentation-numbering` (linear numbering as presentation only; execution order follows the dependency graph), (f) lint rule `P-003` for cycle detection, (g) lint rule `P-004` preventing placeholder bodies in stub Plans for `done`-status tasks. Reviewer-baseline blocker categories extended to cover the new fields.
 
 ## Problem
 
@@ -74,7 +76,9 @@ The Plan artifact conforms to a canonical schema: title-prefix dispatch key, bol
 
 #### REQ: plan-schema-conformance
 
-The Plan `.md` MUST follow the SpecScore Plan template: `# Plan: <Title>` heading, body metadata (`**Status:**`, `**Source Feature:**`, `**Date:**`, `**Owner:**`, `**Supersedes:**`) immediately after, `## Summary` (1–3 sentences), `## Approach` (≤1 paragraph on decomposition strategy), `## Tasks` (with `### Task N: <name>` blocks), optional `## Deferred AC Coverage`, `## Outstanding Questions`, and the adherence footer.
+The Plan `.md` MUST follow the SpecScore Plan template: `# Plan: <Title>` heading, body metadata (`**Status:**`, `**Source Feature:**`, `**Date:**`, `**Owner:**`, `**Supersedes:**`, `**Mode:**`) immediately after, `## Summary` (1–3 sentences), `## Approach` (≤1 paragraph on decomposition strategy), `## Tasks` (with `### Task N: <name>` blocks), optional `## Deferred AC Coverage`, `## Outstanding Questions`, and the adherence footer.
+
+The `**Mode:**` body-metadata line MAY be absent in pre-existing Plans authored before this revision; absence means `frozen` semantics (treated as `**Mode:** full`). New Plans SHOULD declare `**Mode:**` explicitly.
 
 #### REQ: plan-status-domain
 
@@ -89,13 +93,17 @@ The Plan `.md` MUST declare its source via a `**Source Feature:** <feature-slug>
 Each task MUST be a `### Task N: <task-name>` sub-heading inside `## Tasks`, numbered linearly starting from 1. Each task block MUST contain:
 
 1. A `**Verifies:** <feature-slug>#ac:<ac-slug>, <feature-slug>#ac:<ac-slug>, …` line listing one or more AC IDs from the source Feature.
-2. A 1–3 sentence prose description of what the task does.
+2. A `**Status:** <pending|in-progress|done|blocked>` line. Default is `pending`. Absent on pre-existing Plans authored before this revision; absence is treated as `pending`. See `REQ:task-status-field` for write semantics.
+3. A `**Depends-On:** —` (or `**Depends-On:** <task-number>, <task-number>, …`) line declaring predecessor tasks by their task numbers. Default `—` (no dependencies). Absent on pre-existing Plans; absence is treated as `—`. See `REQ:depends-on-field`.
+4. A 1–3 sentence prose description of what the task does, **OR** — when the Plan's `**Mode:** stub` — a single placeholder marker (token TBD, see Outstanding Questions). See `REQ:posture-stub-placeholder`.
 
-Tasks MAY include additional optional fields (e.g., `**Notes:**`) but the two fields above are required.
+Tasks MAY include additional optional fields (e.g., `**Notes:**`) but the four above are required.
 
-#### REQ: linear-order-only
+#### REQ: linear-presentation-numbering
 
-In the MVP, tasks MUST be in strict linear order — numbered 1..N with no gaps, no parallel branches, no DAG-style dependencies. Partial-order or DAG-style planning is a future Idea and explicitly out of scope for the MVP. If the user requests DAG-style ordering, the skill MUST say so and offer either (a) linearize the DAG into a best-effort order, or (b) defer until a future plan-schema revision.
+Tasks MUST be numbered linearly 1..N with no gaps. **The numbering is presentation order only** — it determines the order in which tasks appear in the rendered Plan, but **not** the order in which `specstudio:implement` executes them. Execution order is determined by the dependency graph declared via `**Depends-On:**` (see `REQ:depends-on-field` and `REQ:dependency-driven-execution`).
+
+When every task has `**Depends-On:** —` and every task's numbering is interpreted as an implicit dependency on its predecessor (i.e., task N depends on task N-1), the Plan degrades to the original strict-linear semantics — this is the default behavior of pre-existing Plans authored before this revision and is preserved for backward compatibility. New Plans SHOULD declare `**Depends-On:**` explicitly on every task.
 
 ### Source Feature linkage and AC coverage
 
@@ -132,6 +140,66 @@ The MVP plans against one Feature at a time.
 #### REQ: single-feature-per-plan
 
 A Plan MUST reference exactly one source Feature via `**Source Feature:**`. Multi-Feature or roadmap-level planning is explicitly out of scope for the MVP and is a separate Idea. If the user asks to plan across two Features, the skill MUST say so and offer to write two Plans instead.
+
+### Task dependencies and execution order
+
+The dependency graph encoded by `**Depends-On:**` is what enables parallel-batch execution by `specstudio:implement` while keeping the task-numbering stable as the human-readable presentation order.
+
+#### REQ: depends-on-field
+
+Each task in a Plan MUST declare a `**Depends-On:**` body field. The value is either `—` (no predecessors, eligible for execution as soon as the user approves the Plan) or a comma-separated list of predecessor task numbers (e.g., `**Depends-On:** 1, 3`). Predecessor numbers MUST resolve to actual task numbers in the same Plan; references to nonexistent task numbers are a lint violation. Self-references (a task depending on itself) are a lint violation.
+
+#### REQ: dependency-driven-execution
+
+`specstudio:implement` MUST compute the execution order from the dependency graph, not from the task numbering. A task is eligible for execution when all its declared predecessors (per `**Depends-On:**`) are in `**Status:** done`. Tasks with no unsatisfied predecessors may execute in parallel (subject to `specstudio:implement`'s own max-parallel cap; that cap is owned by the implement skill, not by `plan`).
+
+#### REQ: cycle-detection-lint
+
+The Plan dependency graph MUST be acyclic. Cycles (e.g., task 1 depends on task 2, task 2 depends on task 1) are detected by lint rule `P-003`. The lint MUST surface the full cycle path (e.g., "Task 1 → Task 3 → Task 2 → Task 1") so the user can fix it. `P-003` is a hard rule, not advisory.
+
+### Plan posture: full vs stub
+
+Each Plan declares a posture that controls whether task bodies are authored at plan time or journaled at implement time.
+
+#### REQ: plan-mode-field
+
+A Plan MAY declare its posture via a `**Mode:** <full|stub>` body-metadata line in the Plan header. Permitted values: `full`, `stub`. Default when absent: `full` (backward-compatible with pre-existing Plans). The skill MUST set `**Mode:**` explicitly on all new Plans.
+
+#### REQ: posture-full-default
+
+In `full` posture (the default), each task body MUST be a 1–3 sentence prose description of what the task does, authored at plan time and locked before the Plan is approved. Task bodies in `full` Plans are NOT written back by `specstudio:implement`; only `**Status:**` is updated as tasks progress.
+
+#### REQ: posture-stub-placeholder
+
+In `stub` posture, each task body MAY be a single placeholder marker (token TBD — see Outstanding Questions) instead of a prose description. `specstudio:implement` writes back the actual prose description (1–2 sentence post-hoc summary referencing the commit SHA) after the task lands. Stub-mode Plans approve with placeholder bodies; their bodies become canonical only post-implement.
+
+#### REQ: posture-one-way
+
+Once a Plan is declared `**Mode:** stub` or `**Mode:** full`, the posture is fixed for the Plan's lifetime. The skill MUST NOT support mid-flight posture re-classification (no `--switch-mode` flag, no automatic switching). A user who needs the other posture for an in-flight Plan MUST create a successor Plan with `**Supersedes:**` set.
+
+#### REQ: posture-no-auto-classification
+
+The skill MUST NOT auto-classify Plans as `full` or `stub` based on AC count, task count, LLM judgement, or any other heuristic. Posture is **user-declared explicitly** at `plan` time. Auditability beats convenience. (External skills such as consilium MAY *recommend* a posture; the user MUST confirm.)
+
+### Per-task status tracking
+
+Status is the at-a-glance progress signal in the rendered Plan; the authoritative progress source is the git log's `Verifies:` trailer (parsed and cross-checked on every `specstudio:implement` invocation).
+
+#### REQ: task-status-field
+
+Each task MUST have a `**Status:**` body-metadata field with one of: `pending`, `in-progress`, `done`, `blocked`. Default value: `pending`. The field MAY be absent on pre-existing Plans authored before this revision; absence is treated as `pending` and the skill SHOULD add the field on the next revise-in-place opportunity.
+
+#### REQ: task-status-write-authority
+
+`specstudio:implement` is the canonical writer of `**Status:**`. It writes `pending → in-progress` on subagent dispatch, `in-progress → done` on subagent DONE return, and `→ blocked` on subagent BLOCKED return. The user MAY manually edit `**Status:**` (e.g., to reset a task from `blocked` back to `pending` after fixing the blocker); `specstudio:implement` MUST detect manual edits on the next invocation and cross-check them against the git-log `Verifies:` trailer authority. The **divergence-resolution policy** (what `implement` does when the Plan's `**Status:**` and the git-log evidence disagree — surface as warning, refuse to proceed, auto-overwrite, etc.) is owned by the `implement` Feature, not this one; the reviewer-blocker category at item 10 of `REQ:reviewer-baseline-blockers` enforces that any such divergence is at least surfaced.
+
+#### REQ: status-applies-to-both-postures
+
+Per-task `**Status:**` writes apply to **both** `full` and `stub` Plans. The body-writeback exclusion in `posture-full-default` is specifically about *task bodies*, not about status. Status updates are not body edits.
+
+#### REQ: stub-placeholder-done-lint
+
+A task whose `**Status:** done` MUST NOT have a placeholder body — its body MUST be the prose summary written by `specstudio:implement` post-batch. This is enforced by lint rule `P-004`: a placeholder body on a `done`-status task in a `stub` Plan is a lint violation. The lint MUST cite the offending task number and reference both the placeholder rule and the writeback contract.
 
 ### CLI vs fallback path
 
@@ -182,12 +250,16 @@ The built-in reviewer MUST treat the following finding categories as **blocker-s
 
 1. **AC coverage gap.** An AC in the source Feature appears neither in a task's `**Verifies:**` nor in `## Deferred AC Coverage`.
 2. **Stale AC reference.** A task references an AC ID that does not exist in the current source Feature.
-3. **Order violates dependency.** A task is ordered before another task whose `**Verifies:**` ACs it depends on (the dependency is inferable from the source Feature's REQs or from the prose description). A finding in this category MUST cite the specific REQ slug or prose passage that establishes the dependency, so the user can verify the inference; uncited dependency claims are not actionable and MUST NOT be raised as blockers.
+3. **Missing or wrong dependency declaration.** Two sub-cases: (a) a task's prose description implies a dependency on another task (e.g., "uses the output of task N") but its `**Depends-On:**` field doesn't declare it; (b) a task's `**Depends-On:**` declares a predecessor whose `**Verifies:**` ACs are unrelated to the dependent task's work (a spurious dependency that would serialize execution unnecessarily). A finding in this category MUST cite the specific REQ slug or prose passage that establishes (or contradicts) the dependency, so the user can verify the inference; uncited dependency claims are not actionable and MUST NOT be raised as blockers.
 4. **Task is an AC wrapper.** A task's description and `**Verifies:**` line restate a single AC's `Then` clause with no implementation work beyond it.
 5. **Hidden multi-Feature scope.** A task description references work in a Feature other than the declared `**Source Feature:**`.
 6. **Defer-reason vague.** A `## Deferred AC Coverage` entry has a reason that does not specify why or when the AC will be addressed (e.g., "later", "TBD", "out of scope" with no follow-up reference).
+7. **Cycle in the dependency graph.** Tasks form a cycle via their `**Depends-On:**` references. Lint rule `P-003` catches syntactic cycles; the reviewer additionally flags *semantic* cycles inferable from task descriptions (e.g., task A's description says "needs the output of task B" but `**Depends-On:**` doesn't declare it, and task B's description says the inverse). Finding MUST cite the inferred cycle path.
+8. **Stale Depends-On task number.** A `**Depends-On:**` field references a task number that does not exist in the current Plan (e.g., the user renumbered tasks but left a stale dependency). Lint rule `P-003`'s validity check catches dangling references; the reviewer additionally flags this if a Plan-author note describes a dependency on a renamed/renumbered task.
+9. **Posture-inconsistent placeholder body.** A task body is a placeholder marker in a `**Mode:** full` Plan, or a `done`-status task has a placeholder body in a `**Mode:** stub` Plan. Lint rule `P-004` covers the latter; the reviewer flags the former.
+10. **Status inconsistent with git-log Verifies cross-check.** A task with `**Status:** done` whose `**Verifies:**` ACs do not appear in any commit's `Verifies:` trailer in the repo's git log — or, conversely, a task with `**Status:** pending` whose ACs DO appear in a `Verifies:` trailer. Finding MUST cite the specific commit (or commit-absence) and AC slug, so the user can reconcile manually or rerun `specstudio:implement` to refresh the Status field.
 
-Findings outside these six categories MAY be returned as `Advisory` severity. Future expansions happen via Proposal once the Feature is `Stable`.
+Findings outside these ten categories MAY be returned as `Advisory` severity. Future expansions happen via Proposal once the Feature is `Stable`.
 
 #### REQ: reviewer-extension-hook
 
@@ -288,7 +360,7 @@ The skill MUST NOT yes-machine weak Plans. When a task is too vague, an AC is un
 **When** the user invokes `specstudio:plan` against it,
 **Then** the skill refuses to proceed, explains that the Feature must be approved via `specstudio:specify` first, and exits without writing any Plan file.
 
-### AC: artifact-conformance (verifies REQ:artifact-path, REQ:plan-slug-derivation, REQ:no-docs-path, REQ:auto-create-plans-dir, REQ:auto-stage-on-create, REQ:plan-schema-conformance, REQ:task-format, REQ:linear-order-only)
+### AC: artifact-conformance (verifies REQ:artifact-path, REQ:plan-slug-derivation, REQ:no-docs-path, REQ:auto-create-plans-dir, REQ:auto-stage-on-create, REQ:plan-schema-conformance, REQ:task-format, REQ:linear-presentation-numbering)
 
 **Given** an approved Feature with three ACs and no existing `spec/plans/` directory,
 **When** the user invokes `specstudio:plan` and the skill completes a writing pass,
@@ -324,11 +396,11 @@ The skill MUST NOT yes-machine weak Plans. When a task is too vague, an AC is un
 **When** the reviewer subagent runs,
 **Then** the reviewer returns `Issues Found` with a blocker-severity finding for each vague defer-reason, and the User Review Gate does not release.
 
-### AC: linear-order-only (verifies REQ:linear-order-only)
+### AC: linear-presentation-numbering (verifies REQ:linear-presentation-numbering)
 
-**Given** a user asking for a DAG-style plan with parallel branches,
+**Given** a user asking for non-linear *task numbering* in the rendered Plan (e.g., gapped numbers like 1, 3, 5; sub-task notation like 1a/1b; side-by-side parallel-column layout),
 **When** the skill processes the request,
-**Then** the skill declines to write a DAG-shaped Plan, explains that linear-only is the MVP contract, and offers either a linearized best-effort ordering or to defer until a future plan-schema revision — and only proceeds with the user's choice.
+**Then** the skill declines, explains that task numbering is linear-1..N for presentation only (with parallel *execution* expressed via `**Depends-On:**` annotations on linearly-numbered tasks), and either rewrites the request as a numbered list with explicit `**Depends-On:**` or stops for user clarification.
 
 ### AC: single-feature-per-plan (verifies REQ:single-feature-per-plan)
 
@@ -380,11 +452,78 @@ The skill MUST NOT yes-machine weak Plans. When a task is too vague, an AC is un
 **When** the skill processes the request,
 **Then** the skill names the specific problem, proposes the alternative, and does not write the requested Plan until the user resolves the issue.
 
+### AC: depends-on-graph (verifies REQ:depends-on-field, REQ:dependency-driven-execution, REQ:linear-presentation-numbering)
+
+**Given** a Plan with five tasks numbered 1..5 where `**Depends-On:**` declares task 3 → task 1 and tasks 4, 5 → task 2 (tasks 1 and 2 have `**Depends-On:** —`),
+**When** `specstudio:implement` computes the execution order,
+**Then** tasks 1 and 2 are eligible in batch 1 (no predecessors), task 3 is eligible in batch 2 (after task 1 done), tasks 4 and 5 are eligible in batch 2 (after task 2 done). The task numbering (1..5) determines presentation in the rendered Plan only — not execution order.
+
+### AC: cycle-detected (verifies REQ:cycle-detection-lint, REQ:reviewer-baseline-blockers)
+
+**Given** a Plan where task 1 declares `**Depends-On:** 3` and task 3 declares `**Depends-On:** 1`,
+**When** the skill runs lint,
+**Then** lint rule `P-003` fails with a finding that cites the full cycle path ("Task 1 → Task 3 → Task 1") and the user is shown a non-empty exit with no Plan write/approval permitted.
+
+### AC: stale-depends-on (verifies REQ:depends-on-field, REQ:reviewer-baseline-blockers)
+
+**Given** a Plan with four tasks numbered 1..4 where task 3 declares `**Depends-On:** 7` (task 7 does not exist),
+**When** the skill runs lint,
+**Then** lint fails citing the stale reference, names task 3 and the dangling number 7, and suggests the closest valid alternative (highest task number in the Plan).
+
+### AC: posture-default-and-explicit (verifies REQ:plan-mode-field, REQ:posture-full-default)
+
+**Given** two new Plans — one declaring `**Mode:** full` explicitly, one omitting `**Mode:**` entirely,
+**When** the skill writes both,
+**Then** both Plans behave identically (treated as `full` posture). The skill MUST set `**Mode:**` explicitly on new Plans but MUST accept Plans without the field as `full` for backward compatibility with pre-existing approved Plans.
+
+### AC: stub-posture-placeholder-body (verifies REQ:posture-stub-placeholder, REQ:task-format)
+
+**Given** a Plan with `**Mode:** stub` and three tasks whose bodies are the agreed placeholder marker,
+**When** the skill runs lint,
+**Then** lint passes — placeholder bodies are explicitly permitted in stub-mode Plans for tasks whose `**Status:**` is not `done`.
+
+### AC: stub-placeholder-blocked-when-done (verifies REQ:stub-placeholder-done-lint, REQ:reviewer-baseline-blockers)
+
+**Given** a Plan with `**Mode:** stub`, three tasks, and task 2 has `**Status:** done` but its body is still a placeholder marker,
+**When** the skill runs lint,
+**Then** lint rule `P-004` fails, cites task 2 with both the placeholder rule and the writeback contract reference, and the user is told to either re-run `specstudio:implement` to write back the prose summary or revert the Status to `pending`.
+
+### AC: posture-no-mid-flight-switch (verifies REQ:posture-one-way, REQ:revise-vs-supersede)
+
+**Given** an approved Plan with `**Mode:** stub`,
+**When** the user asks to switch the Plan to `**Mode:** full` mid-implementation,
+**Then** the skill refuses the in-place switch, explains the one-way constraint, and offers two paths: (a) create a successor Plan with `**Supersedes:** <slug>` and `**Mode:** full`, or (b) keep the current Plan and proceed as-is.
+
+### AC: posture-explicit-declaration (verifies REQ:posture-no-auto-classification)
+
+**Given** a Plan with eight ACs (the kind of size that might tempt auto-classification as `full`) or one with one AC (the kind that might be auto-classified as `stub`),
+**When** the user invokes `plan` without declaring `**Mode:**`,
+**Then** the skill MUST NOT pick a posture silently — it MUST either default to `full` (current backward-compatible behavior) or explicitly ask the user to declare. The skill MUST NOT use AC count, task count, LLM judgement, or any other heuristic to auto-select posture.
+
+### AC: task-status-default-and-writes (verifies REQ:task-status-field, REQ:task-status-write-authority, REQ:status-applies-to-both-postures)
+
+**Given** a new Plan with four tasks, all with default `**Status:** pending`,
+**When** `specstudio:implement` dispatches task 1's subagent,
+**Then** task 1's `**Status:**` transitions `pending → in-progress`; when the subagent returns DONE, `**Status:**` transitions to `done`. The same transitions apply identically in both `**Mode:** full` and `**Mode:** stub` Plans.
+
+### AC: status-cross-check (verifies REQ:task-status-write-authority, REQ:reviewer-baseline-blockers)
+
+**Given** a Plan with task 2 marked `**Status:** done` whose `**Verifies:**` ACs do not appear in any commit's `Verifies:` trailer in the git log,
+**When** the reviewer subagent runs,
+**Then** the reviewer returns `Issues Found` with a blocker citing the inconsistency between Plan-stated Status and git-log authority, names the specific AC slug, and tells the user to either rerun `specstudio:implement` to refresh the Status or investigate why the commit is missing.
+
 ## Outstanding Questions
 
-- **Plan-specific lint rule numbering.** This Feature reserves `P-001` (AC coverage gap) and `P-002` (stale AC reference). The full rule list, including auto-fixable flags and severity, should live in the SpecScore lint rule registry — to be drafted as a separate Feature on the SpecScore side before the `plan` skill ships.
+- **Plan-specific lint rule numbering.** This Feature reserves `P-001` (AC coverage gap), `P-002` (stale AC reference), `P-003` (Depends-On cycle / dangling / self-reference), and `P-004` (placeholder body on done-status task in stub Plan). The full rule list, including auto-fixable flags and severity, should live in the SpecScore lint rule registry — to be drafted as a separate Feature on the SpecScore side before the `plan` skill revision ships. **Cross-repo dependency:** all four rules and the parser extensions (`**Mode:**`, `**Status:**`, `**Depends-On:**`, placeholder-body token recognition) must land in [`specscore-cli`](https://github.com/specscore/specscore-cli) before this revision can ship. Tracked in sidekick seed [`specscore-cli-companion-implement-plan-feature-lint-rules`](../../../ideas/seeds/specscore-cli-companion-implement-plan-feature-lint-rules.md).
 - **Rehearse integration.** The MVP explicitly omits Rehearse stub scaffolding (deferred per the source Idea). Once Rehearse's markdown format stabilizes, a follow-on Feature should specify how a `**Verifies:**` AC ID links to its Rehearse scenario file under the source Feature's `_tests/` directory.
-- **DAG / partial-order plans.** Linear-only is the MVP. The follow-on Idea for DAG planning should specify the schema change (`**Depends-On:**` per task), the lint implications (cycle detection, topological reachability), and the migration path for existing linear Plans.
+- **Placeholder body token for stub Plans.** Candidates (from the implement Idea's Outstanding Questions): `<!-- implement: pending -->` (HTML comment, invisible in rendered markdown, machine-friendly), `**Implementation:** _pending_` (visible, scannable in a rendered Plan), or `_to be journaled by `implement`_` (visible, self-documenting). Visibility-vs-noise tradeoff; spec-time decision before either skill ships. Resolution must be coordinated with the `specscore` CLI parser change (see Cross-repo dependency above).
+- **CLI flag for posture declaration.** Should `specstudio:plan` accept a `--mode=full|stub` flag in addition to body-metadata declaration? Recommendation: yes (CLI flag writes the metadata line); if both differ on revise-in-place, the file wins. Confirm at implementation time.
+- **`plan.updated` payload in stub mode.** When `specstudio:implement` writes back task bodies in stub Plans, the `plan.updated` event MUST list affected task slugs in `changed_sections`. Discipline confirmed at the Idea level; the exact payload shape lands during implement-skill spec work.
+- **Status-vs-git-log reconciliation on first invocation of `specstudio:implement` against a pre-existing Plan.** If a Plan was approved before this revision (no Status fields), and the user runs `specstudio:implement` against it, how does the skill initialize Status fields without misreading the git log? Recommendation: scan git log for `Verifies:` trailers referencing any of the Plan's ACs and set Status to `done` for matched tasks; leave the rest `pending`. Spec-time work for the implement Feature.
+
+## Sidekick Seeds Generated
+
+- [specscore-cli-companion-implement-plan-feature-lint-rules](../../../ideas/seeds/specscore-cli-companion-implement-plan-feature-lint-rules.md) — captured 2026-05-19 by specstudio:specify
 
 ---
 *This document follows the https://specscore.md/feature-specification*
