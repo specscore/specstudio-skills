@@ -11,7 +11,7 @@ flowchart LR
     init([init]):::shipped -.bootstrap.-> ideate
     intent([clear intent]):::input
     intent --> specify
-    ideate([ideate]):::shipped --> specify([specify]):::shipped --> plan([plan]):::defined --> build([build]):::roadmap --> verify([verify]):::roadmap --> recap([recap]):::roadmap --> review([review]):::roadmap --> ship([ship]):::roadmap
+    ideate([ideate]):::shipped --> specify([specify]):::shipped --> plan([plan]):::shipped --> build([build]):::roadmap --> verify([verify]):::roadmap --> recap([recap]):::roadmap --> review([review]):::roadmap --> ship([ship]):::roadmap
 
     classDef shipped fill:#d4f4dd,stroke:#2d7a3e,color:#1a3d1f
     classDef defined fill:#fff4cc,stroke:#a07a00,color:#3d3000
@@ -28,7 +28,7 @@ Each in-line phase consumes the previous phase's lint-clean artifact and gates t
 | [`init`](./init/SKILL.md) | Shipped | Bootstrap a SpecScore-managed project: `specscore.yaml`, `spec/` tree, instruction snippet, orchestration setup. One-time-per-project. |
 | [`ideate`](./ideate/SKILL.md) | Shipped | Refine raw ideas into lint-clean SpecScore Idea artifacts. |
 | [`specify`](./specify/SKILL.md) | Shipped | Turn an approved Idea into a lint-clean SpecScore Feature with G/W/T acceptance criteria. |
-| [`plan`](../spec/ideas/specstudio-plan-skill.md) | Defined | Turn an approved Feature into an ordered, AC-mapped Plan artifact. |
+| [`plan`](./plan/SKILL.md) | Shipped | Turn an approved Feature into an ordered, AC-mapped Plan artifact at `spec/plans/<slug>.md`. |
 | `build` | Roadmap | Implement Plan tasks one at a time, gated on AC coverage. |
 | `verify` | Roadmap | Run Rehearse tests against acceptance criteria; report coverage. |
 | `recap` | Roadmap | Summarize what was built against what was specified; surface drift. |
@@ -73,15 +73,14 @@ Turns an approved Idea (or a clear buildable intent) into a SpecScore Feature wi
 - **Gate:** No code, plans, or scaffolding until the Feature is lint-clean and user-approved.
 - **Source:** [`specify/SKILL.md`](./specify/SKILL.md)
 
-### `plan` — Defined
+### `plan` — Shipped
 
-Turns an approved Feature into an ordered set of tasks where each task references one or more AC IDs from its source Feature. Closes the gap where users today fall back to SpecScore-blind planning skills.
+Turns an approved Feature into a single-file Plan at `spec/plans/<slug>.md` — an ordered, AC-mapped task list. Closes the gap where users previously fell back to SpecScore-blind planning skills.
 
-- **Planned output:** lint-clean `spec/plans/<slug>.md` of ordered, AC-mapped tasks.
-- **Planned gate:** mirrors `ideate` and `specify` — lint-clean output and user approval before any `build` or implementation skill can run.
-- **Status:** Idea approved 2026-04-20. Not yet promoted to a Feature.
-- **Idea:** [`spec/ideas/specstudio-plan-skill.md`](../spec/ideas/specstudio-plan-skill.md)
-- **Next step:** run `specstudio:specify` on the Idea to produce a Feature, then implement.
+- **Output:** lint-clean `spec/plans/<slug>.md` with tasks numbered 1..N, each bound to ≥1 AC ID from the source Feature.
+- **Triggers:** `plan`, `/plan`, `specstudio:plan`, "plan this feature", or the `feature.approved` Synchestra event.
+- **Gate:** AC coverage (every AC covered or explicitly deferred, lint rule `P-001`), lint, baseline reviewer + any third-party reviewers (AND composition), user approval. No transition to `specstudio:build` until all five hold.
+- **Source:** [`plan/SKILL.md`](./plan/SKILL.md)
 
 ### `build` — Roadmap
 
