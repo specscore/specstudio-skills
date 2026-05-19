@@ -95,7 +95,7 @@ Each task MUST be a `### Task N: <task-name>` sub-heading inside `## Tasks`, num
 1. A `**Verifies:** <feature-slug>#ac:<ac-slug>, <feature-slug>#ac:<ac-slug>, …` line listing one or more AC IDs from the source Feature.
 2. A `**Status:** <pending|in-progress|done|blocked>` line. Default is `pending`. Absent on pre-existing Plans authored before this revision; absence is treated as `pending`. See `REQ:task-status-field` for write semantics.
 3. A `**Depends-On:** —` (or `**Depends-On:** <task-number>, <task-number>, …`) line declaring predecessor tasks by their task numbers. Default `—` (no dependencies). Absent on pre-existing Plans; absence is treated as `—`. See `REQ:depends-on-field`.
-4. A 1–3 sentence prose description of what the task does, **OR** — when the Plan's `**Mode:** stub` — a single placeholder marker (token TBD, see Outstanding Questions). See `REQ:posture-stub-placeholder`.
+4. A 1–3 sentence prose description of what the task does, **OR** — when the Plan's `**Mode:** stub` — the canonical placeholder marker `<!-- implement: pending -->` (HTML comment, invisible in rendered markdown, byte-exact parseable). See `REQ:posture-stub-placeholder`.
 
 Tasks MAY include additional optional fields (e.g., `**Notes:**`) but the four above are required.
 
@@ -171,7 +171,7 @@ In `full` posture (the default), each task body MUST be a 1–3 sentence prose d
 
 #### REQ: posture-stub-placeholder
 
-In `stub` posture, each task body MAY be a single placeholder marker (token TBD — see Outstanding Questions) instead of a prose description. `specstudio:implement` writes back the actual prose description (1–2 sentence post-hoc summary referencing the commit SHA) after the task lands. Stub-mode Plans approve with placeholder bodies; their bodies become canonical only post-implement.
+In `stub` posture, each task body MAY be the canonical placeholder marker `<!-- implement: pending -->` (HTML comment, invisible in rendered markdown, byte-exact parseable by `specscore` and `specstudio:implement`) instead of a prose description. `specstudio:implement` writes back the actual prose description (1–2 sentence post-hoc summary referencing the commit SHA) after the task lands. Stub-mode Plans approve with placeholder bodies; their bodies become canonical only post-implement.
 
 #### REQ: posture-one-way
 
@@ -478,7 +478,7 @@ The skill MUST NOT yes-machine weak Plans. When a task is too vague, an AC is un
 
 ### AC: stub-posture-placeholder-body (verifies REQ:posture-stub-placeholder, REQ:task-format)
 
-**Given** a Plan with `**Mode:** stub` and three tasks whose bodies are the agreed placeholder marker,
+**Given** a Plan with `**Mode:** stub` and three tasks whose bodies are the canonical placeholder marker `<!-- implement: pending -->`,
 **When** the skill runs lint,
 **Then** lint passes — placeholder bodies are explicitly permitted in stub-mode Plans for tasks whose `**Status:**` is not `done`.
 
@@ -514,9 +514,9 @@ The skill MUST NOT yes-machine weak Plans. When a task is too vague, an AC is un
 
 ## Outstanding Questions
 
-- **Plan-specific lint rule numbering.** This Feature reserves `P-001` (AC coverage gap), `P-002` (stale AC reference), `P-003` (Depends-On cycle / dangling / self-reference), and `P-004` (placeholder body on done-status task in stub Plan). The full rule list, including auto-fixable flags and severity, should live in the SpecScore lint rule registry — to be drafted as a separate Feature on the SpecScore side before the `plan` skill revision ships. **Cross-repo dependency:** all four rules and the parser extensions (`**Mode:**`, `**Status:**`, `**Depends-On:**`, placeholder-body token recognition) must land in [`specscore-cli`](https://github.com/specscore/specscore-cli) before this revision can ship. Tracked in sidekick seed [`specscore-cli-companion-implement-plan-feature-lint-rules`](../../../ideas/seeds/specscore-cli-companion-implement-plan-feature-lint-rules.md).
+- **Plan-specific lint rule registry.** This Feature reserves `P-001` (AC coverage gap), `P-002` (stale AC reference), `P-003` (Depends-On cycle / dangling reference / self-reference / non-linear numbering), and `P-004` (placeholder body on done-status task in stub Plan + invalid `**Mode:**`/`**Status:**` token values). **Cross-repo dependency resolved:** all four rules and the parser extensions (`**Mode:**`, `**Status:**`, `**Depends-On:**`, the canonical placeholder body token) are shipped on [`specscore-cli@main`](https://github.com/specscore/specscore-cli) under Feature `cli/spec/lint/plan-rules` (unreleased at commit 76b6b29 as of 2026-05-19; early adopters install from source via `go install`). Tracked-and-completed in sidekick seed [`specscore-cli-companion-implement-plan-feature-lint-rules`](../../../ideas/seeds/specscore-cli-companion-implement-plan-feature-lint-rules.md).
 - **Rehearse integration.** The MVP explicitly omits Rehearse stub scaffolding (deferred per the source Idea). Once Rehearse's markdown format stabilizes, a follow-on Feature should specify how a `**Verifies:**` AC ID links to its Rehearse scenario file under the source Feature's `_tests/` directory.
-- **Placeholder body token for stub Plans.** Candidates (from the implement Idea's Outstanding Questions): `<!-- implement: pending -->` (HTML comment, invisible in rendered markdown, machine-friendly), `**Implementation:** _pending_` (visible, scannable in a rendered Plan), or `_to be journaled by `implement`_` (visible, self-documenting). Visibility-vs-noise tradeoff; spec-time decision before either skill ships. Resolution must be coordinated with the `specscore` CLI parser change (see Cross-repo dependency above).
+- ~~**Placeholder body token for stub Plans.**~~ **Resolved 2026-05-19.** The canonical placeholder body token is **`<!-- implement: pending -->`** — HTML comment, invisible in rendered markdown, byte-exact parseable. Chosen over the visible alternatives (`**Implementation:** _pending_`, `_to be journaled by `implement`_`) for zero visual noise in the rendered Plan (stub Plans are primarily seen *through* `implement`, not directly read by humans). Encoded in the `specscore-cli@main` parser and lint rules.
 - **CLI flag for posture declaration.** Should `specstudio:plan` accept a `--mode=full|stub` flag in addition to body-metadata declaration? Recommendation: yes (CLI flag writes the metadata line); if both differ on revise-in-place, the file wins. Confirm at implementation time.
 - **`plan.updated` payload in stub mode.** When `specstudio:implement` writes back task bodies in stub Plans, the `plan.updated` event MUST list affected task slugs in `changed_sections`. Discipline confirmed at the Idea level; the exact payload shape lands during implement-skill spec work.
 - **Status-vs-git-log reconciliation on first invocation of `specstudio:implement` against a pre-existing Plan.** If a Plan was approved before this revision (no Status fields), and the user runs `specstudio:implement` against it, how does the skill initialize Status fields without misreading the git log? Recommendation: scan git log for `Verifies:` trailers referencing any of the Plan's ACs and set Status to `done` for matched tasks; leave the rest `pending`. Spec-time work for the implement Feature.
