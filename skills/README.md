@@ -11,7 +11,7 @@ flowchart LR
     init([init]):::shipped -.bootstrap.-> ideate
     intent([clear intent]):::input
     intent --> specify
-    ideate([ideate]):::shipped --> specify([specify]):::shipped --> plan([plan]):::shipped --> implement([implement]):::roadmap --> verify([verify]):::roadmap --> recap([recap]):::roadmap --> review([review]):::roadmap --> ship([ship]):::roadmap
+    ideate([ideate]):::shipped --> specify([specify]):::shipped --> plan([plan]):::shipped --> implement([implement]):::shipped --> verify([verify]):::roadmap --> recap([recap]):::roadmap --> review([review]):::roadmap --> ship([ship]):::roadmap
 
     classDef shipped fill:#d4f4dd,stroke:#2d7a3e,color:#1a3d1f
     classDef defined fill:#fff4cc,stroke:#a07a00,color:#3d3000
@@ -29,7 +29,7 @@ Each in-line phase consumes the previous phase's lint-clean artifact and gates t
 | [`ideate`](./ideate/SKILL.md) | Shipped | Refine raw ideas into lint-clean SpecScore Idea artifacts. |
 | [`specify`](./specify/SKILL.md) | Shipped | Turn an approved Idea into a lint-clean SpecScore Feature with G/W/T acceptance criteria. |
 | [`plan`](./plan/SKILL.md) | Shipped | Turn an approved Feature into an ordered, AC-mapped Plan artifact at `spec/plans/<slug>.md`. |
-| `implement` | Roadmap | Implement Plan tasks one at a time, gated on AC coverage. |
+| [`implement`](./implement/SKILL.md) | Shipped | Dispatch one subagent per Plan task in parallel batches; stage AC-traceable code changes with a `Verifies:` commit-message trailer; per-batch user-approval gate. |
 | `verify` | Roadmap | Run Rehearse tests against acceptance criteria; report coverage. |
 | `recap` | Roadmap | Summarize what was built against what was specified; surface drift. |
 | `review` | Roadmap | Multi-axis review of code against the Feature it claims to satisfy. |
@@ -82,11 +82,14 @@ Turns an approved Feature into a single-file Plan at `spec/plans/<slug>.md` — 
 - **Gate:** AC coverage (every AC covered or explicitly deferred, lint rule `P-001`), lint, baseline reviewer + any third-party reviewers (AND composition), user approval. No transition to `specstudio:implement` until all five hold.
 - **Source:** [`plan/SKILL.md`](./plan/SKILL.md)
 
-### `implement` — Roadmap
+### `implement` — Shipped
 
-The skill that consumes a Plan and writes code one task at a time, mapping each commit back to AC IDs.
+Consumes an approved Plan; dispatches one subagent per task in parallel batches computed from the Plan's `**Depends-On:**` dependency graph; stages every batch's changes with a mandatory `Verifies: <feature-slug>#ac:<ac-slug>, ...` commit-message trailer that the user pastes when committing. Linear in user interaction (one approval per batch), parallel in execution (subagent fan-out within a batch).
 
-Scope TBD. Next step: `ideate` it.
+- **Output:** staged source-code changes (one or more `git diff --staged` batches across the Plan's lifetime), plus per-task `**Status:**` writes on the Plan file; in `**Mode:** stub` Plans, also writes back task bodies with post-hoc 1–2 sentence summaries.
+- **Triggers:** `implement`, `/implement`, `specstudio:implement`, "implement this plan", or the `plan.approved` Synchestra event.
+- **Gate:** Plan Status ∈ {Approved, Implementing}, Source Feature Status ∈ {Approved, Implementing, Stable}, lint after every batch, line-overlap conflict detection post-batch, explicit per-batch user approval, user-commit-before-next-batch. Promotion boundary is `specstudio:verify` only.
+- **Source:** [`implement/SKILL.md`](./implement/SKILL.md)
 
 ### `verify` — Roadmap
 
