@@ -125,6 +125,10 @@ If you want to see the methodology applied at scale, this repo is the reference.
 
 **Version 0.0.3 — early.** The `ideate` and `specify` skills are stable enough to use on real work; the rest of the lifecycle is in progress. Expect sharp edges, breaking changes, and active iteration.
 
+## Contributing
+
+Contributions are welcome. See [`CONTRIBUTING.md`](./CONTRIBUTING.md) for the contribution workflow and required reading, and [`CHANGELOG.md`](./CHANGELOG.md) for release history.
+
 ## License
 
 MIT. See [`LICENSE`](./LICENSE).

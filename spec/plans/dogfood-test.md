@@ -1,6 +1,6 @@
 # Plan: Dogfood Test
 
-**Status:** Approved
+**Status:** Completed
 **Source Feature:** dogfood-test
 **Date:** 2026-05-19
 **Owner:** alexander.trakhimenok
@@ -41,7 +41,7 @@ Create a new file `CHANGELOG.md` at repo root with a top-level `# Changelog` hea
 ### Task 3: Add Contributing section to README
 
 **Verifies:** dogfood-test#ac:readme-cross-references-both
-**Status:** pending
+**Status:** done
 **Depends-On:** 1, 2
 
 Add a new `## Contributing` H2 section to root `README.md`, placed after the existing `## Status` section and before the `## License` section. Body text: one paragraph linking to both `CONTRIBUTING.md` (for the contribution workflow) and `CHANGELOG.md` (for release history) via relative markdown links. Keep it brief — a discoverability pointer, not a manifesto.
