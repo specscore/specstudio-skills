@@ -41,7 +41,7 @@ The skill MUST refuse to proceed unless its input is a Plan at `spec/plans/<slug
 
 #### REQ: requires-approved-source-feature
 
-The skill MUST also verify that the Plan's `**Source Feature:**` resolves to a Feature with `**Status:**` in `{Approved, Implementing, Stable}`. If the Feature has regressed to `Draft` or `Under Review` since the Plan was approved (spec drift), the skill MUST stop, surface the drift, and recommend either re-approving the Feature via `specstudio:specify` or reverting the Feature to its prior approved revision.
+The skill MUST also verify that the Plan's `**Source Feature:**` resolves to a Feature with `**Status:**` in `{Approved, Implementing, Stable}`. If the Feature has regressed to `Draft` or `Under Review` since the Plan was approved (spec drift), the skill MUST stop, surface the drift, and recommend either re-approving the Feature via `specstudio:specify` or reverting the Feature to its prior approved revision. The skill MUST additionally confirm the Source Feature exists at git HEAD via `git cat-file -e HEAD:spec/features/<feature-slug>/README.md`; a Feature that exists only in the working tree (uncommitted) MUST cause pre-flight to refuse and instruct the user to commit the Feature first, because the `Verifies:` commit-message trailer must reference a Feature that exists in git history.
 
 ### Hard gate
 
@@ -364,6 +364,12 @@ The skill MUST NOT yes-machine weak Plans or silently retry blocked subagents. W
 **Given** an approved Plan whose source Feature has regressed to `**Status:** Draft` (e.g., the user opened the Feature for revision after Plan approval),
 **When** the skill is invoked,
 **Then** the skill stops, surfaces the drift with the Feature path and status, and recommends either re-approving the Feature via `specstudio:specify` or reverting to the prior approved revision. No subagent is dispatched.
+
+### AC: refuse-uncommitted-source-feature (verifies REQ:requires-approved-source-feature)
+
+**Given** an approved Plan whose `**Source Feature:**` exists only in the working tree (not yet committed to git HEAD),
+**When** the skill's pre-flight runs,
+**Then** the skill refuses to dispatch, names the uncommitted Feature path, and instructs the user to commit the Feature first. No subagent is dispatched.
 
 ### AC: hard-gate-enforced (verifies REQ:hard-gate, REQ:user-approval-required, REQ:pre-commit-batch-block)
 
