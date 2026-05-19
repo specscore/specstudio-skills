@@ -1,6 +1,6 @@
 # Idea: SpecStudio implement skill
 
-**Status:** Draft
+**Status:** Approved
 **Date:** 2026-05-19
 **Owner:** alexander.trakhimenok
 **Promotes To:** —

@@ -10,11 +10,10 @@ Pre-spec one-pagers for SpecStudio. Each Idea is the output of `specstudio:ideat
 |------|--------|------|-------|-------------|
 | [sidekick-consilium](sidekick-consilium.md) | Implementing | 2026-05-18 | alexandertrakhimenok | sidekick-consilium |
 | [sidekick-ideas](sidekick-ideas.md) | Implementing | 2026-05-18 | alexandertrakhimenok | sidekick-capture |
-| [specstudio-implement-skill](specstudio-implement-skill.md) | Draft | 2026-05-19 | alexander.trakhimenok | — |
+| [specstudio-implement-skill](specstudio-implement-skill.md) | Approved | 2026-05-19 | alexander.trakhimenok | — |
 | [specstudio-init-skill](specstudio-init-skill.md) | Implementing | 2026-05-08 | alexander.trakhimenok | skills/init |
 | [specstudio-plan-skill](specstudio-plan-skill.md) | Implementing | 2026-04-20 | alexander.trakhimenok | skills/plan |
 | [third-party-skill-integration-contracts](third-party-skill-integration-contracts.md) | Implementing | 2026-05-08 | alexander.trakhimenok | third-party-integration |
-| [trivial-mode-plans](trivial-mode-plans.md) | Draft | 2026-05-19 | alexander.trakhimenok | — |
 
 ## Outstanding Questions
 
