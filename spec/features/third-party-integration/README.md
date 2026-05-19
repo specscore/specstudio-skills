@@ -1,6 +1,6 @@
 # Feature: Third-Party Skill Integration
 
-> [View in SpecScore Studio](https://specscore.studio/project/features?id=specstudio-skills@specscore@github.com&path=spec%2Ffeatures%2Fthird-party-integration) — graph, discussions, approvals
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/p/github.com/synchestra-io/specstudio-skills/spec/features/third-party-integration?op=explore) | [Edit](https://specscore.studio/app/p/github.com/synchestra-io/specstudio-skills/spec/features/third-party-integration?op=edit) | [Ask question](https://specscore.studio/app/p/github.com/synchestra-io/specstudio-skills/spec/features/third-party-integration?op=ask) | [Request change](https://specscore.studio/app/p/github.com/synchestra-io/specstudio-skills/spec/features/third-party-integration?op=request-change) |
 
 **Status:** Approved
 **Source Ideas:** third-party-skill-integration-contracts
