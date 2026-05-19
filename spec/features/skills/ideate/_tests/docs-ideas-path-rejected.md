@@ -12,7 +12,7 @@ AND the skill explains that SpecScore artifacts live under `spec/`, not `docs/`
 AND the skill writes to `spec/ideas/my-idea.md` instead
 
 GIVEN an Idea artifact has been mistakenly committed to `docs/ideas/my-idea.md`
-WHEN `specscore lint` runs against the project tree
+WHEN `specscore spec lint` runs against the project tree
 THEN lint reports rule `U-007` (file location matches canonical path for type) as an error
 AND `specstudio:specify` cannot consume the misplaced artifact
 

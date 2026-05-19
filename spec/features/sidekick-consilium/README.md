@@ -1,6 +1,6 @@
 # Feature: Sidekick Consilium
 
-> [View in SpecStudio](https://specstudio.synchestra.io/project/features?id=specstudio-skills@synchestra-io@github.com&path=spec%2Ffeatures%2Fsidekick-consilium) — graph, discussions, approvals
+> [View in SpecScore Studio](https://specscore.studio/project/features?id=specstudio-skills@specscore@github.com&path=spec%2Ffeatures%2Fsidekick-consilium) — graph, discussions, approvals
 
 **Status:** Approved
 **Date:** 2026-05-18
@@ -610,5 +610,6 @@ Rehearse stubs are scaffolded with `**Status:** pending`; authoring the actual s
 
 - [rebrand-view-in-specstudio-blockquote-to-view-in-specscore](../../ideas/seeds/rebrand-view-in-specstudio-blockquote-to-view-in-specscore.md) — captured 2026-05-18 by specstudio:specify
 
+- [extend-consilium-to-review-regular-specscore-ideas-not-just](../../ideas/seeds/extend-consilium-to-review-regular-specscore-ideas-not-just.md) — captured 2026-05-18 by superpowers:writing-plans
 ---
 *This document follows the https://specscore.md/feature-specification*

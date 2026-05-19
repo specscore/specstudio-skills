@@ -41,7 +41,7 @@ This is a single-source-of-truth choice: the skill is a faithful **event source*
 ## Events Emitted by `specstudio:ideate`
 
 ### `idea.drafted`
-Fired after every successful `specscore lint` pass following a write or edit, while the Idea's `**Status:**` is `Draft`. The first emission carries the same event name as subsequent ones — Synchestra dedupes by event uuid.
+Fired after every successful `specscore spec lint` pass following a write or edit, while the Idea's `**Status:**` is `Draft`. The first emission carries the same event name as subsequent ones — Synchestra dedupes by event uuid.
 
 ```yaml
 payload:
@@ -70,7 +70,7 @@ payload:
 **Consumer:** Synchestra may react by scheduling `specstudio:specify` (after user confirmation) or by notifying watchers.
 
 ### `idea.updated`
-Fired after every successful `specscore lint` pass following a write or edit, while the Idea's `**Status:**` is `Approved`. Distinguishes post-approval iteration from pre-approval drafting; consumers that watch only for material changes to approved Ideas subscribe here rather than to `idea.drafted`.
+Fired after every successful `specscore spec lint` pass following a write or edit, while the Idea's `**Status:**` is `Approved`. Distinguishes post-approval iteration from pre-approval drafting; consumers that watch only for material changes to approved Ideas subscribe here rather than to `idea.drafted`.
 
 ```yaml
 payload:
@@ -121,7 +121,7 @@ payload:
 The change-context fields are never `null` here — the prior revision is the last `feature.specified` emission.
 
 ### `feature.updated`
-Fired after every successful `specscore lint` pass following a write or edit, while the Feature's `**Status:**` is `Implementing` or `Stable`. Distinguishes post-approval iteration from pre-approval drafting; consumers that watch only for material changes to approved Features subscribe here rather than to `feature.specified`.
+Fired after every successful `specscore spec lint` pass following a write or edit, while the Feature's `**Status:**` is `Implementing` or `Stable`. Distinguishes post-approval iteration from pre-approval drafting; consumers that watch only for material changes to approved Features subscribe here rather than to `feature.specified`.
 
 ```yaml
 payload:

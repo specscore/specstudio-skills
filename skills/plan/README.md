@@ -11,7 +11,7 @@ The `specstudio:plan` Claude Code skill — turns an approved SpecScore Feature 
 Produces a single `spec/plans/<slug>.md` file with tasks numbered 1..N, each bound to one or more AC IDs from the source Feature. Hard-gated on:
 
 1. **AC coverage** — every AC in the source Feature is in a task's `**Verifies:**` line OR explicitly listed under `## Deferred AC Coverage` with a concrete reason. Enforced by lint rule `P-001`.
-2. **Lint** — `specscore lint spec/plans/<slug>.md` passes.
+2. **Lint** — `specscore spec lint` passes.
 3. **Reviewer** — the baseline plan-document reviewer subagent returns `Approved`, plus any third-party reviewers registered in `specscore.yaml` (AND composition).
 4. **User approval** — explicit phrase, with a single confirmation step for vague positive signals.
 

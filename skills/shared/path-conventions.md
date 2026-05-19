@@ -7,7 +7,7 @@
 
 | Tree | Purpose | Audience | Format | Tooling |
 |---|---|---|---|---|
-| `spec/` | Machine-addressable SpecScore artifacts (ideas, features, requirements, acceptance criteria, plans) | Tooling (`specscore lint`, Rehearse, Synchestra agents) and contributors editing specs | Typed — title-prefix dispatch (`# Idea: …` / `# Feature: …` / `# Plan: …`), bold-prefixed body metadata (`**Status:**`, `**Date:**`, `**Owner:**`, …), fixed section schema | Lintable, schema-validated, stable IDs (slug = filename), bidirectional links |
+| `spec/` | Machine-addressable SpecScore artifacts (ideas, features, requirements, acceptance criteria, plans) | Tooling (`specscore spec lint`, Rehearse, Synchestra agents) and contributors editing specs | Typed — title-prefix dispatch (`# Idea: …` / `# Feature: …` / `# Plan: …`), bold-prefixed body metadata (`**Status:**`, `**Date:**`, `**Owner:**`, …), fixed section schema | Lintable, schema-validated, stable IDs (slug = filename), bidirectional links |
 | `docs/` | User-facing prose | Human readers of the project (adopters, reviewers, contributors) | Freeform markdown | Rendered as-is; no schema constraints |
 
 ## Canonical Paths
@@ -46,6 +46,6 @@ When porting logic from upstream skills, the following path conventions are **de
 
 ## Enforcement
 
-- `specscore lint` refuses SpecScore artifacts outside `spec/`.
-- `specscore lint` warns on prose-shaped files inside `spec/` (missing required title prefix, missing required body-metadata lines, missing required sections).
+- `specscore spec lint` refuses SpecScore artifacts outside `spec/`.
+- `specscore spec lint` warns on prose-shaped files inside `spec/` (missing required title prefix, missing required body-metadata lines, missing required sections).
 - CI integration: PRs creating new top-level directories under `spec/` require review.

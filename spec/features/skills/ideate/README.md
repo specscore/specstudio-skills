@@ -1,6 +1,6 @@
 # Feature: Ideate Skill
 
-> [View in SpecStudio](https://specstudio.synchestra.io/project/features?id=specstudio-skills@synchestra-io@github.com&path=spec%2Ffeatures%2Fskills%2Fideate) — graph, discussions, approvals
+> [View in SpecScore Studio](https://specscore.studio/project/features?id=specstudio-skills@specscore@github.com&path=spec%2Ffeatures%2Fskills%2Fideate) — graph, discussions, approvals
 
 **Status:** Approved
 
@@ -39,7 +39,7 @@ The skill is gated downstream — once invoked, it must produce a complete, lint
 The skill MUST NOT invoke `specstudio:specify`, `writing-plans`, or any implementation skill until ALL THREE conditions hold:
 
 1. An Idea artifact exists at `spec/ideas/<slug>.md`.
-2. `specscore lint spec/ideas/<slug>.md` exits zero.
+2. `specscore spec lint` exits zero.
 3. The user has explicitly approved the Recommended Direction.
 
 A skill invocation that bypasses any condition is a contract violation.
@@ -98,7 +98,7 @@ When the `specscore` CLI is NOT on PATH, the skill MUST fall back to a direct fi
 
 #### REQ: schema-equivalence-cli-fallback
 
-CLI and fallback paths MUST produce **schema-equivalent** artifacts: identical title prefix, identical body-metadata fields, identical section headings, identical required content. They MAY differ in cosmetic ways (whitespace, blank-line counts, comment style, default ordering of optional fields). The contract is that downstream consumers (`specscore lint`, `specstudio:specify`, human readers) cannot tell which path produced the artifact based on its functional content.
+CLI and fallback paths MUST produce **schema-equivalent** artifacts: identical title prefix, identical body-metadata fields, identical section headings, identical required content. They MAY differ in cosmetic ways (whitespace, blank-line counts, comment style, default ordering of optional fields). The contract is that downstream consumers (`specscore spec lint`, `specstudio:specify`, human readers) cannot tell which path produced the artifact based on its functional content.
 
 ### Required artifact content
 
@@ -118,14 +118,14 @@ Every artifact passes through both machine validation and a deliberate human-sty
 
 #### REQ: lint-pass
 
-After writing or editing the artifact, the skill MUST run `specscore lint spec/ideas/<slug>.md` and confirm a zero exit code before proceeding to user review.
+After writing or editing the artifact, the skill MUST run `specscore spec lint` and confirm a zero exit code before proceeding to user review.
 
 #### REQ: lint-failure-recovery
 
-On `specscore lint` failure after a write or edit, the skill MUST:
+On `specscore spec lint` failure after a write or edit, the skill MUST:
 
-1. Run `specscore lint --fix spec/ideas/<slug>.md` once to attempt automated repair.
-2. Re-run `specscore lint spec/ideas/<slug>.md` to verify the result.
+1. Run `specscore spec lint --fix` once to attempt automated repair.
+2. Re-run `specscore spec lint` to verify the result.
 3. If lint now passes, continue and tell the user what was auto-fixed.
 4. If lint still fails, surface the remaining violations to the user with rule IDs and affected sections.
 
@@ -169,7 +169,7 @@ The skill participates in the Synchestra event vocabulary defined in [`shared/sy
 
 #### REQ: event-drafted
 
-While the artifact's `**Status:**` is `Draft`, the skill MUST emit `idea.drafted` after every successful `specscore lint` pass that follows a write or edit. The first emission carries the same event name as subsequent ones — Synchestra dedupes by event uuid.
+While the artifact's `**Status:**` is `Draft`, the skill MUST emit `idea.drafted` after every successful `specscore spec lint` pass that follows a write or edit. The first emission carries the same event name as subsequent ones — Synchestra dedupes by event uuid.
 
 #### REQ: event-approved
 
@@ -177,7 +177,7 @@ The skill MUST emit `idea.approved` exactly once, after the user approves the Re
 
 #### REQ: event-updated
 
-After `idea.approved` has fired, the artifact's `status` is `Approved`. While in that state, the skill MUST emit `idea.updated` after every successful `specscore lint` pass that follows a subsequent write or edit. The skill MUST NOT emit `idea.drafted` for an Approved artifact, and MUST NOT re-emit `idea.approved` for further iteration.
+After `idea.approved` has fired, the artifact's `status` is `Approved`. While in that state, the skill MUST emit `idea.updated` after every successful `specscore spec lint` pass that follows a subsequent write or edit. The skill MUST NOT emit `idea.drafted` for an Approved artifact, and MUST NOT re-emit `idea.approved` for further iteration.
 
 #### REQ: event-payload-change-context
 
@@ -226,13 +226,13 @@ The skill MUST NOT yes-machine weak ideas. When a direction has clear problems, 
 
 **Requirements:** ideate#req:hard-gate, ideate#req:lint-pass, ideate#req:user-approval-required
 
-The skill cannot invoke `specify`, `writing-plans`, or any implementation skill until the artifact exists at `spec/ideas/<slug>.md`, `specscore lint` passes, and the user has approved the Recommended Direction. Any invocation that bypasses any of these conditions is rejected.
+The skill cannot invoke `specify`, `writing-plans`, or any implementation skill until the artifact exists at `spec/ideas/<slug>.md`, `specscore spec lint` passes, and the user has approved the Recommended Direction. Any invocation that bypasses any of these conditions is rejected.
 
 ### AC: artifact-conformance
 
 **Requirements:** ideate#req:artifact-path, ideate#req:no-docs-path, ideate#req:auto-create-ideas-dir, ideate#req:auto-stage-on-create, ideate#req:phase-3-crystallize, ideate#req:not-doing-required, ideate#req:assumption-tiers
 
-Every produced artifact lives at the canonical path `spec/ideas/<slug>.md`, conforms to the Idea schema, has a non-empty `Not Doing (and Why)` section, and lists at least one Must-be-true assumption. When `spec/ideas/` does not exist, the skill bootstraps it (with a lint-clean index README) and tells the user. All files the skill creates are staged in git and the staged paths are reported to the user; the skill never commits on the user's behalf. Artifacts written elsewhere or missing required sections are rejected by `specscore lint`.
+Every produced artifact lives at the canonical path `spec/ideas/<slug>.md`, conforms to the Idea schema, has a non-empty `Not Doing (and Why)` section, and lists at least one Must-be-true assumption. When `spec/ideas/` does not exist, the skill bootstraps it (with a lint-clean index README) and tells the user. All files the skill creates are staged in git and the staged paths are reported to the user; the skill never commits on the user's behalf. Artifacts written elsewhere or missing required sections are rejected by `specscore spec lint`.
 
 ### AC: phase-discipline
 
@@ -262,7 +262,7 @@ The skill detects approval in two tiers: explicit phrases (`approve`, `approved`
 
 **Requirements:** ideate#req:lint-pass, ideate#req:lint-failure-recovery
 
-On lint failure after a write/edit, the skill runs `specscore lint --fix` exactly once, re-runs lint, and either continues (logging what was fixed) or surfaces the remaining violations to the user. The skill never loops `--fix`, and never encodes its own list of which rules are auto-fixable — the `specscore` CLI owns that policy.
+On lint failure after a write/edit, the skill runs `specscore spec lint --fix` exactly once, re-runs lint, and either continues (logging what was fixed) or surfaces the remaining violations to the user. The skill never loops `--fix`, and never encodes its own list of which rules are auto-fixable — the `specscore` CLI owns that policy.
 
 ### AC: skip-condition-respected
 

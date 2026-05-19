@@ -1,6 +1,6 @@
 # Feature: Third-Party Skill Integration
 
-> [View in SpecStudio](https://specstudio.synchestra.io/project/features?id=specstudio-skills@synchestra-io@github.com&path=spec%2Ffeatures%2Fthird-party-integration) — graph, discussions, approvals
+> [View in SpecScore Studio](https://specscore.studio/project/features?id=specstudio-skills@specscore@github.com&path=spec%2Ffeatures%2Fthird-party-integration) — graph, discussions, approvals
 
 **Status:** Approved
 **Source Ideas:** third-party-skill-integration-contracts
@@ -11,7 +11,7 @@ Defines the contract for integrating third-party agent skills (Superpowers `brai
 
 ## Problem
 
-SpecStudio adopters increasingly run third-party agent skills (Superpowers, addyosmani agent-skills, etc.) alongside SpecStudio in the same repository. Without an explicit contract, three failure modes surface: (1) third-party Producer-class skills write artifacts that look canonical but fail `specscore lint` and lack lifecycle integration (events, status transitions, Synchestra reconciliation); (2) potential Reviewer-class subagents have no registration path even though [`skills/specify`](../skills/specify/README.md)'s `reviewer-extension-hook` already specifies an AND-composition contract for them; (3) Capability-class tools (visual companions, diagram renderers, accessibility auditors) have no defined invocation surface, so each integration becomes an ad-hoc adapter.
+SpecStudio adopters increasingly run third-party agent skills (Superpowers, addyosmani agent-skills, etc.) alongside SpecStudio in the same repository. Without an explicit contract, three failure modes surface: (1) third-party Producer-class skills write artifacts that look canonical but fail `specscore spec lint` and lack lifecycle integration (events, status transitions, Synchestra reconciliation); (2) potential Reviewer-class subagents have no registration path even though [`skills/specify`](../skills/specify/README.md)'s `reviewer-extension-hook` already specifies an AND-composition contract for them; (3) Capability-class tools (visual companions, diagram renderers, accessibility auditors) have no defined invocation surface, so each integration becomes an ad-hoc adapter.
 
 This Feature replaces ad-hoc handling with a typed contract that adopters and skill authors can target.
 

@@ -21,7 +21,7 @@ Turn approved intent into a lintable, testable SpecScore Feature.
 Do NOT invoke `writing-plans`, `frontend-design`, `mcp-builder`, or ANY implementation skill until ALL of the following are true:
   1. The Feature artifact exists at `spec/features/<slug>/README.md` and contains at least one `#### REQ: <slug>` requirement inside the `## Behavior` section.
   2. Each requirement has ≥1 acceptance criterion in `Given / When / Then` format.
-  3. `specscore lint spec/features/<slug>/` passes.
+  3. `specscore spec lint` passes.
   4. The spec-document reviewer subagent returned `Approved`.
   5. The user has explicitly approved the written Feature.
 
@@ -56,7 +56,7 @@ Create a task for each and complete in order:
 6. **Present spec sections** one at a time, get approval after each.
 7. **Author the Feature artifact** — single `README.md` with topic-grouped `### <Topic>` headings inside `## Behavior`, each containing one or more `#### REQ: <slug>` requirements.
 8. **Rehearse stub decision** — per-AC heuristic. See [rehearse-heuristic.md](../shared/rehearse-heuristic.md).
-9. **Lint** — `specscore lint spec/features/<slug>/`.
+9. **Lint** — `specscore spec lint`.
 10. **Inline self-review** — placeholders, consistency, scope, ambiguity.
 11. **Dispatch spec-document-reviewer subagent** — see [reviewer-prompt.md](references/reviewer-prompt.md). Must return `Approved` before user review.
 12. **User review gate** — user reviews the written Feature; wait for approval.
@@ -254,7 +254,7 @@ If the user has `obra/superpowers` installed, we may reuse its browser-based vis
 - [ ] `## Behavior` contains at least one `#### REQ: <slug>` requirement (scoped under a `###` topic heading)
 - [ ] Every requirement has ≥1 acceptance criterion
 - [ ] Every AC is `Given / When / Then`
-- [ ] `specscore lint spec/features/<slug>/` passes
+- [ ] `specscore spec lint` passes
 - [ ] Reviewer subagent returned `Approved`
 - [ ] User explicitly approved the written Feature
 - [ ] `**Status:** Approved` in body metadata

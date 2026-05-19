@@ -8,7 +8,7 @@ The `specstudio:specify` Claude Code skill — turns an approved SpecScore Idea,
 
 ## What it does
 
-Produces a `spec/features/<slug>/` directory containing the Feature README, requirements, acceptance criteria in G/W/T form, and (optionally) Rehearse test scaffolding. Hard-gated: no plans, code, or implementation-skill invocations until `specscore lint` passes and the user explicitly approves.
+Produces a `spec/features/<slug>/` directory containing the Feature README, requirements, acceptance criteria in G/W/T form, and (optionally) Rehearse test scaffolding. Hard-gated: no plans, code, or implementation-skill invocations until `specscore spec lint` passes and the user explicitly approves.
 
 `ideate` is skippable when the problem and scope are already obvious — `specify` accepts a clear buildable intent directly. If the intent isn't actually clear, the skill pushes back rather than producing a low-quality Feature.
 

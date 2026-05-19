@@ -8,16 +8,16 @@ GIVEN an approved Idea exists at `spec/ideas/payment-fraud.md` with `**Status:**
 AND the user invokes `specstudio:specify` against that Idea
 WHEN the skill writes the Feature
 THEN the Feature `README.md` contains `**Source Ideas:** payment-fraud` immediately after the Status line
-AND `specscore lint` accepts the reference
+AND `specscore spec lint` accepts the reference
 
 GIVEN the user attempts to declare `**Source Ideas:** does-not-exist` in a Feature
-WHEN `specscore lint` runs against the Feature directory
+WHEN `specscore spec lint` runs against the Feature directory
 THEN lint reports an error: the referenced Idea slug does not resolve to an existing file
 AND the hard-gate blocks downstream `writing-plans`
 
 GIVEN an Idea exists at `spec/ideas/draft-only.md` with `**Status:** Draft` body metadata (not yet Approved)
 AND the user attempts to declare `**Source Ideas:** draft-only` in a Feature
-WHEN `specscore lint` runs against the Feature directory
+WHEN `specscore spec lint` runs against the Feature directory
 THEN lint reports an error: source Ideas must have `Status ∈ {Approved, Specified}`
 AND the skill MUST NOT proceed
 

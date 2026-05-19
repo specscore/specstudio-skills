@@ -7,7 +7,7 @@
 GIVEN a Feature at `spec/features/checkout-v2/` with `**Status:** Implementing` body metadata
 AND `feature.approved` was previously emitted exactly once
 WHEN the user edits the Feature (e.g., adds a new `#### REQ:` block under `## Behavior`)
-AND `specscore lint spec/features/checkout-v2/` passes
+AND `specscore spec lint` passes
 THEN the skill emits `feature.updated`
 AND the skill does NOT emit `feature.specified`
 AND the skill does NOT re-emit `feature.approved`

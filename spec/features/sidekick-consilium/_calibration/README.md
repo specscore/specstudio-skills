@@ -1,6 +1,15 @@
+## Contents
+
+| Child | Description |
+|---|---|
+| [ambiguous](ambiguous/README.md) | TODO: Add description. |
+
 # Sidekick Consilium Calibration Set
 
 20 seed fixtures used by REQ `calibration-set-20-verdicts` to validate that the consilium produces verdicts matching post-hoc human judgment ≥95% of the time, and that adversaries correctly flag known-weak seeds ≥80% of the time.
+| [out-of-domain](out-of-domain/README.md) | TODO: Add description. |
+| [strong](strong/README.md) | TODO: Add description. |
+| [weak](weak/README.md) | TODO: Add description. |
 
 ## Categories
 

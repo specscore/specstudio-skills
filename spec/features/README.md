@@ -1,6 +1,6 @@
 # SpecStudio Features
 
-> [View in SpecStudio](https://specstudio.synchestra.io/project/features?id=specstudio-skills@synchestra-io@github.com&path=spec%2Ffeatures) — graph, discussions, approvals
+> [View in SpecScore Studio](https://specscore.studio/project/features?id=specstudio-skills@specscore@github.com&path=spec%2Ffeatures) — graph, discussions, approvals
 
 Feature specifications for the SpecStudio plugin. This index lists every top-level SpecScore Feature in this repository.
 

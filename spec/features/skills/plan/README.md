@@ -1,6 +1,6 @@
 # Feature: Plan Skill
 
-> [View in SpecStudio](https://specstudio.synchestra.io/project/features?id=specstudio-skills@synchestra-io@github.com&path=spec%2Ffeatures%2Fskills%2Fplan) — graph, discussions, approvals
+> [View in SpecScore Studio](https://specscore.studio/project/features?id=specstudio-skills@specscore@github.com&path=spec%2Ffeatures%2Fskills%2Fplan) — graph, discussions, approvals
 
 **Status:** Approved
 **Source Ideas:** specstudio-plan-skill
@@ -42,7 +42,7 @@ The skill MUST NOT invoke `specstudio:build`, `writing-plans`, or ANY implementa
 
 1. The Plan artifact exists at `spec/plans/<slug>.md` and contains at least one `### Task N: <name>` task inside the `## Tasks` section.
 2. Every acceptance criterion in the source Feature is either covered by at least one task (via the task's `**Verifies:**` line) or explicitly deferred under `## Deferred AC Coverage` with a reason.
-3. `specscore lint spec/plans/<slug>.md` exits zero.
+3. `specscore spec lint` exits zero.
 4. The plan-document reviewer subagent returned `Approved`.
 5. The user has explicitly approved the written Plan.
 
@@ -151,14 +151,14 @@ Every Plan passes through machine validation and a deliberate self-review.
 
 #### REQ: lint-pass
 
-After writing or editing the Plan, the skill MUST run `specscore lint spec/plans/<slug>.md` and confirm a zero exit code before proceeding to the reviewer subagent.
+After writing or editing the Plan, the skill MUST run `specscore spec lint` and confirm a zero exit code before proceeding to the reviewer subagent.
 
 #### REQ: lint-failure-recovery
 
-On `specscore lint` failure, the skill MUST:
+On `specscore spec lint` failure, the skill MUST:
 
-1. Run `specscore lint --fix spec/plans/<slug>.md` exactly once.
-2. Re-run `specscore lint spec/plans/<slug>.md` to verify.
+1. Run `specscore spec lint --fix` exactly once.
+2. Re-run `specscore spec lint` to verify.
 3. If passing, continue and tell the user what was auto-fixed.
 4. If still failing, surface remaining violations to the user with rule IDs.
 
@@ -178,7 +178,7 @@ The skill MUST dispatch at least the built-in plan-document reviewer subagent (p
 
 #### REQ: reviewer-baseline-blockers
 
-The built-in reviewer MUST treat the following finding categories as **blocker-severity**. These are semantic checks that complement (do not duplicate) `specscore lint`'s syntactic checks:
+The built-in reviewer MUST treat the following finding categories as **blocker-severity**. These are semantic checks that complement (do not duplicate) `specscore spec lint`'s syntactic checks:
 
 1. **AC coverage gap.** An AC in the source Feature appears neither in a task's `**Verifies:**` nor in `## Deferred AC Coverage`.
 2. **Stale AC reference.** A task references an AC ID that does not exist in the current source Feature.
@@ -346,7 +346,7 @@ The skill MUST NOT yes-machine weak Plans. When a task is too vague, an AC is un
 
 **Given** a freshly written Plan that fails lint on an auto-fixable rule (e.g., heading-spacing),
 **When** the skill enters its lint-recovery path,
-**Then** the skill runs `specscore lint --fix` exactly once, re-lints, and on success continues to the reviewer subagent while telling the user what was auto-fixed; on persistent failure the skill surfaces remaining violations with rule IDs and stops.
+**Then** the skill runs `specscore spec lint --fix` exactly once, re-lints, and on success continues to the reviewer subagent while telling the user what was auto-fixed; on persistent failure the skill surfaces remaining violations with rule IDs and stops.
 
 ### AC: reviewer-then-user (verifies REQ:reviewer-subagent-required, REQ:reviewer-baseline-blockers, REQ:reviewer-extension-hook, REQ:user-approval-required)
 

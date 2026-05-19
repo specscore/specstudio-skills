@@ -1,9 +1,9 @@
 # Idea: SpecStudio plan skill
 
-**Status:** Approved
+**Status:** Implementing
 **Date:** 2026-04-20
 **Owner:** alexander.trakhimenok
-**Promotes To:** —
+**Promotes To:** skills/plan
 **Supersedes:** —
 **Related Ideas:** —
 

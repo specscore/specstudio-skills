@@ -2,14 +2,14 @@
 
 **Status:** Contract (skills depend on these; changes require a coordinated update)
 
-Both `specstudio:ideate` and `specstudio:specify` assume `specscore lint` enforces the rules below. Skills invoke lint as a verification step — if any rule here changes, the corresponding skill checklist step may need to update.
+Both `specstudio:ideate` and `specstudio:specify` assume `specscore spec lint` enforces the rules below. Skills invoke lint as a verification step — if any rule here changes, the corresponding skill checklist step may need to update.
 
 The rules below are SpecStudio's **expectation** of canonical SpecScore lint behavior — they describe the canonical SpecScore artifact shape (no YAML front-matter; bold-prefixed body metadata; title-prefix dispatch keys). The authoritative spec is the SpecScore feature tree at [`synchestra-io/specscore`](https://github.com/synchestra-io/specscore); when this contract diverges, that repo wins.
 
 ## Lint CLI Contract
 
-- `specscore lint <file>` — single-file mode. Returns 0 on pass, non-zero on fail; machine-readable output on stderr (`--json` flag).
-- `specscore lint` (no arg) — whole-tree mode, scans `spec/**`.
+- `specscore spec lint <file>` — single-file mode. Returns 0 on pass, non-zero on fail; machine-readable output on stderr (`--json` flag).
+- `specscore spec lint` (no arg) — whole-tree mode, scans `spec/**`.
 - Dispatches per-artifact rule sets based on the **title prefix** (`# Idea: …`, `# Feature: …`, `# Plan: …`). The artifact's canonical id is the filename slug (no separate `id:` field).
 
 ## Universal Rules (all SpecScore artifacts)
@@ -57,11 +57,11 @@ Out of scope for this document — defined by the planning skill (see `spec/idea
 
 ## What Skills Do on Lint Failure
 
-1. **Run `specscore lint --fix <file>` exactly once.** Trust the CLI to repair what is safely auto-fixable.
-2. **Re-run `specscore lint <file>`.** If the result is now clean, continue and tell the user what was auto-fixed.
+1. **Run `specscore spec lint --fix <file>` exactly once.** Trust the CLI to repair what is safely auto-fixable.
+2. **Re-run `specscore spec lint <file>`.** If the result is now clean, continue and tell the user what was auto-fixed.
 3. **If lint still fails, surface the remaining violations to the user** with rule IDs and affected sections.
 4. **Do not loop `--fix`.** One attempt only.
-5. **Do not bypass lint.** Skills treat a passing `specscore lint` as a precondition for user-review and event emission.
+5. **Do not bypass lint.** Skills treat a passing `specscore spec lint` as a precondition for user-review and event emission.
 
 ### CLI owns the fix policy
 

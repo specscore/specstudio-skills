@@ -22,7 +22,7 @@ Turn an approved SpecScore Feature into a lint-clean, AC-mapped, ordered task li
 Do NOT invoke `specstudio:build`, `writing-plans`, `frontend-design`, `mcp-builder`, or ANY implementation skill until ALL of the following are true:
   1. The Plan artifact exists at `spec/plans/<slug>.md` and contains at least one `### Task N: <name>` task inside the `## Tasks` section.
   2. Every acceptance criterion in the source Feature is either covered by ≥1 task (via the task's `**Verifies:**` line) OR explicitly listed under `## Deferred AC Coverage` with a concrete one-sentence reason.
-  3. `specscore lint spec/plans/<slug>.md` passes.
+  3. `specscore spec lint` passes.
   4. The plan-document reviewer subagent returned `Approved`.
   5. The user has explicitly approved the written Plan.
 
@@ -59,7 +59,7 @@ Create a task for each and complete in order:
 4. **Author the Plan artifact** — single `spec/plans/<slug>.md` per the schema below.
 5. **Auto-create `spec/plans/`** + index `README.md` if absent. Tell the user the directory is being bootstrapped.
 6. **Auto-stage** all created files via `git add`. Report the staged paths.
-7. **Lint** — `specscore lint spec/plans/<slug>.md`. On failure, run `specscore lint --fix` exactly once and re-lint; on persistent failure, surface violations with rule IDs and stop.
+7. **Lint** — `specscore spec lint`. On failure, run `specscore spec lint --fix` exactly once and re-lint; on persistent failure, surface violations with rule IDs and stop.
 8. **Inline self-review** — placeholders, empty `**Verifies:**` lines, AC IDs that look misspelled vs the source Feature, task-name vs `**Verifies:**` contradictions.
 9. **Status: Draft → Under Review.**
 10. **Dispatch the baseline reviewer subagent** — see [reviewer-prompt.md](references/reviewer-prompt.md). Must return `Approved` before user review.
@@ -181,10 +181,10 @@ If the reviewer flags an ordering that violates an inferable dependency, the fin
 
 ## Lint and Self-Review
 
-Run `specscore lint spec/plans/<slug>.md` after every write. On failure:
+Run `specscore spec lint` after every write. On failure:
 
-1. Run `specscore lint --fix spec/plans/<slug>.md` exactly **once**.
-2. Re-run `specscore lint` to verify.
+1. Run `specscore spec lint --fix` exactly **once**.
+2. Re-run `specscore spec lint` to verify.
 3. If passing, continue and tell the user what was auto-fixed.
 4. If still failing, surface remaining violations with rule IDs and stop.
 
@@ -292,7 +292,7 @@ The skill MUST NOT yes-machine weak Plans. When a task is vague, an AC is uncove
 - [ ] Every task has a `**Verifies:**` line with ≥1 valid AC ID
 - [ ] Every source-Feature AC is covered (in a task) or deferred (with a concrete reason)
 - [ ] Tasks numbered 1..N with no gaps
-- [ ] `specscore lint spec/plans/<slug>.md` passes
+- [ ] `specscore spec lint` passes
 - [ ] Baseline reviewer subagent returned `Approved`
 - [ ] All registered third-party reviewers returned `Approved`
 - [ ] User explicitly approved the Plan

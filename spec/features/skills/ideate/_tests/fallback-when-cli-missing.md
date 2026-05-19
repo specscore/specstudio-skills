@@ -9,7 +9,7 @@ AND the skill is in Phase 3 with a complete set of inputs
 WHEN the skill crystallizes the Idea
 THEN the skill writes `spec/ideas/<slug>.md` directly using the authoritative schema documented in `skills/ideate/SKILL.md`
 AND the resulting artifact is byte-equivalent (modulo whitespace) to what `specscore new idea <slug>` would have produced
-AND `specscore lint spec/ideas/<slug>.md` exits zero when the CLI is later installed and re-run against the same file
+AND `specscore spec lint` exits zero when the CLI is later installed and re-run against the same file
 
 GIVEN the fallback path was used
 WHEN the user inspects the artifact's title, body metadata, and section structure

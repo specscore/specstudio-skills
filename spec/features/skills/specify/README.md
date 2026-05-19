@@ -1,6 +1,6 @@
 # Feature: Specify Skill
 
-> [View in SpecStudio](https://specstudio.synchestra.io/project/features?id=specstudio-skills@synchestra-io@github.com&path=spec%2Ffeatures%2Fskills%2Fspecify) — graph, discussions, approvals
+> [View in SpecScore Studio](https://specscore.studio/project/features?id=specstudio-skills@specscore@github.com&path=spec%2Ffeatures%2Fskills%2Fspecify) — graph, discussions, approvals
 
 **Status:** Approved
 
@@ -44,7 +44,7 @@ The skill MUST NOT invoke `writing-plans`, `frontend-design`, `mcp-builder`, or 
 
 1. The Feature artifact exists at `spec/features/<slug>/README.md` and contains at least one `#### REQ: <slug>` requirement inside the `## Behavior` section.
 2. Each requirement has ≥1 acceptance criterion in `Given / When / Then` format.
-3. `specscore lint spec/features/<slug>/` exits zero.
+3. `specscore spec lint` exits zero.
 4. The spec-document reviewer subagent returned `Approved`.
 5. The user has explicitly approved the written Feature.
 
@@ -124,14 +124,14 @@ Every artifact passes through machine validation, automated repair, and a delibe
 
 #### REQ: lint-pass
 
-After writing or editing the Feature, the skill MUST run `specscore lint spec/features/<slug>/` and confirm a zero exit code before proceeding to the reviewer subagent.
+After writing or editing the Feature, the skill MUST run `specscore spec lint` and confirm a zero exit code before proceeding to the reviewer subagent.
 
 #### REQ: lint-failure-recovery
 
-On `specscore lint` failure, the skill MUST:
+On `specscore spec lint` failure, the skill MUST:
 
-1. Run `specscore lint --fix spec/features/<slug>/` exactly once.
-2. Re-run `specscore lint spec/features/<slug>/` to verify.
+1. Run `specscore spec lint --fix` exactly once.
+2. Re-run `specscore spec lint` to verify.
 3. If passing, continue and tell the user what was auto-fixed.
 4. If still failing, surface remaining violations to the user with rule IDs and affected files.
 
@@ -151,7 +151,7 @@ The skill MUST dispatch at least the built-in spec-document reviewer subagent (p
 
 #### REQ: reviewer-baseline-blockers
 
-The built-in reviewer MUST treat the following finding categories as **blocker-severity**. These are semantic checks that complement (do not duplicate) `specscore lint`'s syntactic checks:
+The built-in reviewer MUST treat the following finding categories as **blocker-severity**. These are semantic checks that complement (do not duplicate) `specscore spec lint`'s syntactic checks:
 
 1. **Scope spans multiple subsystems.** The Feature describes work that should be decomposed into multiple Features.
 2. **Unobservable `Then` clause.** An AC whose outcome cannot be checked (e.g., "Then the user feels confident", "Then performance is acceptable" with no metric).
@@ -269,7 +269,7 @@ The skill MUST NOT yes-machine weak Features. When a requirement is vague, an AC
 
 **Requirements:** specify#req:hard-gate, specify#req:lint-pass, specify#req:reviewer-subagent-required, specify#req:user-approval-required
 
-The skill cannot invoke `writing-plans` or any implementation skill until the Feature exists with at least one requirement and ≥1 G/W/T AC, `specscore lint` passes, the reviewer subagent returns `Approved`, and the user has approved the Feature. Bypassing any condition is rejected.
+The skill cannot invoke `writing-plans` or any implementation skill until the Feature exists with at least one requirement and ≥1 G/W/T AC, `specscore spec lint` passes, the reviewer subagent returns `Approved`, and the user has approved the Feature. Bypassing any condition is rejected.
 
 ### AC: artifact-conformance
 
@@ -293,7 +293,7 @@ When a `specscore new feature` (or equivalent) CLI is on PATH, the skill uses it
 
 **Requirements:** specify#req:lint-pass, specify#req:lint-failure-recovery
 
-After each write/edit, lint is run; on failure, `specscore lint --fix` is attempted exactly once before re-lint. If still failing, remaining violations are surfaced to the user with rule IDs and affected files. The skill never loops `--fix`, and never encodes its own list of which rules are auto-fixable — the `specscore` CLI owns that policy.
+After each write/edit, lint is run; on failure, `specscore spec lint --fix` is attempted exactly once before re-lint. If still failing, remaining violations are surfaced to the user with rule IDs and affected files. The skill never loops `--fix`, and never encodes its own list of which rules are auto-fixable — the `specscore` CLI owns that policy.
 
 ### AC: reviewer-then-user
 

@@ -10,7 +10,7 @@ WHEN the user responds with the standalone phrase `approve` (or `Approved`, `APP
 THEN the skill recognizes the response as an explicit approval
 AND the skill does NOT ask for additional confirmation
 AND the skill transitions the `**Status:**` body-metadata value from `Draft` to `Approved`
-AND the skill re-runs `specscore lint`
+AND the skill re-runs `specscore spec lint`
 AND the skill emits `idea.approved`
 
 GIVEN the user response contains `approve` as the dominant content of a short message (e.g., "approve, looks great")

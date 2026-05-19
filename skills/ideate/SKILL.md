@@ -19,7 +19,7 @@ Turn raw ideas into sharp, SpecScore-compatible Idea artifacts through structure
 <HARD-GATE>
 Do NOT invoke `specstudio:specify`, `writing-plans`, or any implementation skill until:
   1. An Idea artifact has been written to `spec/ideas/<slug>.md`.
-  2. `specscore lint spec/ideas/<slug>.md` passes.
+  2. `specscore spec lint` passes.
   3. The user has explicitly approved the Recommended Direction.
 
 Ideas that can't be lint-clean aren't ready to be specified.
@@ -51,7 +51,7 @@ Create a task for each and complete in order:
 3. **Phase 1 — Understand & Expand** (divergent).
 4. **Phase 2 — Evaluate & Converge**.
 5. **Phase 3 — Crystallize** as a SpecScore Idea artifact. Bootstrap `spec/ideas/` if missing. Prefer the `specscore new idea` CLI scaffold over a direct file write when the CLI is available (see Phase 3 below).
-6. **Lint** the artifact: `specscore lint spec/ideas/<slug>.md`. On failure, run `specscore lint --fix` once, re-lint; surface remaining violations to the user.
+6. **Lint** the artifact: `specscore spec lint`. On failure, run `specscore spec lint --fix` once, re-lint; surface remaining violations to the user.
 7. **Auto-stage** every file you created (`spec/ideas/<slug>.md`, plus the bootstrap files if any) with `git add`. Tell the user the staged paths. Never commit on the user's behalf.
 8. **Inline self-review** — placeholders, contradictions, ambiguity, scope.
 9. **User review** — ask the user to review and approve the Recommended Direction. Recognize explicit approval phrases (`approve`, `approved`, `accept`, `accepted`, `lgtm`, plus their semantic equivalents in the user's language); treat vague positive signals as soft and ask one explicit confirmation question.
@@ -163,12 +163,12 @@ If the CLI is not on PATH, write the file directly using the schema below. The c
 
 ### Step 3d — Lint (with bounded auto-recovery)
 
-In both paths, after the artifact is complete, run `specscore lint spec/ideas/<slug>.md`. The CLI scaffold is lint-clean on generation; your subsequent `Edit`s must not break that.
+In both paths, after the artifact is complete, run `specscore spec lint`. The CLI scaffold is lint-clean on generation; your subsequent `Edit`s must not break that.
 
 **On lint failure:**
 
-1. Run `specscore lint --fix spec/ideas/<slug>.md` exactly once.
-2. Re-run `specscore lint spec/ideas/<slug>.md`.
+1. Run `specscore spec lint --fix` exactly once.
+2. Re-run `specscore spec lint`.
 3. If lint now passes: continue. Tell the user what was auto-fixed.
 4. If lint still fails: surface the remaining violations to the user with rule IDs and affected sections. Do NOT loop `--fix`.
 
@@ -337,7 +337,7 @@ Both `idea.drafted` (re-emissions) and `idea.updated` events carry three change-
 
 - [ ] Artifact exists at `spec/ideas/<slug>.md`
 - [ ] `spec/ideas/` and `spec/ideas/README.md` exist (bootstrap if needed; never silent)
-- [ ] `specscore lint` passes (auto-recovery via `--fix` attempted at most once on initial failure)
+- [ ] `specscore spec lint` passes (auto-recovery via `--fix` attempted at most once on initial failure)
 - [ ] All created files staged with `git add` and reported to user (never committed)
 - [ ] "How Might We" statement, target user, success criteria all explicit
 - [ ] ≥2 alternatives stress-tested
@@ -359,7 +359,7 @@ Both `idea.drafted` (re-emissions) and `idea.updated` events carry three change-
 - Manually editing `**Promotes To:**` (managed state — Synchestra owns it)
 - Jumping to `specstudio:specify` before user approval
 - Silently bootstrapping `spec/ideas/` without telling the user
-- Looping `specscore lint --fix` more than once
+- Looping `specscore spec lint --fix` more than once
 - Encoding the skill's own list of "rules `--fix` shouldn't touch" — that policy belongs to the `specscore` CLI; if it gets it wrong, fix it there
 - Treating `yes` / `ok` / `sí` / `oui` / `+1` / `🚀` as explicit approval (silent status transition on vague signal)
 - Running `git commit` instead of `git add` (skill stages, never commits)

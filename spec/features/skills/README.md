@@ -1,6 +1,6 @@
 # Feature: Skills
 
-> [View in SpecStudio](https://specstudio.synchestra.io/project/features?id=specstudio-skills@synchestra-io@github.com&path=spec%2Ffeatures%2Fskills) — graph, discussions, approvals
+> [View in SpecScore Studio](https://specscore.studio/project/features?id=specstudio-skills@specscore@github.com&path=spec%2Ffeatures%2Fskills) — graph, discussions, approvals
 
 **Status:** Approved
 
@@ -56,7 +56,7 @@ The `ship` skill is intended to run the pre-launch checklist, gated on `verify` 
 
 ## Problem
 
-SpecStudio's value proposition is spec↔code coherence: every skill produces an artifact that the next skill consumes, gated by `specscore lint`. For that loop to be machine-verifiable, each skill needs a typed Feature spec — not just a SKILL.md manifest and a roadmap line in the repo README. Without per-skill Features:
+SpecStudio's value proposition is spec↔code coherence: every skill produces an artifact that the next skill consumes, gated by `specscore spec lint`. For that loop to be machine-verifiable, each skill needs a typed Feature spec — not just a SKILL.md manifest and a roadmap line in the repo README. Without per-skill Features:
 
 - Tooling cannot validate that a skill's behavior matches its specification.
 - Contributors cannot tell where a skill is in its lifecycle (Draft / In Progress / Stable / Deprecated).
