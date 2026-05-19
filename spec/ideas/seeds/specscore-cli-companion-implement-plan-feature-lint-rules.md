@@ -5,7 +5,7 @@ captured_at: 2026-05-19T17:42:47Z
 captured_by: specstudio:specify
 captured_during: spec/features/skills/plan
 trigger: explicit
-status: queued
+status: completed
 synchestra_task: null
 ---
 
@@ -33,3 +33,7 @@ synchestra_task: null
 - `stub` Plans: placeholder body permitted when `**Status:** ≠ done`; prose required when `done`.
 
 Captured during the revise-in-place revision of the plan Feature driven by `spec/ideas/specstudio-implement-skill.md`.
+
+## Resolution
+
+Shipped 2026-05-19 as `specscore-cli` Feature `cli/spec/lint/plan-rules`. Placeholder token chosen: `<!-- implement: pending -->`.
