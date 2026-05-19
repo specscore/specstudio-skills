@@ -526,5 +526,9 @@ The skill MUST NOT yes-machine weak Plans or silently retry blocked subagents. W
 - **Subagent-failure observability.** When a dispatched subagent crashes (context window exhausted, tool-call failure, etc.) before returning a status, how does the parent skill detect this? Recommendation: treat any non-returning subagent after a timeout as implicit `BLOCKED` with reason "subagent did not return"; surface to user and offer re-dispatch. Timeout value and detection mechanism are implementation-time work.
 - **Pre-existing Plan Status initialization on first invocation.** When `implement` is invoked against a Plan that pre-dates the plan-Feature revision (no `**Status:**` fields on tasks), the skill must initialize Status fields without misreading the git log. Recommendation: scan git log for `Verifies:` trailers referencing any of the Plan's ACs and set `**Status:** done` for matched tasks; leave the rest `pending`. The first invocation against a pre-existing Plan thus implicitly "catches up" the Status fields. Coordinate at implementation time.
 
+## Sidekick Seeds Generated
+
+- [specscore-plugin-should-expose-a-dedicated-skill-for](../../../ideas/seeds/specscore-plugin-should-expose-a-dedicated-skill-for.md) — captured 2026-05-19 by user
+
 ---
 *This document follows the https://specscore.md/feature-specification*
