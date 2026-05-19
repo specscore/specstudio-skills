@@ -5,7 +5,7 @@ captured_at: 2026-05-19T19:01:10Z
 captured_by: user
 captured_during: spec/features/skills/implement
 trigger: explicit
-status: queued
+status: completed
 synchestra_task: null
 ---
 

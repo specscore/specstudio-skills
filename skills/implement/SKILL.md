@@ -89,7 +89,7 @@ Subagent prompt contains, in this order:
 3. **AC full text.** For each referenced AC, the complete `Given / When / Then` text quoted verbatim from the source Feature at `spec/features/<feature-slug>/README.md`.
 4. **Authored task body.** The 1–3 sentence prose from the Plan task body, verbatim.
 5. **Commit-message trailer convention.** `Verifies: <feature-slug>#ac:<ac-slug>, ...` listing every AC ID from this task's `**Verifies:**`.
-6. **TDD discipline pointer.** Reference `agent-skills:test-driven-development` or `superpowers:test-driven-development` when available in the subagent's environment; otherwise an in-skill TDD instruction (write failing test → minimal fix → refactor).
+6. **Discipline pointer.** For tasks involving behavior change: the TDD pointer — reference `agent-skills:test-driven-development` or `superpowers:test-driven-development` when available; otherwise an in-skill TDD instruction (write failing test → minimal fix → refactor). For tasks with no testable surface (pure-documentation edits, file renames, deletions, formatting-only changes): substitute the AC-verification adapter clause — "re-read the artifact after editing and confirm each predicate in the AC's `Then` clause directly." The adapter preserves the verification discipline while honoring the actual task shape.
 7. **Return-shape contract.** One of `DONE` / `DONE_WITH_CONCERNS` / `NEEDS_CONTEXT` / `BLOCKED`, with required fields per status.
 8. **Stage-only instruction.** "Stage your changes with `git add`. Do NOT run `git commit`. The parent skill aggregates and the user commits."
 

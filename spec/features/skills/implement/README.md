@@ -106,7 +106,7 @@ For a Plan with `**Mode:** full`, each subagent's prompt MUST include:
 3. For each referenced AC, the full `Given / When / Then` text quoted from the source Feature.
 4. The task's authored body (1–3 sentences of prose describing what the task does).
 5. The mandatory commit-message trailer convention (`Verifies: <feature-slug>#ac:<ac-slug>, …` listing every AC ID from the task's `**Verifies:**`).
-6. The TDD discipline pointer (delegated to `agent-skills:test-driven-development` / `superpowers:test-driven-development` when those skills are available in the subagent's environment; otherwise a minimal direct in-skill TDD instruction).
+6. The discipline pointer. For tasks involving behavior change, this is the TDD pointer (delegated to `agent-skills:test-driven-development` / `superpowers:test-driven-development` when those skills are available; otherwise a minimal direct in-skill TDD instruction). For tasks with no testable surface — pure-documentation edits, file renames, deletions, formatting-only changes — the prompt MUST substitute the AC-verification adapter clause: "re-read the artifact after editing and confirm each predicate in the AC's `Then` clause directly." The adapter preserves the verification discipline while honoring the actual task shape.
 7. The expected return shape (one of the four SDD-style statuses; see `REQ:subagent-status-protocol`).
 8. Explicit instruction to **stage** changes via `git add` and NOT to commit.
 
@@ -400,6 +400,12 @@ The skill MUST NOT yes-machine weak Plans or silently retry blocked subagents. W
 **Given** a `**Mode:** stub` Plan with task 4 whose body is the canonical placeholder `<!-- implement: pending -->`,
 **When** the skill dispatches task 4's subagent,
 **Then** the subagent's prompt contains the same items as the full case EXCEPT the authored body (because there isn't one) AND additionally includes the Plan's `## Approach` section, the predecessor tasks' brief summaries, and an explicit instruction to (a) infer implementation approach from the ACs and Plan Approach, and (b) return a SHA-free 1–2 sentence "what landed" summary at subagent-return time (BEFORE the user commits the batch) — this summary becomes the canonical body of the task via the writeback step. Commit-SHA linkage lives in the `implement.batch-completed` event payload, not in the task body.
+
+### AC: subagent-prompt-ac-verification-adapter (verifies REQ:subagent-prompt-full)
+
+**Given** a Plan task whose `**Verifies:**` ACs all have `Then` clauses observable purely by file state (e.g., a docs-only task: "file exists with the following H2 headings"),
+**When** the skill constructs the subagent prompt,
+**Then** the prompt's discipline-pointer slot contains the AC-verification adapter clause ("re-read the artifact post-edit and confirm each predicate in the AC's `Then` clause directly") instead of the TDD pointer. The other prompt items (task name, AC list, AC full text, trailer convention, status protocol, stage-only instruction) are unchanged.
 
 ### AC: subagent-status-done (verifies REQ:subagent-status-protocol, REQ:status-write-on-return)
 
