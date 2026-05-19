@@ -2,7 +2,7 @@
 
 **Spec-driven development, by Synchestra.**
 
-AI skills (and a coming Web UI) for efficient spec-driven development — the full lifecycle: **specify, plan, implement, verify, recap, review, ship.** SpecStudio turns vague ideas into lintable, testable specifications and gates implementation on those specifications being clear, complete, and approved.
+AI skills (and a coming Web UI) for efficient spec-driven development — the full lifecycle: **ideate, specify, plan, implement, verify, recap, review, ship.** SpecStudio turns vague ideas into lintable, testable specifications and gates implementation on those specifications being clear, complete, and approved.
 
 This repo (`specstudio-skills`) is the Claude Code plugin surface of SpecScore Studio: skills, commands, and supporting tooling for AI coding agents. The web client lives at [`specstudio-web`](https://github.com/specscore/specstudio-web) (planned) and will deploy to [`specscore.studio`](https://specscore.studio).
 

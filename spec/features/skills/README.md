@@ -82,7 +82,7 @@ Sub-features are listed in lifecycle order (`ideate` → `specify` → `plan` �
 flowchart LR
     intent([clear intent]):::input
     intent --> specify
-    ideate([ideate]):::shipped --> specify([specify]):::shipped --> plan([plan]):::defined --> implement([implement]):::roadmap --> verify([verify]):::roadmap --> recap([recap]):::roadmap --> review([review]):::roadmap --> ship([ship]):::roadmap
+    ideate([ideate]):::shipped --> specify([specify]):::shipped --> plan([plan]):::shipped --> implement([implement]):::roadmap --> verify([verify]):::roadmap --> recap([recap]):::roadmap --> review([review]):::roadmap --> ship([ship]):::roadmap
 
     classDef shipped fill:#d4f4dd,stroke:#2d7a3e,color:#1a3d1f
     classDef defined fill:#fff4cc,stroke:#a07a00,color:#3d3000
