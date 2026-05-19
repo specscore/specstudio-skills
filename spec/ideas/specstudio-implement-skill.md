@@ -3,7 +3,7 @@
 **Status:** Implementing
 **Date:** 2026-05-19
 **Owner:** alexander.trakhimenok
-**Promotes To:** skills/plan
+**Promotes To:** skills/implement, skills/plan
 **Supersedes:** —
 **Related Ideas:** —
 
