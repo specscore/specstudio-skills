@@ -8,7 +8,7 @@ Pre-spec one-pagers for SpecStudio. Each Idea is the output of `specstudio:ideat
 
 | Idea | Status | Date | Owner | Promotes To |
 |------|--------|------|-------|-------------|
-| [artifact-frontmatter-convention](artifact-frontmatter-convention.md) | Draft | 2026-05-19 | alexandertrakhimenok | — |
+| [idea-skills-destination-resolution](idea-skills-destination-resolution.md) | Approved | 2026-05-20 | alexandertrakhimenok | — |
 | [sidekick-consilium](sidekick-consilium.md) | Implementing | 2026-05-18 | alexandertrakhimenok | sidekick-consilium |
 | [sidekick-ideas](sidekick-ideas.md) | Implementing | 2026-05-18 | alexandertrakhimenok | sidekick-capture |
 | [specstudio-implement-skill](specstudio-implement-skill.md) | Implementing | 2026-05-19 | alexander.trakhimenok | skills/implement, skills/plan |
