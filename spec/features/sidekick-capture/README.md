@@ -11,6 +11,12 @@ Phase 0 of the [`sidekick-ideas`](../../ideas/sidekick-ideas.md) Idea: a new `sp
 
 The Feature is the smallest independently-shippable slice of the Idea. It produces concrete value on its own (a sideline-idea notebook captured without derailing host work) and produces the artifacts every downstream Phase will consume.
 
+## Contents
+
+| Child | Description |
+|---|---|
+| [destination-resolution](destination-resolution/README.md) | Pre-write destination resolution: the host AI agent deliberates which repo the seed belongs to in a multi-repo workspace; the pick is surfaced as an inline confirmation the human accepts or overrides. Ships alongside the `specstudio:relocate-idea` recovery skill. |
+
 ## Problem
 
 While running focused work in `specstudio:ideate`, `specstudio:specify`, or `agent-skills:build`, host agents regularly notice tangential improvement ideas — refactors, missing tests, adjacent features, UX wins — that are out of scope for the current task. Today these get dropped: either the agent derails to chase them, the user is interrupted to triage them, or they are forgotten. None of those outcomes is good.
