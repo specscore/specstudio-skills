@@ -23,9 +23,11 @@ For *when* a host should invoke this skill, read [`shared/sidekick-capture.md`](
 - A host skill (`specstudio:ideate`, `specstudio:specify`, third-party adopter) has detected a sideline idea per `shared/sidekick-capture.md` and is invoking on the host's behalf.
 - A user has typed `/sidekick <one-liner>` directly to park an idea.
 
-## Anti-Pattern: Deliberation at Capture
+## Anti-Pattern: Content-Deliberation at Capture
 
-This skill MUST NOT deliberate the merits of the seed, ask the user follow-up questions, scan existing seeds for content duplicates, or trigger any review pipeline. Deliberation is the consilium's job (a separate Feature, not yet built). If a host invocation arrives that requires deliberation, that is a contract violation in the host — capture the seed and return.
+This skill MUST NOT deliberate the *merits* of the seed, ask follow-up questions about the idea's content, scan existing seeds for content duplicates, or trigger any review pipeline. Content-deliberation (is this idea worth capturing? does it duplicate an existing one? does it need scoping?) is the consilium's job (a separate Feature, not yet built). If a host invocation arrives that requires content-deliberation, that is a contract violation in the host — capture the seed and return.
+
+The destination-resolution UX in multi-repo workspaces (see [Destination resolution](#destination-resolution-multi-repo-workspaces) below) is NOT content-deliberation: it is a pre-write confirmation of *where* the seed is durably stored, never *whether* it should be. The skill still writes (or aborts cleanly) on a single user response; no follow-up clarifying questions about the idea's substance ever happen.
 
 ## Input
 
@@ -71,9 +73,125 @@ if [ ${#slug} -gt 60 ]; then
 fi
 ```
 
+## Destination resolution (multi-repo workspaces)
+
+Implements [`sidekick-capture/destination-resolution`](../../spec/features/sidekick-capture/destination-resolution/README.md). The output of this section is `<destination-repo-root>` — the absolute path of the repo the seed will be written into. Every subsequent section (Collision disambiguation, Writing the seed file, Output) uses that value.
+
+In a **single-repo workspace** (the source project is the only `specscore.yaml`-bearing directory in its parent), this entire section is skipped: `<destination-repo-root>` is the source project root, and the skill goes directly to "Collision disambiguation". Today's behavior preserved.
+
+### Step 1 — Sibling-dir scan (REQ `sibling-dir-scan`)
+
+Before any seed-file write, scan the parent of the source project for sibling repos containing `specscore.yaml`:
+
+- Walk the source project's parent directory (`..`).
+- For each immediate-child entry:
+  - **Skip** if the name starts with `.` (hidden dirs like `.git`, `.synchestra`).
+  - **Skip** if the entry is a symlink whose target resolves outside `..` (no symlink-out follows).
+  - **Include** if the entry is a directory containing a `specscore.yaml`.
+- Always include the source project itself as a candidate (unconditional).
+
+The scan MUST complete in under 500ms for ≤20 siblings. For each candidate, read its `specscore.yaml` and capture `project.repo` — that's the candidate identity used downstream.
+
+If **zero siblings** are matched (only the source project is a candidate), skip every step below this and proceed to "Collision disambiguation" using the source project root as `<destination-repo-root>`. REQ `single-repo-bypass`.
+
+If **≥1 siblings** are matched, continue to step 2.
+
+### Step 2 — Invoke the deliberation helper (REQ `invokes-helper-before-write`)
+
+Read [`shared/destination-resolution.md`](../shared/destination-resolution.md) and assemble the prompt by substituting:
+
+- `<seed-one-liner>` in section (a): the user's actual one-liner (verbatim, no normalization).
+- The candidates table in section (b): one row per candidate, with `project.repo` from each candidate's `specscore.yaml` and the names of its top-level `spec/features/*/` directories (comma-separated, capped at 10 with `, …` truncation; `(no Features)` when empty).
+
+Pass the assembled prompt to the host AI agent. No seed file is written until this and the confirmation UX complete.
+
+### Step 3 — Parse the agent's response (REQ `parses-agent-response`)
+
+Parse per the helper's section (c) contract:
+
+- **Exactly one line.** Multi-line response → malformed.
+- **≤120 characters total** (counting the `; ` separator and reason).
+- **Shape `<repo>; <reason>`** — `<repo>` (case-insensitive, whitespace-trimmed) MUST match exactly one candidate's `project.repo`.
+- The literal token **`UNCERTAIN`** (case-sensitive, alone on its line, no other content) is the helper's section (d) escape clause.
+
+Routing:
+
+- Well-formed → step 5 (pick-with-reason confirmation).
+- Malformed OR `UNCERTAIN` → step 4 (one retry).
+
+### Step 4 — Retry, then fall through (REQ `malformed-or-uncertain-response`)
+
+On the FIRST malformed/`UNCERTAIN` response only, re-invoke the helper. Same assembled prompt, with this corrective instruction appended at the end of the prompt body:
+
+> Your previous response was unparseable; reply EXACTLY in `<repo>; <reason>` ≤120 chars, where `<repo>` is one of: `<comma-separated-candidate-slugs>`.
+
+Parse the retry per step 3.
+
+- Well-formed → step 5.
+- Malformed OR `UNCERTAIN` (second time) → step 6 (ask-without-pre-fill).
+
+There is NO second retry. The agent gets two chances; the user picks next.
+
+### Step 5 — Pick-with-reason confirmation (REQ `shows-pick-with-reason`)
+
+Display this exact line to the user (whitespace and punctuation literal):
+
+```
+Routing to <repo> because <reason> — press enter to accept, type other to override.
+```
+
+Where `<repo>` is the parsed pick and `<reason>` is the agent's parsed reason verbatim (including the agent's own punctuation choices). The prompt MUST appear as the next message in the host conversation and MUST block further sidekick progress until user input arrives.
+
+On user input:
+
+- **Empty input** (whitespace-only, including bare enter): route to the agent's picked candidate. `<destination-repo-root>` becomes that candidate's path. Proceed to "Collision disambiguation". REQ `accepts-enter-as-route-to-agent-pick`.
+- **Non-empty input**: treat as an override per step 7.
+
+### Step 6 — Ask-without-pre-fill (REQ `shows-ask-without-pre-fill`)
+
+Display the candidate list followed by the prompt line. Format (whitespace and punctuation literal):
+
+```
+1. <repo-slug-1>
+2. <repo-slug-2>
+3. <repo-slug-3>
+...
+Type a number, a repo slug, or a path to override — or press enter to abort the capture.
+```
+
+Each `<repo-slug-N>` is a candidate's `project.repo`. Ordering: source project FIRST, then siblings alphabetically by `project.repo`. Block until user input arrives.
+
+On user input:
+
+- **Empty input** (whitespace-only): abort the capture. REQ `enter-aborts-in-ask-flow`. The skill MUST NOT write a seed file, MUST NOT emit the `sidekick-idea.captured` event, and MUST print one short line:
+  ```
+  Capture aborted: no destination chosen.
+  ```
+  Exit 0 (clean abort, not an error).
+- **Numeric input `N` where 1 ≤ N ≤ candidate-count**: route to that list position. `<destination-repo-root>` becomes that candidate's path. Proceed to "Collision disambiguation". REQ `accepts-numbered-selection-in-ask-flow`.
+- **Numeric input out of range, or any non-numeric non-empty input**: treat as an override per step 7.
+
+### Step 7 — Override (REQ `accepts-override-input`)
+
+Applies to both step 5 (pick-with-reason) and step 6 (ask-without-pre-fill) when input is non-empty and not a list-position number.
+
+Interpret per the same form rules as the [`cli/idea/relocate --to-repo`](https://github.com/specscore/specscore-cli/blob/main/spec/features/cli/idea/relocate/README.md#req-target-repo-resolution) flag — `/` is the discriminator:
+
+- **No `/` in input** → repo slug. Match against the sibling-dir scan result (step 1) by `project.repo`:
+  - **Single match** → use that repo as `<destination-repo-root>`. Proceed to "Collision disambiguation".
+  - **Zero matches** → display `No SpecScore-managed candidate has project.repo=<input>. Try one of: <comma-separated-candidate-slugs>, or a path containing /.` and **re-display the same confirmation prompt** the user was on (step 5 or step 6).
+  - **Multiple matches** → display `Multiple candidates declare project.repo=<input>: <paths>. Use a path with / to disambiguate.` and re-display the same prompt.
+- **`/` in input** → path. Resolve relative to the source project root (or absolute if starting with `/`). The path MUST be a directory containing a `specscore.yaml`:
+  - **Valid path** → use that directory as `<destination-repo-root>`. Proceed to "Collision disambiguation".
+  - **Path missing, not a directory, or lacks `specscore.yaml`** → display `<input> is not a SpecScore-managed directory (no specscore.yaml at that path).` and re-display the same confirmation prompt.
+
+No seed file is written on invalid override. Re-prompts always use the SAME confirmation form the user was on (don't switch flows mid-resolution).
+
 ## Collision disambiguation (REQ `writes-seed-artifact`)
 
-If `spec/ideas/seeds/<slug>.md` already exists:
+The destination directory is `<destination-repo-root>/spec/ideas/seeds/` — `<destination-repo-root>` is the repo resolved by [Destination resolution](#destination-resolution-multi-repo-workspaces), or the source project root when that section was skipped (single-repo workspace).
+
+If `<destination-repo-root>/spec/ideas/seeds/<slug>.md` already exists:
 
 1. Try `<slug>-2.md`. If that exists, try `-3`, `-4`, …
 2. Use the first available suffix.
@@ -125,15 +243,15 @@ Total length of the body region (everything after the closing `---`, inclusive o
 
 ## Writing the seed file (REQ `writes-seed-artifact`)
 
-1. Ensure `spec/ideas/seeds/` exists; create it if not:
+1. Ensure `<destination-repo-root>/spec/ideas/seeds/` exists; create it if not:
 
    ```bash
-   mkdir -p spec/ideas/seeds
+   mkdir -p <destination-repo-root>/spec/ideas/seeds
    ```
 
-2. Write the file at `spec/ideas/seeds/<final-slug>.md` using atomic write semantics (write to a temporary file in the same directory, then rename). This prevents readers from observing a half-written seed.
+2. Write the file at `<destination-repo-root>/spec/ideas/seeds/<final-slug>.md` using atomic write semantics (write to a temporary file in the same directory, then rename). This prevents readers from observing a half-written seed.
 
-3. The skill MUST return the relative seed path on success.
+3. The skill MUST return the seed path relative to `<destination-repo-root>` on success.
 
 ## Source-artifact back-link (REQs `writes-back-link-to-source-artifact`, `source-artifact-path-resolution`, `back-link-section-format`, `back-link-best-effort`)
 
@@ -235,13 +353,15 @@ Per `synchestra-events.md`:
 
 ## Output (success)
 
-On success, the skill prints one short line that the host echoes verbatim:
+On success, the skill prints one short line that the host echoes verbatim (REQ `post-write-success-line`):
 
 ```
 Captured: <slug> at spec/ideas/seeds/<slug>.md
 ```
 
-It returns the relative seed path as its programmatic return value.
+The path is relative to `<destination-repo-root>`. The destination repo identity is already visible to the user from the pre-write confirmation UX (multi-repo workspaces) or implicit in cwd (single-repo); the success line confirms the write completed at that destination.
+
+It returns the relative seed path as its programmatic return value. The `sidekick-idea.captured` event payload's `path` field reflects the seed's path within the resolved destination repo (per the existing [REQ:emits-captured-event](../../spec/features/sidekick-capture/README.md#req-emits-captured-event)).
 
 ## Output (error)
 
@@ -259,6 +379,8 @@ These patterns indicate misuse of this skill; refuse or refactor:
 ## References
 
 - [`shared/sidekick-capture.md`](../shared/sidekick-capture.md) — when and why hosts invoke this skill.
+- [`shared/destination-resolution.md`](../shared/destination-resolution.md) — the deliberation-prompt template invoked from "Destination resolution" step 2.
 - [`shared/synchestra-events.md`](../shared/synchestra-events.md) — event envelope and emission transport.
 - [`references/seed-template.md`](references/seed-template.md) — example seed files.
-- [Feature: `sidekick-capture`](../../spec/features/sidekick-capture/README.md) — the spec this skill implements.
+- [Feature: `sidekick-capture`](../../spec/features/sidekick-capture/README.md) — the parent spec this skill implements.
+- [Feature: `sidekick-capture/destination-resolution`](../../spec/features/sidekick-capture/destination-resolution/README.md) — the sub-Feature for the multi-repo destination-resolution flow.
