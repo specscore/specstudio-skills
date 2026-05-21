@@ -35,6 +35,14 @@ Each in-line phase consumes the previous phase's lint-clean artifact and gates t
 | `review` | Roadmap | Multi-axis review of code against the Feature it claims to satisfy. |
 | `ship` | Roadmap | Pre-launch checklist gated on verify + review passing. |
 
+### Recovery & tooling
+
+Skills outside the lifecycle spine — invoked on demand to recover from misroutes or operate on existing SpecScore artifacts.
+
+| Skill | Status | Purpose |
+|---|---|---|
+| [`relocate-idea`](./relocate-idea/SKILL.md) | Shipped | Relocate an Idea or sidekick-seed from the current repo to another SpecScore-managed repo. Thin shell over the `specscore idea relocate` CLI verb; appends a best-effort mismatch-log line on success. |
+
 ### Status definitions
 
 - **Shipped** — Skill folder exists at `skills/<name>/` with a working `SKILL.md`. Usable today via Claude Code.
@@ -114,6 +122,18 @@ Scope TBD. Next step: `ideate` it.
 The skill that runs the pre-launch checklist, gated on `verify` and `review` having passed.
 
 Scope TBD. Next step: `ideate` it.
+
+## Recovery & tooling
+
+### `relocate-idea` — Shipped
+
+A thin shell over the [`specscore idea relocate`](https://github.com/specscore/specscore-cli/blob/main/spec/features/cli/idea/relocate/README.md) CLI verb. Relocates an Idea (`spec/ideas/<slug>.md`) or sidekick seed (`spec/ideas/seeds/<slug>.md`) from the current repo to another SpecScore-managed repo. The CLI handles every mechanic — pre-flight clean-tree checks, file copy + in-file rewrite, cross-repo link cleanup, per-repo commits, rollback on failure. The skill's job is argument collection, shell-out, verbatim output surfacing, and a single best-effort mismatch-log line on success.
+
+- **Output:** the CLI verb's per-repo lines plus summary (verbatim), and one JSON line appended to `.synchestra/destination-resolution-log.jsonl` in the source repo's cwd on exit 0.
+- **Triggers:** `specstudio:relocate-idea`, `/relocate-idea`, "relocate this idea", "move this seed to another repo".
+- **Gate:** `specscore` must be on PATH (delegate install to `/specscore:install` if missing). The skill surfaces the CLI's exit code verbatim — no paraphrasing of rollback commands on commit failure.
+- **Companion Feature:** [`sidekick-capture/destination-resolution`](../spec/features/sidekick-capture/destination-resolution/README.md) — defines this skill alongside the sidekick pre-write destination-resolution hook.
+- **Source:** [`relocate-idea/SKILL.md`](./relocate-idea/SKILL.md)
 
 ## `shared/`
 
