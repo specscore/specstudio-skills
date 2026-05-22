@@ -67,7 +67,7 @@ A single approved SpecScore Feature at `spec/features/third-party-integration/` 
 - **Dependencies:** [`spec/research/ideate-vs-brainstorming-skills-analysis.md`](../research/ideate-vs-brainstorming-skills-analysis.md) §6, §7.2, and §11.1 — the analysis that surfaced the three-shape taxonomy and the §11.1 visual-companion options. No blocking in-flight work; this Idea can be specified independently.
 - **Consumed by:** [`spec/ideas/specstudio-init-skill.md`](specstudio-init-skill.md) — the proposed `specstudio:init` skill consumes the canonical Producer-shape instruction snippet defined by this Feature, installing it into the appropriate platform agent-instructions file (`CLAUDE.md` / `AGENTS.md` / `GEMINI.md`). The two Ideas are independent — this one defines the snippet text and the integration rules; the init Idea defines how a project is bootstrapped end-to-end including the snippet install step.
 
-## Outstanding Questions
+## Open Questions
 
 - **Reviewer registration mechanism — pick one of three at spec time.** Candidates: (a) project-level config file (e.g. `.synchestra/reviewers.yaml`); (b) plugin manifest entries declared by the third-party skill pack itself; (c) convention-based directory discovery (e.g. scan `spec/reviewers/<name>/` for prompts). The decision needs to be made during `specstudio:specify`, not deferred again.
 - **Does the contract apply to non-Claude agents (Cursor, Copilot, Gemini CLI, Codex)?** Each platform handles skills differently; the contract may need platform-conditional clauses or may explicitly scope to Claude-compatible runtimes for MVP.

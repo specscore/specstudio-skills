@@ -51,7 +51,7 @@ The root `README.md` MUST contain a section heading `## Contributing` with body 
 **When** I read root `README.md`,
 **Then** the file contains a `## Contributing` H2 section, and its body text contains both `CONTRIBUTING.md` and `CHANGELOG.md` as link targets (relative markdown link syntax).
 
-## Outstanding Questions
+## Open Questions
 
 - **Fixture lifecycle.** This Feature exists for one-shot dogfooding. Should it be `**Supersedes:**`-ed by a follow-on, or simply transitioned to `**Status:** Deprecated` after the test completes? Recommendation: Deprecated, with a note linking to the dogfood findings.
 

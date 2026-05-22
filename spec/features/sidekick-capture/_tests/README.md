@@ -29,7 +29,7 @@ Rehearse stubs validating the [Sidekick Capture feature](../README.md). Each stu
 
 See [_skipped.md](_skipped.md) for ACs whose verification depends on multi-turn agent behavior and is covered by manual transcript review.
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.
 

@@ -16,8 +16,7 @@ This directory contains the SpecScore-formatted specifications that drive SpecSt
 
 All artifacts under `spec/` follow [SpecScore](https://specscore.org/) conventions and lint clean against `specscore spec lint`. Where the layout prescribed by `specstudio:specify` conflicts with `specscore` lint rules, **SpecScore wins**.
 
-## Outstanding Questions
-
+## Open Questions
 None at this time.
 
 ---

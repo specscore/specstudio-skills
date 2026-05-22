@@ -221,7 +221,7 @@ At-a-glance summary of which shape may write to which path. Authoritative requir
 
 **No Rehearse stubs scaffolded.** This Feature defines a contract — its acceptance criteria are doc-only normative rules and process discipline, not runtime behavior with CLI / HTTP / pure-function / data / UI-selector / filesystem / event surfaces. The closest testable surface (registry entries in `specscore.yaml` parsing correctly) belongs to a downstream Feature once `specstudio:specify` is updated to consume `reviewers:`. Future Rehearse coverage attaches to that consumer Feature, not to this contract definition.
 
-## Outstanding Questions
+## Open Questions
 
 - **Concrete schema of additional `reviewers:` entry fields.** This Feature pins `name`, `prompt`, and optional `description`. Future fields (`applies_to:` for scoping which artifact types a reviewer reviews; `severity_overrides:` for tuning blocker/advisory thresholds; `enabled:` for soft-disabling without removing the entry) are deferred until the first concrete reviewer beyond the baseline ships and the consuming need is real. Track signal; revise additively when needed.
 - **Where does the `Producer-shape brainstorming integration example` actually live?** This contract enables Superpowers `brainstorming` integration via the pasted snippet, but does not provide an example of what the produced draft looks like or how the handoff prompt renders. Likely a follow-on doc — under `docs/` (prose), not under `spec/` — once the snippet is authored and tested against a real `brainstorming` invocation.

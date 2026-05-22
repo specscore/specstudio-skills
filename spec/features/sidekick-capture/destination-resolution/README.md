@@ -276,7 +276,7 @@ Given the CLI verb exits `0`, the skill appends one JSON-formatted line to `.syn
 
 Given the CLI verb exits `0` but the log file is unwritable (e.g., disk full, `.synchestra/` is read-only), the skill displays a single warning line to the host conversation and exits with the CLI's exit code (still `0`). The relocate's success is not masked.
 
-## Outstanding Questions
+## Open Questions
 
 - **Non-interactive invocation.** The inline confirmation UX assumes a human is reachable via the host conversation. How should sidekick behave when invoked from a non-interactive context (CI, scripted sub-agent, headless automation)? A `--no-prompt` flag that auto-accepts the agent's pick is the obvious answer but the source Idea did not enumerate this case; defer until a concrete non-interactive use case appears.
 - **Seed frontmatter deliberation-context capture.** Should the seed's frontmatter optionally record the deliberation context (agent's pick, agent's reason, user-accepted vs. overrode) for retrospective debugging beyond the mismatch log? Lean: no for v1 — frontmatter is for cross-tool query of stable artifact identity, not for session-specific decision context. The mismatch log already captures the actionable signal (the move-to-correct delta). Revisit if prompt-tuning needs richer ground truth than the log provides.

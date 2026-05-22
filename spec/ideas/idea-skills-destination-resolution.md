@@ -121,7 +121,7 @@ Out of scope for MVP:
 - **Dependencies:**
   - Cross-repo coordination with `specscore/specscore-cli` to ship the `idea relocate` verb. **CLI verb lands first** (likely behind an "experimental" flag); skill changes in this repo land after, depending on a pinned CLI version.
 
-## Outstanding Questions
+## Open Questions
 
 - **Deliberation-prompt wording.** The exact prompt text (within the constraints already locked: includes candidates' `project.title` + Feature dir names, instructs single-line output `<repo>; <reason>` ≤120 chars) is a Feature-spec deliverable. Iterate via replay-testing against captured seeds.
 - **Mismatch-log record fields.** Schema deferred to Feature-spec time; not load-bearing for MVP.

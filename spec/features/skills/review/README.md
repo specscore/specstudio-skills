@@ -24,7 +24,7 @@ This is intent, not contract. The actual scope, axes, severity scale, and gate s
 
 Not defined yet.
 
-## Outstanding Questions
+## Open Questions
 
 - Acceptance criteria not yet defined for this feature.
 - Does `review` produce a verdict (pass/fail/conditional) or only findings (leaving the verdict to a human)?

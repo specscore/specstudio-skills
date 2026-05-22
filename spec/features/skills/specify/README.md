@@ -325,7 +325,7 @@ Every AC has a recorded Rehearse decision: either a scaffolded stub at `spec/fea
 
 The skill never transitions to any skill other than `writing-plans`. When the user wants to change an existing Feature, revise-in-place is the default; supersede is reserved for scope changes that invalidate existing ACs and is the user's explicit choice.
 
-## Outstanding Questions
+## Open Questions
  Currently the spec lists three examples (missing Source Ideas, non-G/W/T ACs, empty Outstanding Questions); the canonical list should live in `shared/specscore-lint-rules.md` and be referenced.
 - ~~**Reviewer registration mechanism.**~~ **Resolved by [`third-party-integration`](../../third-party-integration/README.md)** (`reviewer-registration-mechanism` REQ): reviewers register through a `reviewers:` extension key inside the project's `specscore.yaml`. The contract for entry shape, prompt-location constraints, and AND-composition lives in that Feature; the consumer-side wiring lives in [`skills/specify/SKILL.md`](../../../../skills/specify/SKILL.md) under `## Reviewer Subagent`.
 - **When does the reviewer concept earn its own Feature?** The built-in reviewer is currently described in this Feature plus a prose prompt at `skills/specify/references/reviewer-prompt.md`. Once a second reviewer ships, or once the baseline blocker list grows past ~8 entries, promote the reviewer to its own SpecScore Feature at `spec/features/spec-document-reviewer/` (sibling, not sub-feature, since `plan` and `ship` may also load reviewers).

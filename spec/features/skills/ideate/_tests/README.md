@@ -24,7 +24,7 @@ Scenarios validating the [Ideate Skill feature](../README.md). Each scenario ref
 | [clear-intent-hands-off-to-specify.md](clear-intent-hands-off-to-specify.md) | `ideate#ac:skip-condition-respected` |
 | [manual-promotes-to-edit-rejected.md](manual-promotes-to-edit-rejected.md) | `ideate#ac:promotion-boundary-held` |
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.
 

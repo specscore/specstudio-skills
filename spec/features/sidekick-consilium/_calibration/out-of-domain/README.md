@@ -4,7 +4,7 @@
 
 See [../README.md](../README.md) for the full calibration set's purpose and the running instructions.
 
-## Outstanding Questions
+## Open Questions
 
 - None at this time.
 

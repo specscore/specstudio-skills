@@ -593,7 +593,7 @@ Skipped (process gate, not a runtime AC):
 
 Rehearse stubs are scaffolded with `**Status:** pending`; authoring the actual scenario steps follows the implementation plan.
 
-## Outstanding Questions
+## Open Questions
 
 - **`consilium.auto_promote` schema reservation.** Phase 2 will add this block to `specscore.yaml`. Should Phase 1 explicitly *reserve* the key (lint warns on unknown sub-keys today) or wait for Phase 2 to add the schema entry? Tentative: wait; the additive schema-update pattern doesn't need preemption.
 - **Custom-role security in multi-tenant scenarios.** Phase 1 reads custom-role files as prompt text (never executes anything), but a malicious or adversarial custom prompt could (a) leak data, (b) systematically vote `should-implement` to game Phase 2 auto-promote, (c) impersonate a default role. Phase 1 mitigations: roster validation + name-collision detection. Phase 2+: signing/attestation. Resolve only if multi-tenant scenarios materialize.

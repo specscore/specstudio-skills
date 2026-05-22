@@ -46,7 +46,7 @@ Create a new file `CHANGELOG.md` at repo root with a top-level `# Changelog` hea
 
 Add a new `## Contributing` H2 section to root `README.md`, placed after the existing `## Status` section and before the `## License` section. Body text: one paragraph linking to both `CONTRIBUTING.md` (for the contribution workflow) and `CHANGELOG.md` (for release history) via relative markdown links. Keep it brief — a discoverability pointer, not a manifesto.
 
-## Outstanding Questions
+## Open Questions
 
 - **Fixture cleanup after dogfood.** This Plan and the dogfood-test Feature are synthetic — they exist to test `implement`, not to persist. After the dogfood completes and findings are recorded, both should be transitioned to `**Status:** Deprecated` (or moved to an archived/ subdirectory). The actual `CONTRIBUTING.md` / `CHANGELOG.md` / README updates produced by the test are useful and stay.
 

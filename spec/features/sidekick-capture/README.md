@@ -361,7 +361,7 @@ Skipped (UX/discipline-shaped, not directly testable):
 
 Rehearse stubs are scaffolded with `**Status:** pending` per the rehearse-heuristic; authoring the actual scenario steps follows the implementation plan.
 
-## Outstanding Questions
+## Open Questions
 
 - **One-liner length cap (500 chars).** Picked to comfortably fit a "what + brief context" capture (e.g., "persist debug logs across restarts so post-mortems don't lose context — three places we wished we had session-level logs that survived a `/clear`") while still discouraging full paragraphs that should be the body, not the one-liner. Not anchored to a concrete external constraint. If real captures routinely brush the cap, raise it; if real captures average ≤ 80 chars, leave it. Validate after a week of use.
 - **Seeds-directory pre-creation by `init`.** Deferred per Not Doing. If a future adopter is surprised by the directory appearing only on first capture, revisit and add to `specstudio:init`'s scaffolding.

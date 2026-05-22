@@ -16,7 +16,7 @@ Plans here are authored by `superpowers:writing-plans` today and will be authore
 | [sidekick-consilium-arbiter-companion](sidekick-consilium-arbiter-companion.md) | — | Cross-repo companion stub: the `specscore consilium verdict` subcommand lives in `synchestra-io/specscore-cli`. |
 | [sidekick-consilium-task-companion](sidekick-consilium-task-companion.md) | — | Cross-repo companion stub: the `consilium-review` task type lives in `synchestra-io/synchestra`. |
 
-## Outstanding Questions
+## Open Questions
 
 - None at this time.
 

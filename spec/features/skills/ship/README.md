@@ -24,7 +24,7 @@ This is intent, not contract. The actual scope, gate definitions, and deploy-coo
 
 Not defined yet.
 
-## Outstanding Questions
+## Open Questions
 
 - Acceptance criteria not yet defined for this feature.
 - Does `ship` actually deploy, or only run the checklist and hand off to a separate deploy tool (e.g., `gh-deploy`)?

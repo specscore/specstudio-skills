@@ -399,7 +399,7 @@ Skipped (UX/discipline-shaped, not directly testable):
 
 Rehearse stubs are scaffolded with `**Status:** pending` per the rehearse-heuristic; authoring the actual scenario steps follows the implementation plan.
 
-## Outstanding Questions
+## Open Questions
 
 - **Wizard question wording.** This Feature pins question count (3–5), the fixed set, and that defaults are visible — but not the exact prompt strings or option labels. Wording is implementation-time work; the next skill (`writing-plans`) decides whether to lock copy in the plan or leave it to the implement phase. Track signal post-MVP if adopters report specific prompts as confusing.
 - **Delegation-refactor sequencing for ideate/specify.** This Feature notes the future delegation refactor (`ideate` and `specify` calling into `init` for their lazy-bootstrap paths) as out of MVP scope. The sequencing question — does the refactor become a sub-Feature of this one, or its own Feature `skills/lazy-bootstrap-delegation/`? — is deferred. Decide when at least one consumer Feature actually adopts the refactor.

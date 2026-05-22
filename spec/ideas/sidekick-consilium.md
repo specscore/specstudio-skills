@@ -93,7 +93,7 @@ A user with N queued seeds in `spec/ideas/seeds/` runs `/consilium` once, sees N
   - Cross-repo dependency on `synchestra-io/synchestra` for the `consilium-review` task type. Same companion-plan pattern.
   - Soft dependency on Phase 0 (`sidekick-capture`) actually being deployed in target projects — seeds need to exist before the consilium can drain them.
 
-## Outstanding Questions
+## Open Questions
 
 - **Custom-role definition contract.** A project's `consilium.roster.custom` entry points at a markdown file. What MUST that file contain? Tentative shape: YAML frontmatter (`name`, `group`, `output_schema_version`) + a prompt body + an example vote. Resolve at Feature spec time; should align with the default-role file format so the contract is uniform.
 - **Custom-role security and sandboxing.** Loading a custom role from a path doesn't execute anything (markdown is read into the agent prompt as text), but a malicious or poorly-written custom prompt could (a) leak data, (b) systematically vote `should-implement` to game auto-promote, or (c) impersonate a default role. Phase 1 mitigations: roster validation + name-collision detection. Phase 2+ mitigation: signing/attestation. Resolve the signing question only if multi-tenant scenarios materialize.

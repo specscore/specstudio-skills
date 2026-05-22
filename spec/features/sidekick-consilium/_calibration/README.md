@@ -39,7 +39,7 @@ synchestra task list --type consilium-review --status complete
 
 For each verdict, the human reviewer notes whether they would have made the same call. Calibration passes if ≥ 95% match.
 
-## Outstanding Questions
+## Open Questions
 
 - None at this time.
 

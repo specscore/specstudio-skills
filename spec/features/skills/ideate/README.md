@@ -276,7 +276,7 @@ When the user can articulate the problem, recommended direction, and Not-Doing b
 
 The skill never edits `**Promotes To:**`, never scaffolds a Feature, and never modifies an existing Feature. Promotion requests are routed to `specstudio:specify`.
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.
 

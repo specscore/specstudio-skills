@@ -24,7 +24,7 @@ This is intent, not contract. The actual scope, output format, gate semantics, a
 
 Not defined yet.
 
-## Outstanding Questions
+## Open Questions
 
 - Acceptance criteria not yet defined for this feature.
 - What is the canonical report format — JSON, Markdown, both?

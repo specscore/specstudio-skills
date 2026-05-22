@@ -61,7 +61,7 @@ A two-week change to the `plan` skill in this repo: add the `--trivial` flag, th
 - **Existing Features affected:** The Feature(s) describing the `specstudio:plan` skill — schema for Plan body metadata gains an optional `**Mode:**` line; the `## Tasks` section gains a permitted placeholder body form. `specstudio:implement` (when designed) needs a "replace placeholder + emit `plan.updated`" contract baked in from day one.
 - **Dependencies:** None blocking. The MVP can ship before `specstudio:implement` exists — placeholders just stay until the user manually replaces them, gated by "no placeholders in Approved plans." Benefits significantly from `implement` once that lands.
 
-## Outstanding Questions
+## Open Questions
 
 - Is the trivial-mode marker a Plan body metadata line (`**Mode:** trivial`), a flag implicit in the placeholder presence, or both? Body metadata is more discoverable and lintable; implicit is less ceremony.
 - What is the exact placeholder token? Candidates: `<!-- implement: pending -->` (HTML comment, machine-friendly, invisible in rendered markdown) vs. `**Implementation:** _pending_` (visible, scannable in a rendered Plan). Visibility trades off against "looks like a real, incomplete plan to a casual reader."

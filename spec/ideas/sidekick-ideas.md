@@ -113,7 +113,7 @@ MVP success is measured by running the consilium on 5–10 real seeds captured d
   - `specscore` CLI (idea/feature/lint already present; `consilium verdict` is new).
   - Claude Code `Agent` tool with `run_in_background` and parallel-tool-use support (already available).
 
-## Outstanding Questions
+## Open Questions
 
 - **Seed → Idea promotion path.** Do approved seeds flow `seed → spec/ideas/<slug>.md (via specstudio:ideate) → Feature`, or `seed → Feature` directly when the verdict is strong enough? The first preserves the refinement step; the second is faster. Likely answer: strong-verdict seeds skip the Idea step; weak-but-interesting seeds promote into Ideas for further ideation.
 - **Roster override surface.** Per-project `specscore.yaml` is decided (the arbiter's CLI owns the config — see Phase 1 sub-Idea `sidekick-consilium`). Open: do we also allow per-invocation overrides (`/consilium --without security,ops`)? Pro: useful for cost control on small seeds. Con: undermines the "fixed default" guarantee.

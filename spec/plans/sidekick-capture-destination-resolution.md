@@ -72,7 +72,7 @@ Author a new skill file at `skills/relocate-idea/SKILL.md` with standard frontma
 
 When the CLI verb exits `0`, append exactly one JSON line to `.synchestra/destination-resolution-log.jsonl` in the user's cwd at relocate-skill invocation time (the misfiled-artifact repo, not the target repo). The directory is created lazily if absent. The JSON line carries at minimum `ts`, `kind`, `slug`, `original_repo`, `correct_repo`; consumers tolerate unknown fields. On log-write failure (read-only path, disk full, etc.), display a single warning line to the host conversation, do NOT mask the relocate's success, and propagate the CLI's exit code (still `0`) without modification.
 
-## Outstanding Questions
+## Open Questions
 
 - Should the helper-prompt replay-test corpus be assembled as part of this Plan, or is it implementation-time / dogfooding work? Recommended: implementation-time. The Plan's responsibility ends at "helper file exists and conforms to contract"; iterating the wording against real captures is dogfooding once Task 7 ships. Resolve in Task 1.
 - The `specstudio:relocate-idea` skill's `--no-commit` pass-through: does the skill detect `--no-commit` in its trigger arguments, or only when the user explicitly types the flag in the same form the CLI verb expects? Recommended: the skill accepts `--no-commit` verbatim and forwards it; no synonym handling in v1. Resolve in Task 8.

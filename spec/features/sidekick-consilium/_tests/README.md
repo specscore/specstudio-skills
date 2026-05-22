@@ -36,7 +36,7 @@ Rehearse stubs validating the [Sidekick Consilium feature](../README.md). Each s
 
 See [_skipped.md](_skipped.md) for the `calibration-set-passes-95-percent` AC, which is a manual quality gate on the Phase 1 ship decision rather than a runtime observable.
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.
 

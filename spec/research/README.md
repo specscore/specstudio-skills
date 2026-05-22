@@ -15,8 +15,7 @@ Long-form research notes informing SpecStudio's design. These are not Features â
 
 Research notes are prose-first and may reference upstream URLs, screenshots, and comparison tables. They lint as plain documents â€” no SpecScore body-metadata header or acceptance criteria are required because they are not contracts.
 
-## Outstanding Questions
-
+## Open Questions
 None at this time.
 
 ---

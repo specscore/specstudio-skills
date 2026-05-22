@@ -24,7 +24,7 @@ This is intent, not contract. The actual scope, drift-detection rules, and outpu
 
 Not defined yet.
 
-## Outstanding Questions
+## Open Questions
 
 - Acceptance criteria not yet defined for this feature.
 - What constitutes "drift" precisely — only behavioral divergence, or also stylistic/architectural choices?

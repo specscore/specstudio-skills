@@ -512,7 +512,7 @@ The skill MUST NOT yes-machine weak Plans. When a task is too vague, an AC is un
 **When** the reviewer subagent runs,
 **Then** the reviewer returns `Issues Found` with a blocker citing the inconsistency between Plan-stated Status and git-log authority, names the specific AC slug, and tells the user to either rerun `specstudio:implement` to refresh the Status or investigate why the commit is missing.
 
-## Outstanding Questions
+## Open Questions
 
 - **Plan-specific lint rule registry.** This Feature reserves `P-001` (AC coverage gap), `P-002` (stale AC reference), `P-003` (Depends-On cycle / dangling reference / self-reference / non-linear numbering), and `P-004` (placeholder body on done-status task in stub Plan + invalid `**Mode:**`/`**Status:**` token values). **Cross-repo dependency resolved:** all four rules and the parser extensions (`**Mode:**`, `**Status:**`, `**Depends-On:**`, the canonical placeholder body token) are shipped on [`specscore-cli@main`](https://github.com/specscore/specscore-cli) under Feature `cli/spec/lint/plan-rules` (unreleased at commit 76b6b29 as of 2026-05-19; early adopters install from source via `go install`). Tracked-and-completed in sidekick seed [`specscore-cli-companion-implement-plan-feature-lint-rules`](../../../ideas/seeds/specscore-cli-companion-implement-plan-feature-lint-rules.md).
 - **Rehearse integration.** The MVP explicitly omits Rehearse stub scaffolding (deferred per the source Idea). Once Rehearse's markdown format stabilizes, a follow-on Feature should specify how a `**Verifies:**` AC ID links to its Rehearse scenario file under the source Feature's `_tests/` directory.

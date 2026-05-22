@@ -16,7 +16,7 @@ Pre-spec one-pagers for SpecStudio. Each Idea is the output of `specstudio:ideat
 | [specstudio-plan-skill](specstudio-plan-skill.md) | Implementing | 2026-04-20 | alexander.trakhimenok | skills/plan |
 | [third-party-skill-integration-contracts](third-party-skill-integration-contracts.md) | Implementing | 2026-05-08 | alexander.trakhimenok | third-party-integration |
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.
 

@@ -96,7 +96,7 @@ This diagram is duplicated from [`skills/README.md`](../../../skills/README.md) 
 
 Not defined yet.
 
-## Outstanding Questions
+## Open Questions
 
 - Acceptance criteria not yet defined for this feature.
 - Should sub-feature status roll up to this parent? (e.g., once all sub-features reach `Stable`, does `skills` become `Stable`?)

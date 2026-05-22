@@ -529,7 +529,7 @@ The skill MUST NOT yes-machine weak Plans or silently retry blocked subagents. W
 **When** the skill processes the case,
 **Then** the skill names the specific problem with concrete evidence (commit SHA absence, AC slug, file:line, etc.), proposes the alternative resolution, and does not silently retry or auto-fix. The acceptance bar is honest disagreement, not performative agreement.
 
-## Outstanding Questions
+## Open Questions
 
 - **Configurable max-parallel cap.** MVP hardcodes the concurrent-subagent cap at 5. Should this be configurable per project via `specscore.yaml` (e.g., `implement: { max_parallel: 8 }`)? Defer until dogfooding produces a real reason to vary — likely cost/budget management for projects with expensive subagent contexts. The current hardcoded 5 is a balance between parallelism and context-window cost.
 - **Active TDD-skill detection vs passive delegation.** Each subagent's prompt currently *points at* `agent-skills:test-driven-development` / `superpowers:test-driven-development` as a discipline pointer. Should the subagent's prompt actively invoke those skills via Skill-tool calls from inside its own context, or rely on the subagent's natural prompt-following behavior? Active invocation couples to those skills' public surfaces; passive is looser. Spec-time decision OR implementation-time observation.

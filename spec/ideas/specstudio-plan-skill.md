@@ -61,7 +61,7 @@ A two-week spike: implement `specstudio:plan` as a single skill folder under `sk
 - **Existing Features affected:** None yet; `ideate` and `specify` Features are downstream-agnostic. Lint rule namespace (`P-xxx` for Plan) needs to be reserved.
 - **Dependencies:** None blocking. Benefits from, but does not require, a `specscore new plan` CLI scaffold.
 
-## Outstanding Questions
+## Open Questions
 
 - Does the plan slug mirror the source Feature slug 1:1, or can one Feature have multiple Plans (e.g., alternative breakdowns)?
 - Should `plan` emit `plan.drafted` / `plan.approved` events, or reuse the Feature's event stream?

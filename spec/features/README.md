@@ -18,7 +18,7 @@ Feature specifications for the SpecStudio plugin. This index lists every top-lev
 
 The `skills` feature groups one sub-feature per Claude Code skill in the plugin. Today it covers `ideate`, `specify`, `plan`, `implement`, `verify`, `recap`, `review`, and `ship` — all `Draft` until each is refined via `specstudio:ideate` and promoted via `specstudio:specify`. Implementation maturity (which skills actually ship today) is tracked separately in [`skills/README.md`](../../skills/README.md).
 
-## Outstanding Questions
+## Open Questions
 
 - None at this time.
 

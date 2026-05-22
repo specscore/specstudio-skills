@@ -91,7 +91,7 @@ Use these section headings, in this order:
 **When** <action>
 **Then** <observable outcome>
 
-## Outstanding Questions
+## Open Questions
 - <Question to resolve at spec time, or after.>
 ```
 
