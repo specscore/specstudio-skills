@@ -1,6 +1,6 @@
 # Feature: Sidekick Consilium
 
-> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/p/github.com/synchestra-io/specstudio-skills/spec/features/sidekick-consilium?op=explore) | [Edit](https://specscore.studio/app/p/github.com/synchestra-io/specstudio-skills/spec/features/sidekick-consilium?op=edit) | [Ask question](https://specscore.studio/app/p/github.com/synchestra-io/specstudio-skills/spec/features/sidekick-consilium?op=ask) | [Request change](https://specscore.studio/app/p/github.com/synchestra-io/specstudio-skills/spec/features/sidekick-consilium?op=request-change) |
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/specstudio-skills/spec/features/sidekick-consilium?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/specstudio-skills/spec/features/sidekick-consilium?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/specstudio-skills/spec/features/sidekick-consilium?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/specstudio-skills/spec/features/sidekick-consilium?op=request-change) |
 
 **Status:** Approved
 **Date:** 2026-05-18
