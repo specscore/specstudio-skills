@@ -30,7 +30,7 @@ Implement a shared gate-config loader that reads `gates.<skill>.reviewers` from 
 ### Task 2: Gate runner — serial dispatch, AND composition with halt-after-first-failure, rerun policy
 
 **Verifies:** reviewer-gates#ac:serial-dispatch-observed, reviewer-gates#ac:and-composition-blocks-on-any-issues-found, reviewer-gates#ac:rerun-policy-applies-on-structural-fix
-**Status:** pending
+**Status:** done
 **Depends-On:** 1
 
 Implement the gate runner that consumes Task 1's validated reviewer list and executes the dispatch loop: one reviewer at a time in list order, never concurrent, halt-after-first-`Issues Found` within a pass (per the tightened `and-composition` REQ). `type: ai` entries dispatch via the consumer skill's Agent tool with the prompt file as system prompt; `type: human` entries dispatch via the existing approval-phrase recognizer used by `ideate`/`specify`. Aggregate verdicts under AND; surface the first `Issues Found` finding to the user; never silently downgrade Blocker to Advisory. Implement the rerun-policy: on `Issues Found`, after the user's fix re-dispatch every reviewer that previously returned `Issues Found`, AND every reviewer that previously returned `Approved` if the fix touched a structural section (`## Behavior`, `## Architecture`, `## Acceptance Criteria` for Feature artifacts). **Test-harness for `serial-dispatch-observed`:** use a mocked Agent-tool spy that records dispatch start/end timestamps per reviewer entry, then asserts (a) no two start/end intervals overlap, and (b) start order equals registry order — matches the AC's literal "instrumentation that records dispatch start/end timestamps" language and rules out the looser list-order-only reading. Also add a code comment confirming the per-artifact-type extension story for `rerun-policy` (currently scoped to Feature artifacts; other artifact types use their spec's structurally-load-bearing sections).
@@ -70,12 +70,12 @@ Transition `spec/features/skills/review/README.md` to `**Status:** Archived` via
 ### Task 7: Wire visibility links — root `README.md`, skill docs, features index
 
 **Verifies:** reviewer-gates#ac:root-readme-link-present, reviewer-gates#ac:skill-doc-cross-links-present
-**Status:** pending
+**Status:** done
 **Depends-On:** 5
 
 Edit four files: (1) repo-root `README.md` — add at least one link whose href resolves to `spec/features/reviewer-gates/README.md`, and update the pipeline-overview sentence to remove the standalone `review` step (since reviews become stage-internal). (2) `skills/specify/SKILL.md` — add at least one link to the `reviewer-gates` Feature in its reviewer-dispatch section. (3) `spec/features/skills/specify/README.md` — add at least one link to the `reviewer-gates` Feature (likely in the new `### Reviewer gate` topic written in Task 5; coordinate to avoid duplicate linking). (4) `spec/features/README.md` — verify the existing index row for `reviewer-gates` (added when this Feature was approved) has a one-line description; if not, edit to include one. Confirm `specscore spec lint` passes.
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.
 

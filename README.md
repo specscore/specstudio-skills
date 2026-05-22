@@ -2,7 +2,7 @@
 
 **Spec-driven development, by Synchestra.**
 
-AI skills (and a coming Web UI) for efficient spec-driven development — the full lifecycle: **ideate ⇒ specify ⇒ plan ⇒ implement ⇒ verify ⇒ recap ⇒ review ⇒ ship.** SpecStudio turns vague ideas into lintable, testable specifications and gates implementation on those specifications being clear, complete, and approved.
+AI skills (and a coming Web UI) for efficient spec-driven development — the full lifecycle: **ideate ⇒ specify ⇒ plan ⇒ implement ⇒ verify ⇒ recap ⇒ ship.** SpecStudio turns vague ideas into lintable, testable specifications and gates implementation on those specifications being clear, complete, and approved. Reviews are stage-internal — see [Reviewer Gates](spec/features/reviewer-gates/README.md).
 
 This repo (`specstudio-skills`) is the Claude Code plugin surface of SpecScore Studio: skills, commands, and supporting tooling for AI coding agents. The web client lives at [`specstudio-web`](https://github.com/specscore/specstudio-web) (planned) and will deploy to [`specscore.studio`](https://specscore.studio).
 
@@ -55,7 +55,7 @@ Once installed, the three plugins coexist as independent slash-command namespace
 | `specstudio:ideate` | Refine raw ideas into SpecScore Idea artifacts through structured divergent/convergent thinking. Gates on a lint-clean `spec/ideas/<slug>.md` that the user has approved. |
 | `specstudio:specify` | Turn an approved Idea into a SpecScore Feature with requirements and `Given / When / Then` acceptance criteria at `spec/features/<slug>/`. Gates implementation until the Feature is lint-clean and approved. |
 
-More skills covering the rest of the lifecycle (implement, verify, recap, review, ship) are on the roadmap, alongside a web authoring UI at [`specscore.studio`](https://specscore.studio).
+More skills covering the rest of the lifecycle (implement, verify, recap, ship) are on the roadmap, alongside a web authoring UI at [`specscore.studio`](https://specscore.studio).
 
 ## For AI agents working on this repo
 
@@ -117,7 +117,7 @@ Brand spelling: `SpecScore Studio` (formal copy, first mention, contexts where t
 
 The whole tree lints clean against `specscore spec lint`.
 
-**Developed with SpecStudio.** Every skill in this repo was authored using its own siblings: `specstudio:ideate` produced the Ideas, `specstudio:specify` promoted them into Features, and the same `specstudio:*` workflow gates implementation on lint-clean specs and explicit user approval. When a skill needs a new behavior, the loop is: ideate → specify → review → implement → land — same loop SpecStudio asks of its users.
+**Developed with SpecStudio.** Every skill in this repo was authored using its own siblings: `specstudio:ideate` produced the Ideas, `specstudio:specify` promoted them into Features, and the same `specstudio:*` workflow gates implementation on lint-clean specs and explicit user approval. When a skill needs a new behavior, the loop is: ideate → specify → implement → land — same loop SpecStudio asks of its users.
 
 If you want to see the methodology applied at scale, this repo is the reference. If something in the spec tree is sloppy, that's also visible — and that's the point.
 

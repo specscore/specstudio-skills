@@ -191,6 +191,8 @@ Fix inline. Don't re-review; move on.
 
 ## Reviewer Subagent
 
+> **Migration in progress.** Reviewer dispatch is being migrated to the [Reviewer Gates](../../spec/features/reviewer-gates/README.md) contract — see the Feature for the canonical typed-per-stage schema (`gates:` block in `specscore.yaml`), reviewer entry shape (`type: ai`, `type: human`), and AND-composition semantics. The text below describes the legacy pre-migration behavior.
+
 Dispatch the **built-in baseline reviewer** using [reviewer-prompt.md](references/reviewer-prompt.md). It enforces the six baseline blocker categories (scope spans subsystems / unobservable Then / AC coverage gap / architecture↔requirements contradiction / vague REQ / missing source-Idea reasoning). Status must be `Approved` before the user review gate.
 
 **Additional registered reviewers (third-party).** Read `specscore.yaml` at the repo root. If it contains a top-level `reviewers:` extension key (per the [`third-party-integration`](../../spec/features/third-party-integration/README.md) Feature's `reviewer-registration-mechanism` REQ), dispatch each registered reviewer **in addition to** the baseline:
