@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.0.6
+
+- **sidekick multi-repo destination resolution** — `specstudio:sidekick` now resolves which SpecScore-managed repo a captured seed belongs to when multiple repos are open in the workspace, with an `UNCERTAIN` escape clause when identity signals conflict.
+- **relocate-idea skill shipped** — `specstudio:relocate-idea` is a thin shell over `specscore idea relocate` that moves an Idea or sidekick seed to another SpecScore repo and appends one JSON line to `.synchestra/destination-resolution-log.jsonl` for future tuning.
+- **manifest description** — lifecycle arrows in the plugin description use `→` instead of `⇒`.
+
 ## 0.0.5
 
 - **PRINCIPLES.md added** — top-level repo principles doc; first principle is "Respect the user's time and attention" with three operational sub-principles.
