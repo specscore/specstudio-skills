@@ -63,7 +63,16 @@ The calling skill parses the response per [REQ:parses-agent-response](../../spec
 > UNCERTAIN
 > ```
 >
-> (case-sensitive, alone on its line, no other content). The skill will surface a numbered list to the user for manual selection. Use this rather than guessing.
+> (case-sensitive, alone on its line, no other content). The skill will surface a numbered list to the user for manual selection.
+>
+> **Prefer UNCERTAIN over guessing in any of these cases:**
+>
+> - The seed's content describes work that genuinely spans multiple candidates (e.g., a rebrand affecting two repos, a contract change that requires coordinated edits in producer + consumer).
+> - The seed names a specific candidate's slug, but ALSO names a second candidate's slug — the routing is multi-target and there's no single "primary" home.
+> - No candidate's identity signals (its `project.repo` or its Feature directory names) materially differ from another's for this seed — every candidate is an equally plausible (or implausible) host.
+> - The seed's subject area is outside every candidate's apparent scope — none of the candidates' Feature directories suggest a home, and the agent would be inventing a connection.
+>
+> A wrong pick costs the user a relocate ritual; `UNCERTAIN` costs them one extra prompt. The asymmetry favors `UNCERTAIN` whenever any of the above holds.
 
 ---
 
