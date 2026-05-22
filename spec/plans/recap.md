@@ -1,6 +1,6 @@
 # Plan: Recap Skill MVP
 
-**Status:** Approved
+**Status:** Completed
 **Source Feature:** skills/recap
 **Date:** 2026-05-22
 **Owner:** alex
