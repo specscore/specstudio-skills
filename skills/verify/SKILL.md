@@ -24,8 +24,9 @@ Do NOT invoke `specstudio:ideate`, `specstudio:specify`, `specstudio:plan`, `spe
   1. Pre-flight passed: the input slug resolves to `spec/features/<feature-slug>/README.md`, the Feature's `**Status:**` is in `{Approved, Implementing, Stable}`, and the Feature exists at git HEAD (`git cat-file -e HEAD:spec/features/<feature-slug>/README.md` exits zero).
   2. The Feature parsed cleanly via the `specscore` CLI's Feature parser; the ordered AC ID list is available.
   3. The report has been written to `spec/features/<feature-slug>/_verify/<sha>.md` with a fenced ` ```yaml ` summary block followed by one `## AC: <ac-slug>` body section per AC.
-  4. The report has been staged via `git add` (the skill MUST NOT run `git commit`).
-  5. The `verify.completed` event has been emitted exactly once.
+  4. The `_verify/README.md` index has been created (if absent) or updated with the current run's row (if present), per `## Report Format → Index README`.
+  5. Both the report and the `_verify/README.md` index have been staged via `git add` (the skill MUST NOT run `git commit`).
+  6. The `verify.completed` event has been emitted exactly once.
 
 The only skill invoked after `specstudio:verify` is `specstudio:recap` (or — while `recap` is unshipped — a hand-back to the user with the report path and a recommendation to review verdicts manually).
 </HARD-GATE>
@@ -67,11 +68,12 @@ Create a task for each and complete in order:
 5. **Parse the verdict.** Validate per `## Verifier Subagent Contract`. On a malformed first response, re-dispatch the same subagent exactly once with a corrective prompt that quotes the failure (verdict outside `{pass, fail, error}`, missing justification, or justification exceeding 400 characters) and reiterates the verdict contract. On a malformed second response, record the AC's verdict as `error` and MUST NOT call the subagent a third time.
 6. **Tally counts.** Compute `passed_count`, `failed_count`, `unmapped_count`, `errored_count` over the full AC list. Each is a non-negative integer; their sum equals the Feature's total AC count.
 7. **Write the report.** Create `spec/features/<feature-slug>/_verify/` if absent. Write the report file to `spec/features/<feature-slug>/_verify/<sha>.md` per `## Report Format` below.
-8. **Stage the report.** Run `git add spec/features/<feature-slug>/_verify/<sha>.md`. MUST NOT run `git commit`.
-9. **Emit `verify.completed`.** Per `## Event Emission` below. Exactly once per successful run.
-10. **Transition.** Per `## Promotion Boundary` below. Only `specstudio:recap` (or hand-back when `recap` is unshipped).
-11. **Determine exit code.** Per `## Exit Semantics` below. Non-zero iff `failed_count + errored_count > 0`. Otherwise zero.
-12. **Throughout** — watch for sidekick ideas (e.g., a flaky subagent shape, a deferred AC-coverage gap surfacing during verification). When an out-of-scope improvement surfaces, invoke `specstudio:sidekick` with a one-liner, acknowledge in one line, and return to the current checklist step immediately. Do not derail.
+8. **Write or update the `_verify/README.md` index.** Per `## Report Format → Index README` below. If absent, create it with one row in `## Contents`. If present, append one row for the current run, preserving prior rows. Without this step the project's `readme-exists` lint rule will fail on the newly created `_verify/` directory.
+9. **Stage both files.** Run `git add spec/features/<feature-slug>/_verify/<sha>.md spec/features/<feature-slug>/_verify/README.md`. MUST NOT run `git commit`.
+10. **Emit `verify.completed`.** Per `## Event Emission` below. Exactly once per successful run.
+11. **Transition.** Per `## Promotion Boundary` below. Only `specstudio:recap` (or hand-back when `recap` is unshipped).
+12. **Determine exit code.** Per `## Exit Semantics` below. Non-zero iff `failed_count + errored_count > 0`. Otherwise zero.
+13. **Throughout** — watch for sidekick ideas (e.g., a flaky subagent shape, a deferred AC-coverage gap surfacing during verification). When an out-of-scope improvement surfaces, invoke `specstudio:sidekick` with a one-liner, acknowledge in one line, and return to the current checklist step immediately. Do not derail.
 
 ## Verifier Subagent Contract
 
@@ -204,9 +206,40 @@ expanded for human readability if the subagent supplied a richer rationale>
 
 The YAML block is the machine-readable surface; the body is the human-readable surface.
 
+### Index README
+
+The skill MUST create `spec/features/<feature-slug>/_verify/README.md` if absent and MUST append a row for the current run to its `## Contents` table on every run. The README is the directory's index — without it, the project's `readme-exists` lint rule fails on the newly created `_verify/` directory.
+
+**Shape (when creating from absent):**
+
+```markdown
+# Verify Reports — <feature-slug>
+
+Per-run verify reports produced by `specstudio:verify`. Each report is named `<sha>.md` where `<sha>` is the abbreviated git SHA of `HEAD` at run time.
+
+## Contents
+
+| Report | Run revision | Verdict summary |
+|---|---|---|
+| [<sha>.md](<sha>.md) | <sha> | <one-line verdict summary, e.g., "5 passed, 0 failed, 0 unmapped, 0 errored" or "19 unmapped, 0 passed/failed/errored"> |
+
+## Open Questions
+
+None at this time.
+
+---
+*This document follows the https://specscore.md/index-specification*
+```
+
+**Append rule (when README already exists):**
+
+Locate the `## Contents` table. Insert a new row at the bottom of the table (newest-last). Preserve every prior row in its existing order — never reorder, never delete. The new row's `Report` cell is a Markdown link `[<sha>.md](<sha>.md)`; the `Run revision` cell is the abbreviated SHA; the `Verdict summary` cell is a one-line tally derived from the four flat counts.
+
+If the table is missing entirely (e.g., README was hand-edited), the skill MUST refuse to write the row, surface the missing-table error to the user, and recommend manual repair before re-running.
+
 ### Staging discipline
 
-After writing the report, the skill MUST stage it with `git add spec/features/<feature-slug>/_verify/<sha>.md`. The skill MUST NOT run `git commit` — committing the report is the user's call. This mirrors the `ideate` / `specify` / `plan` / `implement` discipline.
+After writing the report and the index README, the skill MUST stage both with a single `git add spec/features/<feature-slug>/_verify/<sha>.md spec/features/<feature-slug>/_verify/README.md`. The skill MUST NOT run `git commit` — committing the staged set is the user's call. This mirrors the `ideate` / `specify` / `plan` / `implement` discipline.
 
 ### No-commits edge case
 
@@ -306,7 +339,9 @@ When the subagent returns malformed responses twice in a row, the skill records 
 - [ ] Malformed verdicts were retried exactly once; second-time malformed verdicts were recorded as `error`
 - [ ] Report written at `spec/features/<feature-slug>/_verify/<sha>.md` with the fenced YAML block first, then `## AC:` body sections
 - [ ] Every AC appears in the YAML block in Feature AC order with one of `{pass, fail, error, unmapped}`
-- [ ] Report staged via `git add`; `git commit` NEVER invoked by the skill
+- [ ] `_verify/README.md` index created (if absent) or row-appended (if present); table preserves prior rows in their existing order
+- [ ] Both report and `_verify/README.md` staged via `git add` in the same staging set; `git commit` NEVER invoked by the skill
+- [ ] `specscore spec lint` exits zero after the run (no `readme-exists` failure on the `_verify/` directory)
 - [ ] `verify.completed` event emitted exactly once; payload counts sum to the Feature's total AC count; no per-AC details in the payload
 - [ ] Exit code is non-zero iff `failed_count + errored_count > 0`; otherwise zero
 - [ ] No-commits edge case (every AC `unmapped`) still produced a complete report, staged it, emitted the event, and exited zero
@@ -328,6 +363,8 @@ When the subagent returns malformed responses twice in a row, the skill records 
 - Nesting the four counts under a `verdict_counts:` key (the contract is flat: `passed_count`, `failed_count`, `unmapped_count`, `errored_count`)
 - Invoking any skill other than `specstudio:recap` on transition (no `review`, no `ship`, no `writing-plans`, no `frontend-design`, no `mcp-builder`)
 - Refusing to write a report when no commits match (the no-commits edge case still produces a complete `unmapped`-only report)
+- Writing the per-run report but forgetting `_verify/README.md` (the `readme-exists` lint rule will fail on the newly created `_verify/` directory)
+- Reordering or deleting prior rows in `_verify/README.md`'s `## Contents` table (the skill only appends; prior runs' rows are preserved verbatim)
 
 ## References
 

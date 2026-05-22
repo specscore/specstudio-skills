@@ -36,9 +36,9 @@ Implement the serial-dispatch loop that calls one verifier subagent per mapped A
 
 ### Task 4: Report generation and staging
 
-**Verifies:** skills/verify#ac:report-path-and-staging, skills/verify#ac:report-yaml-block-grep-target
+**Verifies:** skills/verify#ac:report-path-and-staging, skills/verify#ac:report-yaml-block-grep-target, skills/verify#ac:report-index-readme-created-and-updated
 
-Write the per-run report to `spec/features/<feature-slug>/_verify/<sha>.md` (create `_verify/` if absent) where `<sha>` is the abbreviated HEAD SHA. The report MUST open with a fenced ```yaml summary block listing each AC in Feature order with `ac`, `verdict`, and `justification` fields, followed by one `## AC: <ac-slug>` body section per AC with verdict, full justification, commit list, and evidence references. Stage the report via `git add`; never invoke `git commit`.
+Write the per-run report to `spec/features/<feature-slug>/_verify/<sha>.md` (create `_verify/` if absent) where `<sha>` is the abbreviated HEAD SHA. The report MUST open with a fenced ```yaml summary block listing each AC in Feature order with `ac`, `verdict`, and `justification` fields, followed by one `## AC: <ac-slug>` body section per AC with verdict, full justification, commit list, and evidence references. Create `_verify/README.md` if absent or append a row to its `## Contents` table if present (preserving prior rows in order). Stage both the per-run report and the index README via `git add` in the same staging set; never invoke `git commit`.
 
 ### Task 5: Exit semantics, unmapped handling, and no-commits edge case
 

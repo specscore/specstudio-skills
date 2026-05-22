@@ -15,6 +15,7 @@ Scenarios validating the [Verify Skill feature](../README.md). Each scenario ref
 | [malformed-verdict-retried-once.md](malformed-verdict-retried-once.md) | `verify#ac:malformed-verdict-retried-once` |
 | [report-path-and-staging.md](report-path-and-staging.md) | `verify#ac:report-path-and-staging` |
 | [report-yaml-block-grep-target.md](report-yaml-block-grep-target.md) | `verify#ac:report-yaml-block-grep-target` |
+| [report-index-readme-created-and-updated.md](report-index-readme-created-and-updated.md) | `verify#ac:report-index-readme-created-and-updated` |
 | [exit-non-zero-on-fail-or-error.md](exit-non-zero-on-fail-or-error.md) | `verify#ac:exit-non-zero-on-fail-or-error` |
 | [no-commits-still-reports.md](no-commits-still-reports.md) | `verify#ac:no-commits-still-reports` |
 | [verify-completed-event-emitted.md](verify-completed-event-emitted.md) | `verify#ac:verify-completed-event-emitted` |

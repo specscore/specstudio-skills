@@ -98,7 +98,11 @@ After the YAML block, the report MUST contain one `## AC: <ac-slug>` section per
 
 #### REQ: report-staged
 
-After writing the report, the skill MUST stage it with `git add spec/features/<feature-slug>/_verify/<sha>.md`. The skill MUST NOT run `git commit` — committing the report is the user's call (mirrors the `ideate` / `specify` / `plan` / `implement` discipline).
+After writing the report, the skill MUST stage it with `git add spec/features/<feature-slug>/_verify/<sha>.md`. The skill MUST stage the `_verify/README.md` index from `REQ:report-index-readme` in the same staging set. The skill MUST NOT run `git commit` — committing the report is the user's call (mirrors the `ideate` / `specify` / `plan` / `implement` discipline).
+
+#### REQ: report-index-readme
+
+The skill MUST create `spec/features/<feature-slug>/_verify/README.md` if absent and MUST append a row for the current run to its `## Contents` table on every run. The README is the directory's index — without it, the project's `readme-exists` lint rule fails on the newly created `_verify/` directory. The README MUST follow SpecScore's scenarios-index conventions: an H1, a one-paragraph description, a `## Contents` table with columns `Report | Run revision | Verdict summary`, an `## Open Questions` section (set to `None at this time.` when no questions are tracked), and the `*This document follows the https://specscore.md/index-specification*` footer. New runs append rows newest-first or newest-last consistently — pick one and document the choice in `## Approach` of the Plan, not as a Feature-level REQ.
 
 ### Exit semantics
 
@@ -195,6 +199,16 @@ ACs are grouped here with explicit REQ back-references, mirroring the sibling `i
 **Given** a completed verify run,
 **When** a downstream consumer reads the report file,
 **Then** the report's first content MUST be a fenced YAML block (delimited by ` ```yaml ` and ` ``` `) listing every AC with `ac`, `verdict`, and `justification` fields in Feature AC order; below the YAML block, the report MUST contain one `## AC: <ac-slug>` section per AC.
+
+### AC: report-index-readme-created-and-updated (verifies REQ:report-index-readme, REQ:report-staged)
+
+**Given** an approved Feature whose `_verify/` directory does not yet exist,
+**When** the user runs `specstudio:verify <slug>` for the first time,
+**Then** the skill MUST create `spec/features/<slug>/_verify/README.md` containing an H1, a one-paragraph description, a `## Contents` table with exactly one row referencing the just-written `<sha>.md`, an `## Open Questions` section set to `None at this time.`, and the `*This document follows the https://specscore.md/index-specification*` footer; the README MUST be in the same staged set as the per-run report; and `specscore spec lint` MUST exit zero after the run.
+
+**Given** an approved Feature whose `_verify/README.md` already exists from a prior run with N rows in its `## Contents` table,
+**When** the user runs `specstudio:verify <slug>` again,
+**Then** the skill MUST append one row to the table for the current `<sha>.md` (preserving the existing rows in their order) and MUST stage the README alongside the new per-run report; the resulting table MUST have N+1 rows; lint MUST exit zero.
 
 ### AC: exit-non-zero-on-fail-or-error (verifies REQ:exit-code-semantics)
 
