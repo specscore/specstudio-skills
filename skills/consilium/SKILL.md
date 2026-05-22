@@ -283,9 +283,9 @@ synchestra task update <task-id> --status complete
 Per REQ `event-reviewed-emitted`, emit the event with the envelope+payload from REQ:
 
 ```bash
-# If synchestra emit is available, prefer it
-if synchestra emit --help &>/dev/null 2>&1; then
-  synchestra emit sidekick-idea.reviewed <event-yaml>
+# If specscore event emit is available, prefer it
+if specscore event emit --help &>/dev/null 2>&1; then
+  specscore event emit sidekick-idea.reviewed <event-yaml>
 else
   # Fallback: append JSONL directly
   jq -c -n \
@@ -295,7 +295,7 @@ else
     --arg slug "$SEED_SLUG" \
     --arg verdict "$VERDICT" \
     '{event: $event, version: 1, uuid: $uuid, timestamp: $ts, …, payload: {slug: $slug, verdict: $verdict, …}}' \
-    >> .synchestra/events.jsonl
+    >> .specscore/events.jsonl
 fi
 ```
 

@@ -6,7 +6,7 @@
 
 **Architecture:** A new in-repo skill orchestrates the 5-stage pipeline per claimed `consilium-review` task. The Synchestra task is the structured source of truth (V3 storage); the seed gets only the scribe's prose summary mirrored into a `## Consilium Verdict` section. The deterministic verdict gate lives cross-repo as a new `specscore consilium verdict` subcommand (V4); the task type lives cross-repo in Synchestra. Per-project roster and gate configuration via `specscore.yaml` → `consilium:` top-level block. Phase 1 is the producer of verdicts; Phase 2 will consume them for auto-promotion.
 
-**Tech Stack:** Markdown skill authoring (Claude Code skill format); YAML frontmatter; bash for orchestration (yq/jq for YAML parsing, `synchestra task` for task lifecycle, `specscore consilium verdict` for the arbiter once it ships); Claude Code `Agent` tool with parallel invocation for the panel fan-out; `.synchestra/events.jsonl` for event transport (fallback when `synchestra emit` is not yet available); `specscore spec lint` for spec hygiene.
+**Tech Stack:** Markdown skill authoring (Claude Code skill format); YAML frontmatter; bash for orchestration (yq/jq for YAML parsing, `synchestra task` for task lifecycle, `specscore consilium verdict` for the arbiter once it ships); Claude Code `Agent` tool with parallel invocation for the panel fan-out; `.specscore/events.jsonl` for event transport (fallback when `specscore event emit` is not yet available); `specscore spec lint` for spec hygiene.
 
 ---
 
@@ -604,7 +604,7 @@ If you find yourself writing judgment-laden language, stop and rewrite. A resear
 
 ## Code references
 - `skills/init/SKILL.md:42-78` — current init flow writes ephemeral status to stdout only.
-- `skills/shared/synchestra-events.md:30-45` — event-bus convention uses `.synchestra/events.jsonl` (gitignored, ephemeral by convention).
+- `skills/shared/synchestra-events.md:30-45` — event-bus convention uses `.specscore/events.jsonl` (gitignored, ephemeral by convention).
 
 ## Recent git activity
 - `1640824`: feat(skills/init): implement specstudio:init skill (2026-05-08)
@@ -1516,9 +1516,9 @@ synchestra task update <task-id> --status complete
 Per REQ `event-reviewed-emitted`, emit the event with the envelope+payload from REQ:
 
 ```bash
-# If synchestra emit is available, prefer it
-if synchestra emit --help &>/dev/null 2>&1; then
-  synchestra emit sidekick-idea.reviewed <event-yaml>
+# If specscore event emit is available, prefer it
+if specscore event emit --help &>/dev/null 2>&1; then
+  specscore event emit sidekick-idea.reviewed <event-yaml>
 else
   # Fallback: append JSONL directly
   jq -c -n \
@@ -1528,7 +1528,7 @@ else
     --arg slug "$SEED_SLUG" \
     --arg verdict "$VERDICT" \
     '{event: $event, version: 1, uuid: $uuid, timestamp: $ts, …, payload: {slug: $slug, verdict: $verdict, …}}' \
-    >> .synchestra/events.jsonl
+    >> .specscore/events.jsonl
 fi
 ```
 

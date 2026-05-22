@@ -15,7 +15,7 @@ feature: sidekick-capture
 
 ## Verification approach
 
-Invoke `specstudio:sidekick ""` and `specstudio:sidekick "   "`; assert non-zero exit; assert no file was created under `spec/ideas/seeds/`; assert `.synchestra/events.jsonl` line count is unchanged.
+Invoke `specstudio:sidekick ""` and `specstudio:sidekick "   "`; assert non-zero exit; assert no file was created under `spec/ideas/seeds/`; assert `.specscore/events.jsonl` line count is unchanged.
 
 ---
 *This document follows the https://specscore.md/scenario-specification*

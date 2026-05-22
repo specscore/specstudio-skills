@@ -131,7 +131,7 @@ After the report is written, staged, and the event is emitted, the skill MUST tr
 - **Orchestrator (the skill body):** Pre-flight, Feature parse, AC iteration, subagent dispatch coordination, verdict aggregation, report write, event emission.
 - **Verifier subagent (single built-in):** Receives the per-AC prompt, fetches commit diffs and reads source files on demand via its own Bash tool (per `subagent-prompt`), returns the verdict line per `subagent-verdict-contract`.
 - **Inputs:** Approved Feature at `spec/features/<feature-slug>/README.md`; git history with `Verifies:` trailers.
-- **Outputs:** Markdown report at `spec/features/<feature-slug>/_verify/<sha>.md` (staged, not committed); one `verify.completed` event in `.synchestra/events.jsonl`.
+- **Outputs:** Markdown report at `spec/features/<feature-slug>/_verify/<sha>.md` (staged, not committed); one `verify.completed` event in `.specscore/events.jsonl`.
 - **Dependencies:** `specstudio:implement` shipped (✅); `Verifies:` trailer convention holds in commit history; `specscore` CLI Feature parser available.
 
 ## Interaction with Other Features
@@ -230,7 +230,7 @@ ACs are grouped here with explicit REQ back-references, mirroring the sibling `i
 
 **Given** a verify run that completes (report written, regardless of verdict outcomes) on a Feature with N total ACs,
 **When** the orchestrator finishes the report write,
-**Then** exactly one `verify.completed` event MUST be appended to `.synchestra/events.jsonl` (or emitted via `synchestra emit` when the CLI is available), with payload fields `feature_slug`, `revision`, `report_path`, `passed_count`, `failed_count`, `unmapped_count`, and `errored_count`,
+**Then** exactly one `verify.completed` event MUST be appended to `.specscore/events.jsonl` (or emitted via `specscore event emit` when the CLI is available), with payload fields `feature_slug`, `revision`, `report_path`, `passed_count`, `failed_count`, `unmapped_count`, and `errored_count`,
 **And** each of the four count fields MUST be a non-negative integer,
 **And** `passed_count + failed_count + unmapped_count + errored_count` MUST equal N,
 **And** the payload MUST NOT include per-AC verdict details.

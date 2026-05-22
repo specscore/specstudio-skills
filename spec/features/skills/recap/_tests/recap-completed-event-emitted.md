@@ -6,7 +6,7 @@
 
 GIVEN a recap run that completes (report written, regardless of drift outcomes) on Feature `example` with N total ACs
 WHEN the orchestrator finishes the report write
-THEN exactly one `recap.completed` event is appended to `.synchestra/events.jsonl` (or emitted via `synchestra emit` when the CLI is available)
+THEN exactly one `recap.completed` event is appended to `.specscore/events.jsonl` (or emitted via `specscore event emit` when the CLI is available)
 AND the payload contains the field `feature_slug`
 AND the payload contains the field `revision`
 AND the payload contains the field `report_path`

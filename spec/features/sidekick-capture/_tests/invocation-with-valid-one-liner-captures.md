@@ -15,7 +15,7 @@ feature: sidekick-capture
 
 ## Verification approach
 
-Run `specstudio:sidekick "We should persist debug logs across restarts"` in a fixture project; assert `spec/ideas/seeds/we-should-persist-debug-logs-across-restarts.md` exists with the expected frontmatter; assert one line was appended to `.synchestra/events.jsonl`.
+Run `specstudio:sidekick "We should persist debug logs across restarts"` in a fixture project; assert `spec/ideas/seeds/we-should-persist-debug-logs-across-restarts.md` exists with the expected frontmatter; assert one line was appended to `.specscore/events.jsonl`.
 
 ---
 *This document follows the https://specscore.md/scenario-specification*

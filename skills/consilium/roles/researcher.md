@@ -59,7 +59,7 @@ If you find yourself writing judgment-laden language, stop and rewrite. A resear
 
 ## Code references
 - `skills/init/SKILL.md:42-78` — current init flow writes ephemeral status to stdout only.
-- `skills/shared/synchestra-events.md:30-45` — event-bus convention uses `.synchestra/events.jsonl` (gitignored, ephemeral by convention).
+- `skills/shared/synchestra-events.md:30-45` — event-bus convention uses `.specscore/events.jsonl` (gitignored, ephemeral by convention).
 
 ## Recent git activity
 - `1640824`: feat(skills/init): implement specstudio:init skill (2026-05-08)

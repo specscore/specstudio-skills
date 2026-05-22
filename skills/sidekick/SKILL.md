@@ -345,8 +345,8 @@ content_hash=$(printf '%s' "$ONE_LINER" \
 
 Per `synchestra-events.md`:
 
-- **Default:** append the event as a single line of JSON to `.synchestra/events.jsonl` at repo root.
-- **Hook:** if `command -v synchestra` resolves, prefer `synchestra emit <event.yaml>` (CLI). Otherwise fall back to the file append.
+- **Default:** append the event as a single line of JSON to `.specscore/events.jsonl` at repo root.
+- **Hook:** if `command -v specscore` resolves, prefer `specscore event emit <event.yaml>` (CLI). Otherwise fall back to the file append.
 
 ### Failure semantics
 

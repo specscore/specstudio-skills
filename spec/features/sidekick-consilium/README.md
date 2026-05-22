@@ -487,7 +487,7 @@ The calibration set is constructed by the implementer: 5 known-strong seeds, 5 k
 ### AC: reviewed-event-emitted-on-success (verifies REQ:event-reviewed-emitted)
 
 **Given** a successful pipeline completion against one queued task
-**When** `.synchestra/events.jsonl` is inspected after the run
+**When** `.specscore/events.jsonl` is inspected after the run
 **Then** exactly one new line has been appended: a JSON event with `event: sidekick-idea.reviewed`, the envelope fields from REQ `event-reviewed-emitted`, and a payload containing `verdict`, `roster_snapshot`, and `tokens_total`.
 
 ### AC: arbiter-reproducibility-snapshot (verifies REQ:arbiter-reproducibility, REQ:specscore-consilium-verdict-subcommand, REQ:arbiter-gate-rules)

@@ -139,7 +139,7 @@ After the report is written, staged, and the event is emitted, the skill MUST tr
 - **Orchestrator (the skill body):** Pre-flight, Feature parse, verify-report resolution and parse, AC iteration, subagent dispatch coordination, drift aggregation, report write, event emission, transition.
 - **Drift-narrator subagent (single built-in):** Receives the per-AC prompt, fetches commit diffs and reads source files on demand via its own Bash tool (per `subagent-prompt`), returns the drift verdict line per `subagent-drift-contract`.
 - **Inputs:** Approved Feature at `spec/features/<feature-slug>/README.md`; latest `_verify/<sha>.md` report at HEAD; git history with `Verifies:` trailers.
-- **Outputs:** Markdown report at `spec/features/<feature-slug>/_recap/<sha>.md` (staged, not committed); one `recap.completed` event in `.synchestra/events.jsonl`.
+- **Outputs:** Markdown report at `spec/features/<feature-slug>/_recap/<sha>.md` (staged, not committed); one `recap.completed` event in `.specscore/events.jsonl`.
 - **Dependencies:** `specstudio:verify` shipped; the `_verify/<sha>.md` report format (YAML head + body) stable enough to parse; the `Verifies:` trailer convention holds in commit history; `specscore` CLI Feature parser available.
 
 ## Interaction with Other Features
@@ -253,7 +253,7 @@ ACs are grouped here with explicit REQ back-references, mirroring the sibling `v
 
 **Given** a recap run that completes (report written, regardless of drift outcomes) on a Feature with N total ACs,
 **When** the orchestrator finishes the report write,
-**Then** exactly one `recap.completed` event MUST be appended to `.synchestra/events.jsonl` (or emitted via `synchestra emit` when the CLI is available), with payload fields `feature_slug`, `revision`, `report_path`, `verify_report_path`, `no_drift_count`, `spec_tighter_count`, `code_tighter_count`, `contradiction_count`, `unmapped_count`, and `errored_count`,
+**Then** exactly one `recap.completed` event MUST be appended to `.specscore/events.jsonl` (or emitted via `specscore event emit` when the CLI is available), with payload fields `feature_slug`, `revision`, `report_path`, `verify_report_path`, `no_drift_count`, `spec_tighter_count`, `code_tighter_count`, `contradiction_count`, `unmapped_count`, and `errored_count`,
 **And** each of the six count fields MUST be a non-negative integer,
 **And** `no_drift_count + spec_tighter_count + code_tighter_count + contradiction_count + unmapped_count + errored_count` MUST equal N,
 **And** the payload MUST NOT include per-AC drift details.

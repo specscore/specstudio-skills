@@ -6,7 +6,7 @@
 
 **Architecture:** A new `specstudio:sidekick` skill writes seed files at `spec/ideas/seeds/<slug>.md` per a documented schema (8-key YAML frontmatter + H1 heading + optional ≤2000-char markdown body); a shared directive at `skills/shared/sidekick-capture.md` instructs host skills (`specstudio:ideate`, `specstudio:specify`) on heuristic and explicit capture paths; the `sidekick-idea.captured` event is emitted on successful write via the existing envelope+payload convention in `skills/shared/synchestra-events.md`. The seed lint rule's CLI implementation is cross-repo (`synchestra-io/specscore-cli`) and tracked by a companion plan stub.
 
-**Tech Stack:** Markdown skill authoring (Claude Code skill format); YAML frontmatter; bash for slug derivation and file writes; SHA-256 for content hashing (e.g., `shasum -a 256`); `.synchestra/events.jsonl` for event transport per existing convention; `specscore spec lint` for verification.
+**Tech Stack:** Markdown skill authoring (Claude Code skill format); YAML frontmatter; bash for slug derivation and file writes; SHA-256 for content hashing (e.g., `shasum -a 256`); `.specscore/events.jsonl` for event transport per existing convention; `specscore spec lint` for verification.
 
 ---
 
@@ -557,8 +557,8 @@ content_hash=$(printf '%s' "$ONE_LINER" \
 
 Per `synchestra-events.md`:
 
-- **Default:** append the event as a single line of JSON to `.synchestra/events.jsonl` at repo root.
-- **Hook:** if `command -v synchestra` resolves, prefer `synchestra emit <event.yaml>` (CLI). Otherwise fall back to the file append.
+- **Default:** append the event as a single line of JSON to `.specscore/events.jsonl` at repo root.
+- **Hook:** if `command -v specscore` resolves, prefer `specscore event emit <event.yaml>` (CLI). Otherwise fall back to the file append.
 
 ### Failure semantics
 
@@ -974,10 +974,10 @@ Create one file per AC. For each, copy the Given/When/Then verbatim from `spec/f
 **12 stub files** (filename = AC slug + `.md`):
 
 1. `invocation-with-valid-one-liner-captures.md`
-   - Verification: run `specstudio:sidekick "We should persist debug logs across restarts"` in a fixture project; assert `spec/ideas/seeds/we-should-persist-debug-logs-across-restarts.md` exists with the expected frontmatter; assert one line was appended to `.synchestra/events.jsonl`.
+   - Verification: run `specstudio:sidekick "We should persist debug logs across restarts"` in a fixture project; assert `spec/ideas/seeds/we-should-persist-debug-logs-across-restarts.md` exists with the expected frontmatter; assert one line was appended to `.specscore/events.jsonl`.
 
 2. `empty-or-whitespace-input-rejected.md`
-   - Verification: invoke `specstudio:sidekick ""` and `specstudio:sidekick "   "`; assert non-zero exit; assert no file was created under `spec/ideas/seeds/`; assert `.synchestra/events.jsonl` line count is unchanged.
+   - Verification: invoke `specstudio:sidekick ""` and `specstudio:sidekick "   "`; assert non-zero exit; assert no file was created under `spec/ideas/seeds/`; assert `.specscore/events.jsonl` line count is unchanged.
 
 3. `over-length-input-rejected.md`
    - Verification: invoke with a fixture one-liner of 501 chars; assert non-zero exit with the 500-char message; assert no file or event change.
@@ -992,10 +992,10 @@ Create one file per AC. For each, copy the Given/When/Then verbatim from `spec/f
    - Verification: pre-seed `spec/ideas/seeds/add-caching-to-search.md`; invoke with a one-liner that derives the same slug; assert new file at `spec/ideas/seeds/add-caching-to-search-2.md`; assert original file's content and mtime unchanged; assert event's `slug` field is `add-caching-to-search-2`.
 
 7. `event-emitted-only-on-successful-write.md`
-   - Verification: chmod `spec/ideas/` to read-only; invoke; assert write fails with a clear error; assert `.synchestra/events.jsonl` line count is unchanged.
+   - Verification: chmod `spec/ideas/` to read-only; invoke; assert write fails with a clear error; assert `.specscore/events.jsonl` line count is unchanged.
 
 8. `event-payload-conforms-to-schema.md`
-   - Verification: invoke with a known one-liner; parse the most recent line of `.synchestra/events.jsonl` as JSON; assert envelope has `event`, `version`, `uuid`, `timestamp`, `actor`, `artifact`; assert payload has exactly `slug`, `captured_during`, `trigger`, `content_hash`; assert `content_hash` equals the SHA-256 of the trimmed lowercase one-liner.
+   - Verification: invoke with a known one-liner; parse the most recent line of `.specscore/events.jsonl` as JSON; assert envelope has `event`, `version`, `uuid`, `timestamp`, `actor`, `artifact`; assert payload has exactly `slug`, `captured_during`, `trigger`, `content_hash`; assert `content_hash` equals the SHA-256 of the trimmed lowercase one-liner.
 
 9. `host-skill-references-directive.md`
    - Verification: grep `skills/ideate/SKILL.md` and `skills/specify/SKILL.md` for the link `../shared/sidekick-capture.md`; assert both contain it inside their `## Checklist` section.
@@ -1019,7 +1019,7 @@ Create one file per AC. For each, copy the Given/When/Then verbatim from `spec/f
     - Verification: pre-create two fixtures: (a) a source artifact with a footer and no existing section, (b) a source artifact with no footer and no existing section. Invoke against each. Assert: in case (a), the new section is immediately before the footer; in case (b), the new section is at end-of-file. In both cases, the section heading is exactly `## Sidekick Seeds Generated` and contains exactly one bullet beneath it.
 
 16. `back-link-skipped-on-null-captured-during.md`
-    - Verification: invoke with `captured_during=null`. Assert: seed exists, `.synchestra/events.jsonl` line added, NO other file modified, exit code 0, no warning about a missing source artifact.
+    - Verification: invoke with `captured_during=null`. Assert: seed exists, `.specscore/events.jsonl` line added, NO other file modified, exit code 0, no warning about a missing source artifact.
 
 17. `back-link-skipped-on-nonexistent-path.md`
     - Verification: invoke with `captured_during=spec/features/this-feature-does-not-exist`. Assert: seed exists, event emitted, exit code 0, no back-link write attempted, no error reported.
@@ -1229,7 +1229,7 @@ Expected: `0 violations found`
 In a Claude Code session in this repo, invoke `/sidekick --captured-during=spec/features/sidekick-capture We should test the sidekick skill end-to-end` (with `captured_during` pointing at this Feature) and verify:
 
 - A file appears at `spec/ideas/seeds/we-should-test-the-sidekick-skill-end-to-end.md` with the 8-key frontmatter (note `captured_during: spec/features/sidekick-capture`) and an H1 line containing the verbatim one-liner.
-- A line is appended to `.synchestra/events.jsonl` (create the file with `touch .synchestra/events.jsonl` first; ensure `.synchestra/` is in `.gitignore` if it isn't already — check `cat .gitignore | grep synchestra`).
+- A line is appended to `.specscore/events.jsonl` (create the file with `touch .specscore/events.jsonl` first; ensure `.specscore/events.jsonl` is in `.gitignore` if it isn't already — check `cat .gitignore | grep '.specscore/events.jsonl'`).
 - **The source artifact (`spec/features/sidekick-capture/README.md`) now contains a `## Sidekick Seeds Generated` section** positioned immediately before the SpecScore footer line, containing one entry: `- [we-should-test-...](../../ideas/seeds/we-should-test-the-sidekick-skill-end-to-end.md) — captured <YYYY-MM-DD> by user`. This is the back-link in action — verifies REQs `writes-back-link-to-source-artifact`, `source-artifact-path-resolution`, `back-link-section-format`.
 - The skill's output is one short line: `Captured: ... at spec/ideas/seeds/...`.
 

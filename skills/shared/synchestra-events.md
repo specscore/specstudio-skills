@@ -26,8 +26,8 @@ payload:
 
 ## Emission Transport
 
-- **Default:** Append-only JSONL to `.synchestra/events.jsonl` at repo root (git-ignored).
-- **Hook:** Skills invoke `synchestra emit <event.yaml>` (CLI) when available; fall back to direct file append otherwise.
+- **Default:** Append-only JSONL to `.specscore/events.jsonl` at repo root (git-ignored).
+- **Hook:** Skills invoke `specscore event emit <event.yaml>` (CLI) when available; fall back to direct file append otherwise.
 - **Idempotency:** Each event includes a `uuid` (assigned by emitter). Synchestra dedupes by uuid.
 
 ## Unaggregated by Design

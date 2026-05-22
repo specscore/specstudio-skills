@@ -15,7 +15,7 @@ feature: sidekick-capture
 
 ## Verification approach
 
-Invoke with `captured_during=null`. Assert: seed exists, `.synchestra/events.jsonl` line added, NO other file modified, exit code 0, no warning about a missing source artifact.
+Invoke with `captured_during=null`. Assert: seed exists, `.specscore/events.jsonl` line added, NO other file modified, exit code 0, no warning about a missing source artifact.
 
 ---
 *This document follows the https://specscore.md/scenario-specification*

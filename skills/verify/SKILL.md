@@ -271,7 +271,7 @@ A pre-flight refusal (Draft Feature, uncommitted Feature) exits non-zero without
 
 ## Event Emission
 
-After the report is written and staged (and only on a successful run — pre-flight refusals do NOT emit), the skill MUST emit exactly one `verify.completed` event via the convention in [synchestra-events.md](../shared/synchestra-events.md). Use `synchestra emit <event.yaml>` when the CLI is available; fall back to appending the event JSONL line to `.synchestra/events.jsonl`.
+After the report is written and staged (and only on a successful run — pre-flight refusals do NOT emit), the skill MUST emit exactly one `verify.completed` event via the convention in [synchestra-events.md](../shared/synchestra-events.md). Use `specscore event emit <event.yaml>` when the CLI is available; fall back to appending the event JSONL line to `.specscore/events.jsonl`.
 
 Payload shape (flat counts — NOT a nested `verdict_counts` object):
 

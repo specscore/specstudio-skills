@@ -9,7 +9,7 @@ AND AC `a` returns `pass` from its verifier subagent
 AND AC `b` has zero matching `Verifies:` trailers
 AND git HEAD's SHA at run time is `<sha>`
 WHEN the user runs `specstudio:verify example` and the run completes
-THEN exactly one event with `event: verify.completed` is appended to `.synchestra/events.jsonl`
+THEN exactly one event with `event: verify.completed` is appended to `.specscore/events.jsonl`
 AND the event payload includes `feature_slug: example`
 AND the event payload includes `revision: <sha>`
 AND the event payload includes `report_path: spec/features/example/_verify/<sha>.md`

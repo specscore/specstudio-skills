@@ -15,7 +15,7 @@ feature: sidekick-capture
 
 ## Verification approach
 
-Invoke with a known one-liner; parse the most recent line of `.synchestra/events.jsonl` as JSON; assert envelope has `event`, `version`, `uuid`, `timestamp`, `actor`, `artifact`; assert payload has exactly `slug`, `captured_during`, `trigger`, `content_hash`; assert `content_hash` equals the SHA-256 of the trimmed lowercase one-liner.
+Invoke with a known one-liner; parse the most recent line of `.specscore/events.jsonl` as JSON; assert envelope has `event`, `version`, `uuid`, `timestamp`, `actor`, `artifact`; assert payload has exactly `slug`, `captured_during`, `trigger`, `content_hash`; assert `content_hash` equals the SHA-256 of the trimmed lowercase one-liner.
 
 ---
 *This document follows the https://specscore.md/scenario-specification*

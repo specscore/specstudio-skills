@@ -15,7 +15,7 @@ feature: sidekick-capture
 
 ## Verification approach
 
-Chmod `spec/ideas/` to read-only; invoke; assert write fails with a clear error; assert `.synchestra/events.jsonl` line count is unchanged.
+Chmod `spec/ideas/` to read-only; invoke; assert write fails with a clear error; assert `.specscore/events.jsonl` line count is unchanged.
 
 ---
 *This document follows the https://specscore.md/scenario-specification*
