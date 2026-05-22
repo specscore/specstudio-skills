@@ -1,9 +1,9 @@
 # Idea: Sidekick Issue-Tracker Destinations
 
-**Status:** Approved
+**Status:** Implementing
 **Date:** 2026-05-22
 **Owner:** alexandertrakhimenok
-**Promotes To:** —
+**Promotes To:** issue-artifact-type
 **Supersedes:** —
 **Related Ideas:** extends:sidekick-ideas
 
