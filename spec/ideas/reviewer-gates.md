@@ -1,9 +1,9 @@
 # Idea: Reviewer Gates
 
-**Status:** Approved
+**Status:** Implementing
 **Date:** 2026-05-22
 **Owner:** alex
-**Promotes To:** —
+**Promotes To:** reviewer-gates
 **Supersedes:** —
 **Related Ideas:** —
 

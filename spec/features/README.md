@@ -13,6 +13,7 @@ Feature specifications for the SpecStudio plugin. This index lists every top-lev
 | [sidekick-consilium](sidekick-consilium/README.md) | Approved | Phase 1 of the [`sidekick-ideas`](../ideas/sidekick-ideas.md) Idea: the `specstudio:consilium` skill that drains captured *sidekick* (sideline-idea) seeds and produces deterministic verdicts via a 5-stage pipeline (CLI gather → researcher → 9-role parallel expert panel → CLI arbiter → scribe). Per-project configurable roster + gate via `specscore.yaml`. |
 | [third-party-integration](third-party-integration/README.md) | Defines the contract for integrating third-party agent skills with SpecScore artifacts via three shapes (Producer, Reviewer, Capability), with explicit non-goal for Shape-3 third-party Producers. |
 | [dogfood-test](dogfood-test/README.md) | Deprecated | TODO: Add description. |
+| [reviewer-gates](reviewer-gates/README.md) | Approved | Defines the canonical reviewer-gates contract: per-stage reviewer lists scoped under a `gates:` block in `specscore.yaml`, with a `type:` discriminator and type-specific fields per reviewer entry. Pins the schema, dispatch semantics, and verdict contract for the MVP type set (`ai`, `human`), and wires `specstudio:specify` as the first consumer — replacing its built-in reviewer dispatch and User Review Gate with the new typed-gate model. Carves the reviewer parts of `third-party-integration` out into this Feature. |
 
 ### skills
 
