@@ -169,5 +169,9 @@ When a new tool enters the SDD or agent-discipline space:
 - **No speculation without labels.** If a capability is inferred from marketing rather than shipped product, say so explicitly.
 - **No marketing language about ourselves.** This tree is for thinking, not selling.
 
+## Open Questions
+
+None at this time.
+
 ---
 *This document follows the https://specscore.md/feature-specification*

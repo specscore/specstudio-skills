@@ -327,3 +327,8 @@ See [`extension-integration.md`](extension-integration.md) for the concrete `ext
 | GitHub stars (rough) | ~92k | low | low | low |
 | Install | `uv tool install` (Python) | `curl … \| sh` (Go) | `curl … \| sh` (Go) | `curl … \| sh` (Go) |
 | License | MIT | CC BY 4.0 (spec) / Apache-2.0 (CLI) | Apache-2.0 | Apache-2.0 |
+
+## Open Questions
+
+None at this time.
+
