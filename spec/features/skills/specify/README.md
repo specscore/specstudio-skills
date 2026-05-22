@@ -8,13 +8,13 @@
 
 The `specstudio:specify` skill turns an approved SpecScore Idea — or a clear buildable intent — into a lint-clean SpecScore Feature with requirements and `Given / When / Then` acceptance criteria. Its output (`spec/features/<slug>/`) is the gating input for `specstudio:plan` and any implementation skill. Unlike `ideate` (single-file artifact), `specify` produces a multi-file directory with a README, one requirement per file, optional Rehearse stubs, and optional assets. Implementation lives at [`skills/specify/`](../../../../skills/specify/).
 
-**Provenance.** This skill is adapted from `obra/superpowers`'s `brainstorming` skill — its checklist flow, `<HARD-GATE>` pattern, "too simple to spec" anti-pattern, one-question-at-a-time cadence, spec-document reviewer subagent, and `writing-plans` terminal handoff are inherited and rebuilt against canonical SpecScore conventions (multi-file `spec/features/<slug>/`, body-metadata header fields, lint-enforced `Given / When / Then` acceptance criteria). Lens-based divergence (inversion, constraint removal, simplification, 10x, …) and the painkiller-vs-vitamin evaluation tier are grafted from `addyosmani/agent-skills`'s `idea-refine`. The full mapping of inherited vs. grafted vs. dropped patterns lives in [`spec/research/ideate-vs-brainstorming-skills-analysis.md`](../../../research/ideate-vs-brainstorming-skills-analysis.md).
+**Provenance.** This skill is adapted from `obra/superpowers`'s `brainstorming` skill — its checklist flow, `<HARD-GATE>` pattern, "too simple to spec" anti-pattern, one-question-at-a-time cadence, spec-document reviewer (now consumed via the [reviewer-gates](../../reviewer-gates/README.md) Feature as an opt-in `type: ai` entry), and `writing-plans` terminal handoff are inherited and rebuilt against canonical SpecScore conventions (multi-file `spec/features/<slug>/`, body-metadata header fields, lint-enforced `Given / When / Then` acceptance criteria). Lens-based divergence (inversion, constraint removal, simplification, 10x, …) and the painkiller-vs-vitamin evaluation tier are grafted from `addyosmani/agent-skills`'s `idea-refine`. The full mapping of inherited vs. grafted vs. dropped patterns lives in [`spec/research/ideate-vs-brainstorming-skills-analysis.md`](../../../research/ideate-vs-brainstorming-skills-analysis.md).
 
 ## Problem
 
 Even when an Idea is well-formed, the jump from "approved direction" to "buildable contract" is non-trivial. Without a structured skill, that jump happens ad-hoc: requirements get scattered into prose, acceptance criteria get omitted or written as vibes, the Source Idea linkage gets lost, Rehearse stubs are forgotten, and the Feature ends up as a description rather than a contract that downstream skills (`plan`, `build`, `verify`) can consume.
 
-`specify` exists to enforce the structural discipline of a SpecScore Feature — canonical title prefix, body-metadata header fields, inline `#### REQ:` requirement decomposition, G/W/T ACs, reviewer-subagent quality gate, Rehearse coverage decision — without forcing the user to memorize the schema. The Feature defines exactly what that discipline must look like, so the artifact is machine-verifiable and downstream skills can rely on it.
+`specify` exists to enforce the structural discipline of a SpecScore Feature — canonical title prefix, body-metadata header fields, inline `#### REQ:` requirement decomposition, G/W/T ACs, reviewer gate (consumed from [reviewer-gates](../../reviewer-gates/README.md)), Rehearse coverage decision — without forcing the user to memorize the schema. The Feature defines exactly what that discipline must look like, so the artifact is machine-verifiable and downstream skills can rely on it.
 
 ## Behavior
 
@@ -40,13 +40,12 @@ The skill enforces a hard gate downstream — once invoked, it must produce a co
 
 #### REQ: hard-gate
 
-The skill MUST NOT invoke `writing-plans`, `frontend-design`, `mcp-builder`, or ANY implementation skill until ALL FIVE conditions hold:
+The skill MUST NOT invoke `writing-plans`, `frontend-design`, `mcp-builder`, or ANY implementation skill until ALL FOUR conditions hold:
 
 1. The Feature artifact exists at `spec/features/<slug>/README.md` and contains at least one `#### REQ: <slug>` requirement inside the `## Behavior` section.
 2. Each requirement has ≥1 acceptance criterion in `Given / When / Then` format.
 3. `specscore spec lint` exits zero.
-4. The spec-document reviewer subagent returned `Approved`.
-5. The user has explicitly approved the written Feature.
+4. The reviewer gate has released — every entry in `gates.specify.reviewers` (including the `type: human` entry that captures the user's approval) returned `Approved` per the [reviewer-gates](../../reviewer-gates/README.md) Feature's AND-composition.
 
 A skill invocation that bypasses any condition is a contract violation.
 
@@ -124,7 +123,7 @@ Every artifact passes through machine validation, automated repair, and a delibe
 
 #### REQ: lint-pass
 
-After writing or editing the Feature, the skill MUST run `specscore spec lint` and confirm a zero exit code before proceeding to the reviewer subagent.
+After writing or editing the Feature, the skill MUST run `specscore spec lint` and confirm a zero exit code before proceeding to the reviewer gate.
 
 #### REQ: lint-failure-recovery
 
@@ -139,44 +138,23 @@ The skill MUST NOT loop `--fix` more than once. **The skill MUST NOT carry its o
 
 #### REQ: inline-self-review
 
-Before dispatching the reviewer subagent, the skill MUST scan the Feature for: (a) unresolved placeholders (`TBD`, `TODO`, `???`, `FIXME`), (b) internal contradictions (architecture vs. requirements, requirements vs. ACs), (c) hidden multi-Feature scope, and (d) requirements interpretable two ways. Findings MUST be fixed inline.
+Before dispatching the reviewer gate, the skill MUST scan the Feature for: (a) unresolved placeholders (`TBD`, `TODO`, `???`, `FIXME`), (b) internal contradictions (architecture vs. requirements, requirements vs. ACs), (c) hidden multi-Feature scope, and (d) requirements interpretable two ways. Findings MUST be fixed inline.
 
-### Reviewer subagent gate
+### Reviewer gate
 
-A subagent provides a structured second opinion on the spec before the user sees it. The skill ships with a built-in reviewer (the **baseline**) and supports running additional reviewers as an extension.
+The skill's reviewer gate — including the user's own approval — is consumed from the typed-gate model defined by the [reviewer-gates](../../reviewer-gates/README.md) Feature, not from any built-in baseline or separate downstream user-approval step.
 
-#### REQ: reviewer-subagent-required
+#### REQ: reviewer-gate-via-reviewer-gates
 
-The skill MUST dispatch at least the built-in spec-document reviewer subagent (per the prompt at `skills/specify/references/reviewer-prompt.md`) after lint passes and before presenting the Feature to the user. Every dispatched reviewer's verdict MUST be `Approved` before the User Review Gate runs. On `Issues Found` from any reviewer, the skill MUST address every blocker-severity finding and re-dispatch every reviewer that previously returned `Issues Found`. Advisory recommendations MAY be ignored.
+The skill MUST consume its reviewer gate from `gates.specify.reviewers` in `specscore.yaml` per the [reviewer-gates](../../reviewer-gates/README.md) Feature's `specify-loads-gate` and `missing-gates-block-refuses` REQs. The skill MUST NOT carry a hardcoded baseline reviewer and MUST NOT dispatch any reviewer outside the registry; the prior baseline-reviewer prompt at `skills/specify/references/reviewer-prompt.md` is opt-in as a `type: ai` entry in the registry like any other reviewer.
 
-#### REQ: reviewer-baseline-blockers
+#### REQ: user-approval-via-human-reviewer-entry
 
-The built-in reviewer MUST treat the following finding categories as **blocker-severity**. These are semantic checks that complement (do not duplicate) `specscore spec lint`'s syntactic checks:
+The user's approval MUST be collected through a `type: human` entry in `gates.specify.reviewers` per the [reviewer-gates](../../reviewer-gates/README.md) Feature's `human-entry-shape` REQ — dispatched serially with the other reviewers and contributing its verdict to the gate's AND-composition. The skill MUST NOT run a separate downstream user-approval step outside the gate; the explicit-approval phrase set is still recognized but only inside the `type: human` reviewer dispatch.
 
-1. **Scope spans multiple subsystems.** The Feature describes work that should be decomposed into multiple Features.
-2. **Unobservable `Then` clause.** An AC whose outcome cannot be checked (e.g., "Then the user feels confident", "Then performance is acceptable" with no metric).
-3. **AC coverage gap.** A requirement's ACs collectively do not exercise the requirement's full statement.
-4. **Architecture↔requirements contradiction.** A claim in the Architecture or Behavior section contradicts a requirement's stated rule.
-5. **Vague requirement.** A requirement interpretable two ways (the reviewer must surface both interpretations).
-6. **Missing source-Idea reasoning.** When an originating Idea exists but the Feature does not justify how its Recommended Direction was preserved or deliberately departed from.
+### Approval phrase recognition and status transitions
 
-Findings outside these six categories MAY be returned as `Advisory` severity. Future expansions to the baseline blocker list happen via Proposal once the Feature is `Stable`.
-
-#### REQ: reviewer-extension-hook
-
-The skill MUST support running additional reviewer subagents beyond the built-in one. Each additional reviewer is itself a subagent contract returning `Approved` or `Issues Found` with its own blocker / advisory categorization (defined by that reviewer's own prompt or contract). The mechanism for *registering* additional reviewers is deferred — see Outstanding Questions.
-
-#### REQ: reviewer-composition
-
-When the skill runs multiple reviewers (built-in plus one or more extensions), the composition is **AND**: every reviewer MUST return `Approved` for the User Review Gate to release. Any single `Issues Found` from any reviewer blocks the gate. The skill MUST NOT silently downgrade a blocker finding from any reviewer to advisory severity, and MUST NOT skip a registered reviewer.
-
-### User review and approval
-
-The user — not the skill, not the subagent — owns the final approval decision.
-
-#### REQ: user-approval-required
-
-After the reviewer subagent returns `Approved`, the skill MUST present the Feature to the user with an explicit request for approval. The skill MUST NOT proceed to status transition or `feature.approved` event emission without that approval.
+The user's approval is collected inside the gate's `type: human` reviewer entry; the phrase set the skill recognizes inside that dispatch — and the Feature `**Status:**` transitions that follow a successful gate — are defined here.
 
 #### REQ: approval-explicit-phrase
 
@@ -188,11 +166,11 @@ When the user's response signals positive sentiment but does not contain a recog
 
 #### REQ: status-transition-under-review
 
-When the skill dispatches the reviewer subagent (and/or first presents the Feature for human review), the skill MUST update the Feature's `**Status:**` body-metadata line from `Draft` to `Under Review`. The transition signals to consumers that the Feature is in active review; subsequent edits during reviewer/user iteration keep `**Status:** Under Review` until either reviewer-and-user-approved (→ `Approved`) or the user explicitly drops back to `Draft` for substantial rework.
+When the skill begins dispatching the reviewer gate (per `reviewer-gate-via-reviewer-gates`), the skill MUST update the Feature's `**Status:**` body-metadata line from `Draft` to `Under Review`. The transition signals to consumers that the Feature is in active review; subsequent edits during reviewer iteration keep `**Status:** Under Review` until the gate releases (→ `Approved`) or the user explicitly drops back to `Draft` for substantial rework.
 
 #### REQ: status-transition-on-approval
 
-On confirmed user approval (after reviewer subagent returned `Approved` AND the user explicitly approved per `approval-explicit-phrase` / `approval-vague-confirmation`), the skill MUST update the Feature's `**Status:**` body-metadata line from `Under Review` to `Approved`, re-run lint, and emit `feature.approved`. The transition Approved → Implementing is owned by `writing-plans` (when implementation work begins), not by `specify`.
+On the reviewer gate releasing (every reviewer entry in `gates.specify.reviewers` returned `Approved` per AND-composition, including the `type: human` entry that captured the user's explicit-phrase approval), the skill MUST update the Feature's `**Status:**` body-metadata line from `Under Review` to `Approved`, re-run lint, and emit `feature.approved`. The transition Approved → Implementing is owned by `writing-plans` (when implementation work begins), not by `specify`.
 
 ### Rehearse stub decision
 
@@ -220,7 +198,7 @@ The skill participates in the Synchestra event vocabulary.
 
 #### REQ: event-specified
 
-The skill MUST emit `feature.specified` after the reviewer subagent returns `Approved` and lint passes — that is, when the Feature is structurally and qualitatively ready for user review. The first emission for a Feature carries `previous_revision: null`; subsequent emissions during reviewer iteration carry the previous revision.
+The skill MUST emit `feature.specified` after lint passes and before dispatching the reviewer gate — that is, when the Feature is structurally ready for the gate to evaluate. The first emission for a Feature carries `previous_revision: null`; subsequent emissions during gate iteration carry the previous revision.
 
 #### REQ: event-approved
 
@@ -257,6 +235,7 @@ The skill MUST NOT yes-machine weak Features. When a requirement is vague, an AC
 | Feature | Interaction |
 |---|---|
 | [Ideate Skill](../ideate/README.md) | `specify` is the downstream gate of `ideate`. `specify` consumes the approved Idea via `Source Ideas` linkage and surfaces its assumptions, alternatives, and Not-Doing list as initial Feature material. The `idea.approved` event triggers `specify` (with user confirmation). |
+| [Reviewer Gates](../../reviewer-gates/README.md) | `specify` consumes its reviewer gate — including the user's own approval — from `gates.specify.reviewers` per `reviewer-gates`'s `specify-loads-gate`, `dispatch-serial`, `and-composition`, `rerun-policy`, and `missing-gates-block-refuses` REQs. No built-in baseline reviewer and no separate downstream user-approval step. |
 | [Plan Skill](../plan/README.md) | `specify` is the upstream gate of `plan`. `plan` consumes the approved Feature; `specify` never invokes `plan` itself — `writing-plans` is the explicit transition. |
 | [SpecScore Feature](https://github.com/synchestra-io/specscore/blob/main/spec/features/feature/README.md) | The schema, lint rules, and lifecycle of the produced Feature artifact are owned by SpecScore's Feature feature. `specify` is a producer, not a definer of that schema. |
 | Synchestra Events | Emits `feature.specified`, `feature.approved`, and `feature.updated`, all with change-context payloads. Consumers — including downstream Features that declare this Feature as a dependency, and Hub — observe these to advance their own state. |
@@ -267,9 +246,9 @@ The skill MUST NOT yes-machine weak Features. When a requirement is vague, an AC
 
 ### AC: hard-gate-enforced
 
-**Requirements:** specify#req:hard-gate, specify#req:lint-pass, specify#req:reviewer-subagent-required, specify#req:user-approval-required
+**Requirements:** specify#req:hard-gate, specify#req:lint-pass, specify#req:reviewer-gate-via-reviewer-gates
 
-The skill cannot invoke `writing-plans` or any implementation skill until the Feature exists with at least one requirement and ≥1 G/W/T AC, `specscore spec lint` passes, the reviewer subagent returns `Approved`, and the user has approved the Feature. Bypassing any condition is rejected.
+The skill cannot invoke `writing-plans` or any implementation skill until the Feature exists with at least one requirement and ≥1 G/W/T AC, `specscore spec lint` passes, and the reviewer gate (consumed from `gates.specify.reviewers` per the [reviewer-gates](../../reviewer-gates/README.md) Feature) has released with every entry — including the `type: human` entry that captures the user's approval — returning `Approved`. Bypassing any condition is rejected.
 
 ### AC: artifact-conformance
 
@@ -295,17 +274,19 @@ When a `specscore feature new` (or equivalent) CLI is on PATH, the skill uses it
 
 After each write/edit, lint is run; on failure, `specscore spec lint --fix` is attempted exactly once before re-lint. If still failing, remaining violations are surfaced to the user with rule IDs and affected files. The skill never loops `--fix`, and never encodes its own list of which rules are auto-fixable — the `specscore` CLI owns that policy.
 
-### AC: reviewer-then-user
+### AC: consumes-gates-specify
 
-**Requirements:** specify#req:reviewer-subagent-required, specify#req:reviewer-baseline-blockers, specify#req:reviewer-extension-hook, specify#req:reviewer-composition, specify#req:user-approval-required
+**Requirements:** specify#req:reviewer-gate-via-reviewer-gates, specify#req:user-approval-via-human-reviewer-entry
 
-At minimum the built-in reviewer subagent must return `Approved` before the user is shown the Feature, with the six baseline blocker categories applied. When additional reviewers are registered, all must return `Approved` (AND composition — any single `Issues Found` blocks). On `Issues Found` from any reviewer, every blocker is addressed and the failing reviewers are re-dispatched. The user's approval is independent of and downstream from every reviewer's; all are required.
+**Given** a `specscore.yaml` with a valid `gates.specify.reviewers` block containing one `type: ai` entry (pointing at `skills/specify/references/reviewer-prompt.md`) followed by one `type: human` entry,
+**When** `specstudio:specify` runs the reviewer gate after lint passes,
+**Then** the skill MUST dispatch exactly the listed entries in list order via the [reviewer-gates](../../reviewer-gates/README.md) Feature's loader/runner per its `specify-loads-gate` REQ, MUST NOT additionally dispatch any built-in baseline reviewer or any reviewer hardcoded in the skill's own logic, MUST NOT run a separate downstream user-approval step outside the gate, and the gate's `Approved` verdict (AND-composition across the two entries) MUST be the sole gating signal for the Draft → Approved status transition.
 
 ### AC: approval-detection
 
-**Requirements:** specify#req:approval-explicit-phrase, specify#req:approval-vague-confirmation, specify#req:user-approval-required
+**Requirements:** specify#req:approval-explicit-phrase, specify#req:approval-vague-confirmation
 
-The skill detects approval in two tiers: explicit phrases (English set + semantic equivalents in any language the user is communicating in) trigger immediate transition; vague positive signals trigger a single confirmation prompt. Silent transition on vague signals is a contract violation.
+The skill detects approval in two tiers inside the gate's `type: human` reviewer dispatch: explicit phrases (English set + semantic equivalents in any language the user is communicating in) trigger an immediate `Approved` verdict for the entry; vague positive signals trigger a single confirmation prompt. Silent transition on vague signals is a contract violation.
 
 ### AC: rehearse-coverage
 
@@ -317,7 +298,7 @@ Every AC has a recorded Rehearse decision: either a scaffolded stub at `spec/fea
 
 **Requirements:** specify#req:event-specified, specify#req:event-approved, specify#req:event-updated, specify#req:event-payload-change-context, specify#req:status-transition-on-approval
 
-`feature.specified` fires after reviewer-subagent approval and lint pass; `feature.approved` fires exactly once on user approval and the Draft → In Progress transition; `feature.updated` fires on every successful lint pass after a subsequent edit. All three carry `changed_sections`, `previous_revision`, and a factual `change_summary` (null on the first `feature.specified`, non-null thereafter). Misclassifying or skipping an emission is a contract violation.
+`feature.specified` fires after lint pass and before reviewer-gate dispatch; `feature.approved` fires exactly once on the reviewer gate releasing (every entry returned `Approved`) and the Under Review → Approved transition; `feature.updated` fires on every successful lint pass after a subsequent edit. All three carry `changed_sections`, `previous_revision`, and a factual `change_summary` (null on the first `feature.specified`, non-null thereafter). Misclassifying or skipping an emission is a contract violation.
 
 ### AC: promotion-boundary-held
 
@@ -327,8 +308,8 @@ The skill never transitions to any skill other than `writing-plans`. When the us
 
 ## Open Questions
  Currently the spec lists three examples (missing Source Ideas, non-G/W/T ACs, empty Outstanding Questions); the canonical list should live in `shared/specscore-lint-rules.md` and be referenced.
-- ~~**Reviewer registration mechanism.**~~ **Resolved by [`third-party-integration`](../../third-party-integration/README.md)** (`reviewer-registration-mechanism` REQ): reviewers register through a `reviewers:` extension key inside the project's `specscore.yaml`. The contract for entry shape, prompt-location constraints, and AND-composition lives in that Feature; the consumer-side wiring lives in [`skills/specify/SKILL.md`](../../../../skills/specify/SKILL.md) under `## Reviewer Subagent`.
-- **When does the reviewer concept earn its own Feature?** The built-in reviewer is currently described in this Feature plus a prose prompt at `skills/specify/references/reviewer-prompt.md`. Once a second reviewer ships, or once the baseline blocker list grows past ~8 entries, promote the reviewer to its own SpecScore Feature at `spec/features/spec-document-reviewer/` (sibling, not sub-feature, since `plan` and `ship` may also load reviewers).
+- ~~**Reviewer registration mechanism.**~~ **Resolved by [`reviewer-gates`](../../reviewer-gates/README.md)**: reviewers register as ordered entries under `gates.specify.reviewers` in `specscore.yaml`, with a `type:` discriminator (`ai` / `human` in MVP) and type-specific fields. The contract for entry shape, dispatch order, AND-composition, and re-run policy lives in that Feature; the consumer-side wiring lives in [`skills/specify/SKILL.md`](../../../../skills/specify/SKILL.md).
+- ~~**When does the reviewer concept earn its own Feature?**~~ **Resolved by [`reviewer-gates`](../../reviewer-gates/README.md)**. The prior baseline reviewer prompt at `skills/specify/references/reviewer-prompt.md` is now an opt-in `type: ai` registry entry rather than a hardcoded baseline.
 
 ---
 *This document follows the https://specscore.md/feature-specification*
