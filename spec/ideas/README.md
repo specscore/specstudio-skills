@@ -9,6 +9,9 @@ Pre-spec one-pagers for SpecStudio. Each Idea is the output of `specstudio:ideat
 | Idea | Status | Date | Owner | Promotes To |
 |------|--------|------|-------|-------------|
 | [idea-skills-destination-resolution](idea-skills-destination-resolution.md) | Specified | 2026-05-20 | alexandertrakhimenok | sidekick-capture/destination-resolution |
+| [map-skill](map-skill.md) | Draft | 2026-05-22 | alex | — |
+| [retrofit-evaluation-skill](retrofit-evaluation-skill.md) | Draft | 2026-05-22 | alex | — |
+| [retrofit-skill](retrofit-skill.md) | Draft | 2026-05-22 | alex | — |
 | [reviewer-gates](reviewer-gates.md) | Implementing | 2026-05-22 | alex | reviewer-gates |
 | [sidekick-consilium](sidekick-consilium.md) | Implementing | 2026-05-18 | alexandertrakhimenok | sidekick-consilium |
 | [sidekick-ideas](sidekick-ideas.md) | Implementing | 2026-05-18 | alexandertrakhimenok | sidekick-capture |
