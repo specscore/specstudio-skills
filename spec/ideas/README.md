@@ -15,7 +15,7 @@ Pre-spec one-pagers for SpecStudio. Each Idea is the output of `specstudio:ideat
 | [specstudio-implement-skill](specstudio-implement-skill.md) | Implementing | 2026-05-19 | alexander.trakhimenok | skills/implement, skills/plan |
 | [specstudio-init-skill](specstudio-init-skill.md) | Implementing | 2026-05-08 | alexander.trakhimenok | skills/init |
 | [specstudio-plan-skill](specstudio-plan-skill.md) | Implementing | 2026-04-20 | alexander.trakhimenok | skills/plan |
-| [specstudio-recap-skill](specstudio-recap-skill.md) | Approved | 2026-05-22 | alex | — |
+| [specstudio-recap-skill](specstudio-recap-skill.md) | Implementing | 2026-05-22 | alex | skills/recap |
 | [specstudio-verify-skill](specstudio-verify-skill.md) | Implementing | 2026-05-22 | alex | skills/verify |
 | [third-party-skill-integration-contracts](third-party-skill-integration-contracts.md) | Implementing | 2026-05-08 | alexander.trakhimenok | third-party-integration |
 
