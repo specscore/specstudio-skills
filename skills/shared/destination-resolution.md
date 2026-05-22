@@ -35,13 +35,26 @@ The calling skill substitutes this section with one row per candidate. The sourc
 
 > **Candidates:**
 >
-> | # | `project.repo` | Top-level Features (`spec/features/*/`) |
+> | # | `project.repo` | Features under `spec/features/*/` (top-level + immediate sub-dirs) |
 > |---|---|---|
-> | 1 | `<repo-slug-1>` | `<comma-separated-feature-dir-names>` |
+> | 1 | `<repo-slug-1>` | `<comma-separated-feature-dir-names-and-subdirs>` |
 > | 2 | `<repo-slug-2>` | `<...>` |
 > | … | … | … |
 
-The Feature-directory list is comma-separated, capped at 10 entries per candidate (truncate with `, …` when more exist). If a candidate has no `spec/features/*/` directories, the cell content MUST be the literal `(no Features)`.
+### `project.repo` fallback
+
+When a candidate's `specscore.yaml` does NOT set `project.repo` (the field is optional), the calling skill MUST substitute the candidate's directory basename as the slug. The agent treats the fallback identifier identically to a yaml-supplied `project.repo` — it appears in the table, it's the value the agent picks in section (c)'s `<repo>` slot, and the calling skill's parser accepts it as a valid candidate match.
+
+### Feature-list expansion
+
+The Features cell lists BOTH:
+
+- The names of top-level directories under `spec/features/*/` (one entry each).
+- The names of immediate sub-directories under each top-level Feature dir (where they exist), formatted `<top-level>/<sub-dir>`.
+
+Together these MUST be comma-separated and capped at 20 entries per candidate (truncate with `, …` when more exist). If a candidate has no `spec/features/*/` directories, the cell content MUST be the literal `(no Features)`.
+
+The sub-dir enrichment surfaces nested-Feature names — notably the individual skills in a `skills/*/` umbrella, or sub-Features of a parent like `sidekick-capture/destination-resolution`. Without them, a seed naming a sub-Feature by slug would route ambiguously because the agent only sees the umbrella name.
 
 ## (c) Output format contract
 

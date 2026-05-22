@@ -101,7 +101,9 @@ If **≥1 siblings** are matched, continue to step 2.
 Read [`shared/destination-resolution.md`](../shared/destination-resolution.md) and assemble the prompt by substituting:
 
 - `<seed-one-liner>` in section (a): the user's actual one-liner (verbatim, no normalization).
-- The candidates table in section (b): one row per candidate, with `project.repo` from each candidate's `specscore.yaml` and the names of its top-level `spec/features/*/` directories (comma-separated, capped at 10 with `, …` truncation; `(no Features)` when empty).
+- The candidates table in section (b): one row per candidate. Each row contains:
+  - **`project.repo` cell:** the value from the candidate's `specscore.yaml`. If `project.repo` is unset, fall back to the candidate's directory basename (the agent treats the fallback identifier identically — see section (b)'s fallback clause in `shared/destination-resolution.md`).
+  - **Features cell:** the names of `spec/features/*/` top-level directories AND their immediate sub-directories (where they exist), formatted as `<top-level>` for plain top-level entries and `<top-level>/<sub-dir>` for nested ones. Comma-separated, capped at 20 entries per candidate with `, …` truncation when more exist. Use the literal `(no Features)` when the candidate has no `spec/features/*/` directories.
 
 Pass the assembled prompt to the host AI agent. No seed file is written until this and the confirmation UX complete.
 

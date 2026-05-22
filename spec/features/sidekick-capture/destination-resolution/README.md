@@ -36,7 +36,11 @@ The shared deliberation-prompt helper MUST live at `skills/shared/destination-re
 
 #### REQ: helper-contract
 
-The helper file MUST document, in this order: (a) the explicit instruction to the host agent to deliberate about destination given the candidate repos + their identity signals + the seed content; (b) the candidate-repo identity contract — each candidate's `project.repo` value (from its `specscore.yaml`) and the names of its top-level `spec/features/*/` directories MUST be presented to the agent as identity signals; (c) the output format contract — the agent's response MUST be exactly one line, ≤120 characters, of shape `<repo>; <reason>` where `<repo>` is one of the candidate slugs; (d) the escape clause — the agent MAY respond with the literal token `UNCERTAIN` if it cannot confidently pick.
+The helper file MUST document, in this order: (a) the explicit instruction to the host agent to deliberate about destination given the candidate repos + their identity signals + the seed content; (b) the candidate-repo identity contract — each candidate's `project.repo` value (from its `specscore.yaml`, or its directory basename as a fallback when `project.repo` is unset) and the names of its `spec/features/*/` directories (top-level dirs AND their immediate sub-directories where present, capped at 20 entries per candidate with `, …` truncation) MUST be presented to the agent as identity signals; (c) the output format contract — the agent's response MUST be exactly one line, ≤120 characters, of shape `<repo>; <reason>` where `<repo>` is one of the candidate slugs (per (b)'s identity contract); (d) the escape clause — the agent MAY respond with the literal token `UNCERTAIN` if it cannot confidently pick.
+
+The sub-directory enrichment in (b) — adding immediate sub-dirs alongside top-level Feature dir names — is necessary because nested-Feature repos (notably `specstudio-skills`, where `spec/features/skills/{ideate,implement,init,plan,specify,relocate-idea}` enumerates individually-routable skills under one top-level `skills` directory) otherwise present only the umbrella name to the agent. Without sub-dir signals, a seed referencing the `implement` skill by name routes ambiguously because the candidates table shows only `skills`, not `skills/implement`. The 20-entry cap accommodates this enrichment without bloating the table for flat-Feature repos.
+
+The `project.repo`-empty fallback in (b) — using the directory basename when the yaml field is unset — is necessary because the field is optional in `specscore.yaml` and a candidate with empty `project.repo` would otherwise have no name the agent could reference in section (c)'s `<repo>` slot. The fallback identifier is treated identically to a yaml-supplied `project.repo` for all downstream parsing per [REQ:parses-agent-response](#req-parses-agent-response).
 
 #### REQ: helper-prompt-iteration
 
@@ -165,7 +169,7 @@ Given a workspace with no sibling SpecScore repos (the source project is the onl
 ### AC: helper-file-exists-and-conforms
 **Requirements:** [#req:helper-location](#req-helper-location), [#req:helper-contract](#req-helper-contract)
 
-Given the Feature is implemented, the file `skills/shared/destination-resolution.md` exists and contains four sections matching the contract: (a) instruction to deliberate, (b) candidate-identity contract describing `project.repo` + Feature dir name signals, (c) output format `<repo>; <reason>` ≤120 chars, (d) escape clause naming `UNCERTAIN`.
+Given the Feature is implemented, the file `skills/shared/destination-resolution.md` exists and contains four sections matching the contract: (a) instruction to deliberate, (b) candidate-identity contract describing `project.repo` (with dir-basename fallback when unset) + top-level Feature dir names + immediate sub-dir names (capped at 20 per candidate) as identity signals, (c) output format `<repo>; <reason>` ≤120 chars, (d) escape clause naming `UNCERTAIN`.
 
 ### AC: helper-prompt-iteration-no-feature-revision
 **Requirements:** [#req:helper-prompt-iteration](#req-helper-prompt-iteration)
