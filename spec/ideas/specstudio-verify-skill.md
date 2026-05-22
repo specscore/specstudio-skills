@@ -1,9 +1,9 @@
 # Idea: SpecStudio verify skill
 
-**Status:** Approved
+**Status:** Implementing
 **Date:** 2026-05-22
 **Owner:** alex
-**Promotes To:** —
+**Promotes To:** skills/verify
 **Supersedes:** —
 **Related Ideas:** —
 
