@@ -293,5 +293,9 @@ Inherited from the source Idea and pinned here:
 - Whether recap should warn when the resolved `_verify/<sha>.md` is stale relative to HEAD (verify ran at SHA X, but HEAD is now SHA Y with new commits not seen by verify). MVP auto-resolves "latest" by SHA/recency without staleness detection; the report's `verify_revision:` field makes the staleness visible to humans but does not block. A separable Idea may add a staleness gate later.
 - Whether the report body should include the resolved verify report's full evidence references per AC, or only the verify verdict + one-line justification snippet. MVP requires verbatim carry-over of verdict + justification only; full evidence-reference duplication is deferred to keep recap reports compact.
 
+## Sidekick Seeds Generated
+
+- [recap-drift-surface-near-zero-when-implementation-is-skill](../../../ideas/seeds/recap-drift-surface-near-zero-when-implementation-is-skill.md) — captured 2026-05-22 by user
+
 ---
 *This document follows the https://specscore.md/feature-specification*
