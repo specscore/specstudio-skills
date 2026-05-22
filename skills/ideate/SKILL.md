@@ -50,7 +50,7 @@ Create a task for each and complete in order:
 2. **Scope decomposition check** — if the request describes multiple independent subsystems, stop and help the user split into multiple Ideas before proceeding.
 3. **Phase 1 — Understand & Expand** (divergent).
 4. **Phase 2 — Evaluate & Converge**.
-5. **Phase 3 — Crystallize** as a SpecScore Idea artifact. Bootstrap `spec/ideas/` if missing. Prefer the `specscore new idea` CLI scaffold over a direct file write when the CLI is available (see Phase 3 below).
+5. **Phase 3 — Crystallize** as a SpecScore Idea artifact. Bootstrap `spec/ideas/` if missing. Prefer the `specscore idea new` CLI scaffold over a direct file write when the CLI is available (see Phase 3 below).
 6. **Lint** the artifact: `specscore spec lint`. On failure, run `specscore spec lint --fix` once, re-lint; surface remaining violations to the user.
 7. **Auto-stage** every file you created (`spec/ideas/<slug>.md`, plus the bootstrap files if any) with `git add`. Tell the user the staged paths. Never commit on the user's behalf.
 8. **Inline self-review** — placeholders, contradictions, ambiguity, scope.
@@ -103,7 +103,7 @@ After the user reacts to Phase 1, shift to convergent mode. Cadence becomes **si
 
 ## Phase 3 — Crystallize as a SpecScore Idea
 
-**Prefer the CLI when available.** `specscore new idea <slug>` produces a lint-clean skeleton by construction and updates `spec/ideas/README.md` for you. Subsequent edits must preserve that lint-clean state.
+**Prefer the CLI when available.** `specscore idea new <slug>` produces a lint-clean skeleton by construction and updates `spec/ideas/README.md` for you. Subsequent edits must preserve that lint-clean state.
 
 ### Step 3.0 — Bootstrap `spec/ideas/` if missing
 
@@ -127,7 +127,7 @@ If the probe succeeds, take the **CLI path**. Otherwise, take the **fallback pat
 
 ### Step 3b (CLI path) — Scaffold, then fill
 
-1. Invoke `specscore new idea <slug>` with every field you already have. Only these flags exist — do not invent others:
+1. Invoke `specscore idea new <slug>` with every field you already have. Only these flags exist — do not invent others:
 
    - `--title`
    - `--owner`
@@ -142,7 +142,7 @@ If the probe succeeds, take the **CLI path**. Otherwise, take the **fallback pat
    Example:
 
    ```bash
-   specscore new idea my-slug \
+   specscore idea new my-slug \
      --title "My Idea" \
      --owner "alex" \
      --hmw "How might we …?" \
@@ -382,4 +382,4 @@ Direct, thoughtful, slightly provocative. A sharp thinking partner, not a facili
 - [specscore-lint-rules.md](../shared/specscore-lint-rules.md) — lint contract this skill assumes.
 - [synchestra-events.md](../shared/synchestra-events.md) — event payloads emitted by this skill.
 - [question-cadence.md](../shared/question-cadence.md) — when to batch vs single-question.
-- `specscore new idea <slug>` — CLI scaffolder used in Phase 3 (see `internal/cli/new.go` in the specscore repo for the authoritative flag list).
+- `specscore idea new <slug>` — CLI scaffolder used in Phase 3 (see `internal/cli/new.go` in the specscore repo for the authoritative flag list).

@@ -86,7 +86,7 @@ Crystallization prefers a stable CLI contract over ad-hoc file writes.
 
 #### REQ: cli-preferred
 
-When the `specscore` CLI is on PATH, the skill MUST use `specscore new idea <slug>` to scaffold the artifact, passing every field it already has via the documented flags (`--title`, `--owner`, `--hmw`, `--context`, `--recommended-direction`, `--mvp`, `--not-doing`).
+When the `specscore` CLI is on PATH, the skill MUST use `specscore idea new <slug>` to scaffold the artifact, passing every field it already has via the documented flags (`--title`, `--owner`, `--hmw`, `--context`, `--recommended-direction`, `--mvp`, `--not-doing`).
 
 #### REQ: cli-flag-discipline
 
@@ -218,7 +218,7 @@ The skill MUST NOT yes-machine weak ideas. When a direction has clear problems, 
 | [Specify Skill](../specify/README.md) | `ideate` is the upstream gate of `specify`. `specify` consumes the approved Idea via `Source Ideas` linkage; `ideate` never invokes `specify` itself — the user does. |
 | [SpecScore Idea](https://github.com/synchestra-io/specscore/blob/main/spec/features/idea/README.md) | The schema, lint rules, and lifecycle of the produced artifact are owned by SpecScore's Idea feature. `ideate` is a producer, not a definer of that schema. |
 | Synchestra Events | Emits `idea.drafted` and `idea.approved`. Consumers — including `specify` and Hub — observe these to advance their own state. |
-| `specscore new idea` CLI | Preferred crystallization path. The skill probes for the CLI once per invocation and falls back to direct write only when absent. |
+| `specscore idea new` CLI | Preferred crystallization path. The skill probes for the CLI once per invocation and falls back to direct write only when absent. |
 
 ## Acceptance Criteria
 
@@ -244,7 +244,7 @@ The skill executes the three-phase dialogue in order. Phase 1 produces a HMW res
 
 **Requirements:** ideate#req:cli-preferred, ideate#req:cli-flag-discipline, ideate#req:fallback-direct-write, ideate#req:schema-equivalence-cli-fallback
 
-The skill probes for the `specscore` CLI once per invocation. When present, scaffolding goes through `specscore new idea <slug>` with only documented flags. When absent, the skill writes the artifact directly using the authoritative schema. Both paths produce schema-equivalent artifacts — identical title prefix, identical body-metadata fields, identical sections, identical required content — though they MAY differ in cosmetic ways (whitespace, blank lines, comment style).
+The skill probes for the `specscore` CLI once per invocation. When present, scaffolding goes through `specscore idea new <slug>` with only documented flags. When absent, the skill writes the artifact directly using the authoritative schema. Both paths produce schema-equivalent artifacts — identical title prefix, identical body-metadata fields, identical sections, identical required content — though they MAY differ in cosmetic ways (whitespace, blank lines, comment style).
 
 ### AC: lifecycle-events
 

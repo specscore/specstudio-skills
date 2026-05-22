@@ -8,7 +8,7 @@ GIVEN the `specscore` binary is on PATH
 AND `specscore --version` exits zero
 AND the skill is in Phase 3 with a complete set of inputs (title, owner, hmw, recommended-direction, mvp, not-doing entries)
 WHEN the skill crystallizes the Idea
-THEN the skill invokes `specscore new idea <slug>` with the documented flags only
+THEN the skill invokes `specscore idea new <slug>` with the documented flags only
 AND the skill does NOT invoke any undocumented flag
 AND the resulting artifact at `spec/ideas/<slug>.md` is lint-clean on generation
 AND `spec/ideas/README.md` is updated by the CLI to include the new Idea

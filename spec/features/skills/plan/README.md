@@ -207,7 +207,7 @@ Plan crystallization prefers a stable CLI contract when available.
 
 #### REQ: cli-preferred
 
-When a `specscore new plan` (or equivalent) CLI command is on PATH, the skill MUST use it to scaffold the Plan file, passing every field it already has via documented flags. The skill MUST NOT invent flags.
+When a `specscore plan new` (or equivalent) CLI command is on PATH, the skill MUST use it to scaffold the Plan file, passing every field it already has via documented flags. The skill MUST NOT invent flags.
 
 #### REQ: fallback-direct-write
 
@@ -344,7 +344,7 @@ The skill MUST NOT yes-machine weak Plans. When a task is too vague, an AC is un
 | [Third-Party Integration](../../third-party-integration/README.md) | Plan reviewers register via the same `reviewers:` extension key in `specscore.yaml` that `specify` uses. The contract (entry shape, prompt-location constraints, AND-composition) is shared. |
 | SpecScore Plan schema | The schema, lint rules, and lifecycle of the produced Plan artifact are owned by SpecScore. `plan` is a producer, not a definer of that schema. The Plan-specific lint rules (`P-001`, `P-002`, …) are reserved by this Feature and defined in the SpecScore lint contract. |
 | Synchestra Events | Emits `plan.drafted`, `plan.approved`, and `plan.updated`, all with change-context payloads. Consumers (including Hub and a future `implement` skill) observe these to advance their own state. |
-| `specscore` CLI | Preferred crystallization path when `specscore new plan` is available. The skill probes for the CLI once per invocation and falls back to direct write only when absent. |
+| `specscore` CLI | Preferred crystallization path when `specscore plan new` is available. The skill probes for the CLI once per invocation and falls back to direct write only when absent. |
 
 ## Acceptance Criteria
 
@@ -410,7 +410,7 @@ The skill MUST NOT yes-machine weak Plans. When a task is too vague, an AC is un
 
 ### AC: cli-vs-fallback (verifies REQ:cli-preferred, REQ:fallback-direct-write)
 
-**Given** two project environments — one with `specscore new plan` on PATH and one without,
+**Given** two project environments — one with `specscore plan new` on PATH and one without,
 **When** the skill writes a Plan in each,
 **Then** both produced Plans are schema-equivalent (identical title prefix, identical body-metadata fields, identical sections, identical required content); cosmetic differences (whitespace, blank lines) are allowed.
 

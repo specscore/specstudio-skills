@@ -112,7 +112,7 @@ Crystallization prefers a stable CLI contract over ad-hoc file writes when one b
 
 #### REQ: cli-preferred
 
-When a `specscore new feature` (or equivalent) CLI command is on PATH, the skill MUST use it to scaffold the Feature directory, passing every field it already has via documented flags. The skill MUST NOT invent flags.
+When a `specscore feature new` (or equivalent) CLI command is on PATH, the skill MUST use it to scaffold the Feature directory, passing every field it already has via documented flags. The skill MUST NOT invent flags.
 
 #### REQ: fallback-direct-write
 
@@ -260,7 +260,7 @@ The skill MUST NOT yes-machine weak Features. When a requirement is vague, an AC
 | [Plan Skill](../plan/README.md) | `specify` is the upstream gate of `plan`. `plan` consumes the approved Feature; `specify` never invokes `plan` itself — `writing-plans` is the explicit transition. |
 | [SpecScore Feature](https://github.com/synchestra-io/specscore/blob/main/spec/features/feature/README.md) | The schema, lint rules, and lifecycle of the produced Feature artifact are owned by SpecScore's Feature feature. `specify` is a producer, not a definer of that schema. |
 | Synchestra Events | Emits `feature.specified`, `feature.approved`, and `feature.updated`, all with change-context payloads. Consumers — including downstream Features that declare this Feature as a dependency, and Hub — observe these to advance their own state. |
-| `specscore` CLI | Preferred crystallization path when a `specscore new feature` (or equivalent) command is available. The skill probes for the CLI once per invocation and falls back to direct write only when absent. |
+| `specscore` CLI | Preferred crystallization path when a `specscore feature new` (or equivalent) command is available. The skill probes for the CLI once per invocation and falls back to direct write only when absent. |
 | Rehearse | The `_tests/` directory under each Feature holds Rehearse-executable scenario files. `specify` decides per-AC whether to scaffold a stub via the rehearse-heuristic. |
 
 ## Acceptance Criteria
@@ -287,7 +287,7 @@ When a Feature originates from one or more approved Ideas, the Feature declares 
 
 **Requirements:** specify#req:cli-preferred, specify#req:fallback-direct-write
 
-When a `specscore new feature` (or equivalent) CLI is on PATH, the skill uses it; otherwise it falls back to direct write. Both paths produce schema-equivalent Features (identical title prefix, body-metadata fields, sections, required content) — cosmetic differences are allowed.
+When a `specscore feature new` (or equivalent) CLI is on PATH, the skill uses it; otherwise it falls back to direct write. Both paths produce schema-equivalent Features (identical title prefix, body-metadata fields, sections, required content) — cosmetic differences are allowed.
 
 ### AC: lint-and-recovery
 

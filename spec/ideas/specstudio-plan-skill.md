@@ -25,7 +25,7 @@ Ship a **thin, lint-gated `plan` skill** that mirrors the shape of `ideate` and 
 
 This is the narrowest thing that closes the most-painful gap. It keeps the "gates are non-negotiable" philosophy intact, keeps the artifact surface familiar to anyone who has used `ideate` or `specify`, and leaves the more speculative directions (Rehearse test scaffolding, runner dispatch) as follow-on Ideas rather than prerequisites.
 
-The MVP does not need a CLI scaffold — it can follow the same fallback direct-write path `ideate` already supports — but should be structured so a future `specscore new plan` command can take over without skill changes.
+The MVP does not need a CLI scaffold — it can follow the same fallback direct-write path `ideate` already supports — but should be structured so a future `specscore plan new` command can take over without skill changes.
 
 ## Alternatives Considered
 
@@ -59,7 +59,7 @@ A two-week spike: implement `specstudio:plan` as a single skill folder under `sk
 
 - **New Features this would create:** TBD at spec time — likely one Feature covering the skill itself and one covering the Plan artifact schema and lint rules.
 - **Existing Features affected:** None yet; `ideate` and `specify` Features are downstream-agnostic. Lint rule namespace (`P-xxx` for Plan) needs to be reserved.
-- **Dependencies:** None blocking. Benefits from, but does not require, a `specscore new plan` CLI scaffold.
+- **Dependencies:** None blocking. Benefits from, but does not require, a `specscore plan new` CLI scaffold.
 
 ## Open Questions
 
