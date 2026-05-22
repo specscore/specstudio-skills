@@ -11,13 +11,21 @@ synchestra_task: null
 
 # sidekick capture corrupts a different seed file in same dir
 
-**Observed** during dogfooding the destination-resolution flow (specstudio-skills `b62457e`, cache fast-forwarded). The live `/sidekick` wrote a NEW seed correctly at `specscore-cli/spec/ideas/seeds/specscore-feature-change-status-should-print-source-idea.md`. But a PRE-EXISTING seed in the same dir (`specscore-feature-change-status-to-stable-backward.md` from `9ac63ed`) had its first line corrupted from `---` to `Captured---` — the word `Captured` prepended to the YAML frontmatter delimiter with no newline, breaking the frontmatter.
+**Observed** during dogfooding the destination-resolution flow (specstudio-skills `b62457e`, cache fast-forwarded). The live `/sidekick` wrote a NEW seed correctly at `specscore-cli/spec/ideas/seeds/specscore-feature-change-status-should-print-source-idea.md`. A PRE-EXISTING seed in the same dir (`specscore-feature-change-status-to-stable-backward.md` from `9ac63ed`) had its first line corrupted from `---` to `Captured---`, breaking the YAML frontmatter.
 
-**Visible transcript shows no tool call that should have touched the old file.** Agent's recorded calls: collision-check (`ls | grep`), Bash (compute timestamp/hash/uuid), Write (new file at correct path), Bash (synchestra probe), Bash (events.jsonl append). None should touch the existing seed.
+**Post-capture investigation:**
 
-**Suspected causes (descending plausibility):**
-1. Parallel-agent race — another concurrent agent in the workspace did an Edit on the file. Old file's mtime sits ~1 min before the new seed's `captured_at`.
-2. LLM tool misuse inside the live agent's autonomy pass — SKILL.md "Output (success)" says "the skill prints `Captured: <slug> at ...`". An agent could interpret "prints" as "writes" against the wrong file.
-3. Stale editor buffer flushing a partial write mid-dogfood.
+- **Git history is clean.** The corrupted file has exactly one touching commit (`9ac63ed`, the original write). Corruption was working-tree-only.
+- **No active git hooks.** `.git/hooks/` is samples-only.
+- **events.jsonl is clean.** The live capture emitted one well-formed event (uuid `2cbd5bc0-71d2-4a0d-991f-03363a7e3aae`) referencing only the new slug.
+- **Mtime ordering rules out the live agent.** Corrupted file's mtime is ~1 min BEFORE the new seed's `captured_at` — a capture cannot modify another file before its own write.
 
-**Workaround applied:** corrupted file restored by hand (specscore-cli commit alongside the dogfood seed). Captured here directly via Write rather than re-invoking `/sidekick`, to avoid risking another side-effect on yet another existing seed.
+**Revised cause ranking:**
+
+1. **Parallel-agent interference (top).** Multiple agents were active in the workspace (org-rename migrator, telemetry sub-Features, cache sync). Any could have issued `Edit(file, old="---", new="Captured---")`. The mtime-before-capture ordering is consistent only with this.
+2. ~~LLM tool misuse inside the sidekick agent~~ — downgraded; events.jsonl, transcript, and mtime all argue against.
+3. ~~Stale editor buffer~~ — possible but unlikely.
+
+**Implication:** the destination-resolution Feature is clean. 0.0.6 (`specstudio--v0.0.6`) ships uncontaminated. Seed kept for consilium triage; likely no-repro race condition.
+
+**Next diagnostic if recurrence:** controlled re-dogfood from an isolated session with no other agents active. If corruption recurs, bug is in the skill; if not, archive as no-repro.
