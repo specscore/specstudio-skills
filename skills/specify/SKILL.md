@@ -22,8 +22,7 @@ Do NOT invoke `writing-plans`, `frontend-design`, `mcp-builder`, or ANY implemen
   1. The Feature artifact exists at `spec/features/<slug>/README.md` and contains at least one `#### REQ: <slug>` requirement inside the `## Behavior` section.
   2. Each requirement has ≥1 acceptance criterion in `Given / When / Then` format.
   3. `specscore spec lint` passes.
-  4. The spec-document reviewer subagent returned `Approved`.
-  5. The user has explicitly approved the written Feature.
+  4. The reviewer gate has released — every entry in `gates.specify.reviewers` (including the `type: human` entry that captures the user's approval) returned `Approved` per the [reviewer-gates](../../spec/features/reviewer-gates/README.md) Feature's AND-composition.
 
 This applies to **every** Feature, regardless of perceived simplicity. The only skill invoked after `specstudio:specify` is `writing-plans`.
 </HARD-GATE>
@@ -58,11 +57,10 @@ Create a task for each and complete in order:
 8. **Rehearse stub decision** — per-AC heuristic. See [rehearse-heuristic.md](../shared/rehearse-heuristic.md).
 9. **Lint** — `specscore spec lint`.
 10. **Inline self-review** — placeholders, consistency, scope, ambiguity.
-11. **Dispatch spec-document-reviewer subagent** — see [reviewer-prompt.md](references/reviewer-prompt.md). Must return `Approved` before user review.
-12. **User review gate** — user reviews the written Feature; wait for approval.
-13. **Emit events** — `feature.specified` on reviewer approval; `feature.approved` on user approval. See [synchestra-events.md](../shared/synchestra-events.md).
-14. **Transition to `writing-plans`.**
-15. **Throughout** — watch for sidekick ideas per [sidekick-capture.md](../shared/sidekick-capture.md). When an out-of-scope improvement surfaces, invoke `specstudio:sidekick` with a one-liner, acknowledge in one line, and return to the current checklist step immediately. Do not derail to discuss the sideline idea.
+11. **Run the reviewer gate** — load and dispatch `gates.specify.reviewers` from `specscore.yaml` per the [Reviewer Gates](../../spec/features/reviewer-gates/README.md) Feature. See the `## Reviewer Gate` section below.
+12. **Emit events** — `feature.specified` after lint passes and before reviewer-gate dispatch; `feature.approved` after the reviewer gate releases (every entry returned `Approved`, including the `type: human` entry that captured the user's approval). See [synchestra-events.md](../shared/synchestra-events.md).
+13. **Transition to `writing-plans`.**
+14. **Throughout** — watch for sidekick ideas per [sidekick-capture.md](../shared/sidekick-capture.md). When an out-of-scope improvement surfaces, invoke `specstudio:sidekick` with a one-liner, acknowledge in one line, and return to the current checklist step immediately. Do not derail to discuss the sideline idea.
 
 ## Spec Sections (scale to complexity)
 
@@ -189,50 +187,54 @@ Check:
 
 Fix inline. Don't re-review; move on.
 
-## Reviewer Subagent
+## Reviewer Gate
 
-> **Migration in progress.** Reviewer dispatch is being migrated to the [Reviewer Gates](../../spec/features/reviewer-gates/README.md) contract — see the Feature for the canonical typed-per-stage schema (`gates:` block in `specscore.yaml`), reviewer entry shape (`type: ai`, `type: human`), and AND-composition semantics. The text below describes the legacy pre-migration behavior.
+The reviewer gate — including the user's own approval — is consumed from the typed-per-stage [Reviewer Gates](../../spec/features/reviewer-gates/README.md) contract. The skill carries NO hardcoded baseline reviewer and runs NO separate downstream user-approval step. The reviewer list comes exclusively from `gates.specify.reviewers` in `specscore.yaml`; the user's approval is collected through a `type: human` entry in that list like any other reviewer.
 
-Dispatch the **built-in baseline reviewer** using [reviewer-prompt.md](references/reviewer-prompt.md). It enforces the six baseline blocker categories (scope spans subsystems / unobservable Then / AC coverage gap / architecture↔requirements contradiction / vague REQ / missing source-Idea reasoning). Status must be `Approved` before the user review gate.
+### Step 1 — Update status to `Under Review`
 
-**Additional registered reviewers (third-party).** Read `specscore.yaml` at the repo root. If it contains a top-level `reviewers:` extension key (per the [`third-party-integration`](../../spec/features/third-party-integration/README.md) Feature's `reviewer-registration-mechanism` REQ), dispatch each registered reviewer **in addition to** the baseline:
+Before dispatching the gate, update the Feature's `**Status:**` body-metadata line from `Draft` to `Under Review`. Re-run lint to confirm the transition is clean.
 
-```yaml
-# Example shape — see third-party-integration Feature for the canonical contract
-reviewers:
-  - name: security-baseline
-    prompt: spec/reviewers/security-baseline/prompt.md
-    description: Enforces auth/data-handling/secret-management blockers
-  - name: ux-accessibility
-    prompt: spec/reviewers/ux-accessibility/prompt.md
-```
+### Step 2 — Load and validate the gate config
 
-For each entry: read the `prompt` file (which MUST be a path inside the repo working tree per `reviewer-prompt-location`), confirm it contains an explicit blocker/advisory taxonomy section (per `reviewer-contract` and `AC: reviewer-registration-and-composition`), and dispatch the reviewer using the same Agent-tool dispatch pattern as the baseline. A reviewer prompt missing a documented taxonomy fails the reviewer registration AC — surface this to the user as a registry error, do not silently skip the reviewer.
+Follow the protocol in [`shared/reviewer-gates/loader.md`](../shared/reviewer-gates/loader.md) with `<skill> = specify`. The loader reads `gates.specify.reviewers` from `specscore.yaml`, validates every entry's shape (per the Reviewer Gates Feature's `reviewer-entry-required-fields`, `mvp-type-set`, `ai-entry-shape`, `human-entry-shape`, `no-untyped-entry` REQs), and returns an ordered list of validated entries.
 
-**Composition is AND.** The User Review Gate releases only when **every** registered reviewer plus the baseline returns `Approved`. Any single `Issues Found` from any reviewer blocks the gate. On `Issues Found`:
+If the loader refuses (missing `gates:` key, missing `gates.specify`, empty `reviewers: []`, any per-entry validation failure), surface its error verbatim and halt. Do NOT dispatch any reviewer, do NOT fall back to a built-in baseline, do NOT run a separate user-approval step, and do NOT emit any approval event.
 
-1. Address every blocker-severity finding from every failing reviewer.
-2. Re-dispatch every reviewer that previously returned `Issues Found`.
-3. Re-dispatch reviewers that previously returned `Approved` when the fix changes the Feature's structural sections (Behavior, Architecture, Acceptance Criteria) — `reviewer-composition` makes this MUST for structural changes, SHOULD for REQ/AC changes covered by previously-Approved reviewers.
+### Step 3 — Run the gate
 
-Advisory findings MAY be ignored.
+Follow the protocol in [`shared/reviewer-gates/runner.md`](../shared/reviewer-gates/runner.md), passing the validated reviewer list returned by the loader. The runner:
 
-The skill MUST NOT silently downgrade a blocker to advisory severity, MUST NOT skip a registered reviewer, and MUST NOT proceed past the User Review Gate while any reviewer's last verdict is `Issues Found`.
+- Dispatches every entry serially in declared list order. For `type: ai`, the Agent tool is invoked with the entry's `prompt` file as the system prompt and the Feature `README.md` as the user-facing message. For `type: human`, the user is presented with the Feature and the approval-phrase recognizer described in `## Approval-Phrase Recognition` below collects the verdict.
+- AND-composes the verdicts: the gate releases only when every entry returns `Approved`. On the first `Issues Found` verdict in a pass, the runner halts — subsequent entries in that pass are NOT dispatched.
+- On rerun (after the user addresses findings), re-dispatches per the runner's `rerun-policy`: every previously-`Issues Found` reviewer always, every previously-`Approved` reviewer when the fix touched a structural section (`## Behavior`, `## Architecture`, or `## Acceptance Criteria`).
 
-When `specscore.yaml` does not contain a `reviewers:` key, only the built-in baseline reviewer runs — the absence of the key is not an error.
+The skill MUST dispatch exactly the entries in `gates.specify.reviewers` — no more, no less. It MUST NOT additionally dispatch any reviewer hardcoded inside this skill's own logic, and MUST NOT silently inject a built-in baseline. The runner's verdict map is the sole gating signal.
 
-## User Review Gate
+### Step 4 — On `Approved`
 
-After reviewer subagent returns `Approved`:
+When the runner returns `Approved` (every entry returned `Approved`):
 
-> "Feature written and lint-clean at `spec/features/<slug>/`. Reviewer subagent approved. Please review and let me know if you want changes before we move to `writing-plans`."
-
-Wait. If the user requests changes, fix, re-lint, re-review, re-gate. Only proceed once the user approves.
-
-On approval:
 - Update `**Status:** Under Review → Approved` in the body metadata.
-- Re-run lint.
-- Emit `feature.approved` event.
+- Re-run lint to confirm the transition is clean.
+- Emit `feature.approved` (see Checklist step 12).
+- Proceed to `## Transition to Implementation`.
+
+### Step 5 — On `Issues Found`
+
+When the runner returns `Issues Found`, surface the failing reviewer's name and every `Blocker`-severity finding verbatim. Advisory findings SHOULD also be surfaced (clearly labeled). Address every `Blocker` inline (edits to the Feature `README.md`), re-run lint, then re-invoke the runner per its `rerun-policy`. Do NOT emit `feature.approved` while any reviewer's last verdict is `Issues Found`.
+
+## Approval-Phrase Recognition
+
+When the runner dispatches a `type: human` entry, it presents the Feature to the user with a prompt such as:
+
+> "Feature written and lint-clean at `spec/features/<slug>/`. The reviewer gate is waiting on your approval. Please review and let me know if you approve or want changes before we move to `writing-plans`."
+
+The recognizer maps the user's response per the same explicit-approval phrase set used by `specstudio:ideate`:
+
+- **Explicit approval phrase** — English `approve`, `approved`, `accept`, `accepted`, `lgtm`, plus direct semantic equivalents in any language the user is communicating in (e.g., `aprobar`, `承認`, `одобрено`, `批准`). The criterion is semantic: the phrase must function as a verb form meaning "I give explicit approval" in the source language. On detection of any qualifying phrase as a standalone or dominant response → verdict `Approved`.
+- **Explicit change request** — the user names a concrete change they want before approving → verdict `Issues Found` with the user's change-request text captured as a single `Blocker` finding under the human entry's `name:`.
+- **Vague positive signal** (e.g., `looks good`, `yeah`, `nice`, `ship it`, `+1`, `🚀`, `yes`, `ok`, `sí`, `oui`, `да`, `はい`) — not yet a verdict. Ask one explicit confirmation question (e.g., "Treat that as approval?") and wait. Silent transition on a vague signal is a contract violation.
 
 ## Transition to Implementation
 
@@ -257,8 +259,7 @@ If the user has `obra/superpowers` installed, we may reuse its browser-based vis
 - [ ] Every requirement has ≥1 acceptance criterion
 - [ ] Every AC is `Given / When / Then`
 - [ ] `specscore spec lint` passes
-- [ ] Reviewer subagent returned `Approved`
-- [ ] User explicitly approved the written Feature
+- [ ] Reviewer gate released — every entry in `gates.specify.reviewers` (including the `type: human` entry) returned `Approved`
 - [ ] `**Status:** Approved` in body metadata
 - [ ] Rehearse decision recorded (stubs scaffolded OR skip-reason noted)
 - [ ] Source Idea (if any) linked via the `**Source Ideas:**` body-metadata line — Synchestra handles the reverse link
@@ -266,19 +267,24 @@ If the user has `obra/superpowers` installed, we may reuse its browser-based vis
 
 ## Red Flags
 
-- Proceeding to `writing-plans` without user approval
+- Proceeding to `writing-plans` before the reviewer gate releases
+- Dispatching a hardcoded baseline reviewer not present in `gates.specify.reviewers`
+- Running a separate downstream user-approval step outside the `type: human` reviewer entry
+- Silently downgrading a `Blocker` finding to `Advisory`, or skipping a registered reviewer
 - Requirements without ACs
 - ACs not in `Given / When / Then`
 - "Too simple to spec" rationalization
 - Scope spanning multiple subsystems
 - Assumptions from the source Idea silently dropped
 - Writing to `docs/superpowers/specs/` instead of `spec/features/<slug>/`
-- Skipping the reviewer subagent
 - Invoking any skill other than `writing-plans` on transition
 
 ## References
 
-- [reviewer-prompt.md](references/reviewer-prompt.md) — spec-document reviewer subagent template.
+- [Reviewer Gates Feature](../../spec/features/reviewer-gates/README.md) — canonical typed-per-stage `gates:` schema, reviewer entry shape, AND-composition, and rerun policy.
+- [shared/reviewer-gates/loader.md](../shared/reviewer-gates/loader.md) — load-and-validate protocol for `gates.specify.reviewers`.
+- [shared/reviewer-gates/runner.md](../shared/reviewer-gates/runner.md) — dispatch and verdict-aggregation protocol.
+- [references/reviewer-prompt.md](references/reviewer-prompt.md) — baseline reviewer prompt; opt-in via a `type: ai` entry in `gates.specify.reviewers`.
 - [visual-companion.md](references/visual-companion.md) — visual companion strategy (decision pending).
 - [philosophy.md](../shared/philosophy.md) — shared tenets.
 - [path-conventions.md](../shared/path-conventions.md) — `spec/` vs `docs/` rules.

@@ -5,3 +5,13 @@ project:
     host: github.com
     org: synchestra-io
     repo: specstudio-skills
+
+gates:
+  specify:
+    reviewers:
+      - name: spec-document-reviewer
+        type: ai
+        prompt: skills/specify/references/reviewer-prompt.md
+        description: Baseline SpecScore Feature reviewer — enforces six blocker categories
+      - name: user-approval
+        type: human

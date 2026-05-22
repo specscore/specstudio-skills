@@ -59,6 +59,23 @@ Agent tool (subagent_type: general-purpose):
 **Reviewer returns:** Status, Issues (if any), Recommendations.
 
 **Caller behavior:**
-- `Approved` → proceed to user review gate.
-- `Issues Found` → fix each issue inline, re-run lint, re-dispatch reviewer.
-- Recommendations → author's judgment; never blocks approval.
+- `Approved` → the reviewer's verdict feeds the gate's AND-composition; the next entry in `gates.specify.reviewers` is dispatched.
+- `Issues Found` → fix each `Blocker` finding inline, re-run lint, re-dispatch this reviewer per the gate runner's `rerun-policy`.
+- Advisory findings → author's judgment; never blocks approval.
+
+## Blocker / Advisory taxonomy
+
+This baseline reviewer maps findings to severities as follows. The taxonomy is required by [reviewer-gates#req:ai-entry-shape](../../../spec/features/reviewer-gates/README.md#req-ai-entry-shape): every `type: ai` reviewer prompt MUST document which finding categories it treats as `Blocker` vs. `Advisory`.
+
+**Blocker — gate-failing findings.** Any of the following MUST be reported with severity `Blocker`. The gate runner blocks gate release on any single `Blocker` finding (per the Reviewer Gates Feature's `and-composition` REQ).
+
+1. **Scope spans subsystems** — the Feature describes work that should be decomposed into multiple Features (multi-Feature scope hidden inside one artifact).
+2. **Unobservable `Then`** — an AC's `Then` clause cannot be checked by a reader (abstract aspiration, not an observable outcome).
+3. **AC coverage gap** — at least one REQ has no AC, or an AC has no `verifies REQ:<slug>` back-reference resolving to an existing REQ in this Feature.
+4. **Architecture ↔ requirements contradiction** — `## Architecture` describes a different system than the one the `#### REQ:` rules describe; or REQs and ACs disagree.
+5. **Vague REQ** — a requirement could be interpreted two ways, would lead two implementers to build different things, or uses MUST/SHOULD/MAY language ambiguously.
+6. **Missing source-Idea reasoning** — when `**Source Ideas:**` is non-empty, the Idea's Must-be-true assumptions are not addressed by any AC and are not explicitly deferred under `## Outstanding Questions` or `## Not Doing`.
+
+**Advisory — non-gate-failing findings.** Every other category of finding MUST be reported with severity `Advisory`. The consumer (`specstudio:specify`) MAY ignore Advisory findings; they do not affect the gate verdict. Examples include: minor wording polish, stylistic preferences, uneven section depth, suggested alternative phrasings, optional clarifications, additional Outstanding Questions to consider.
+
+The reviewer MUST NOT silently downgrade a Blocker-category finding to Advisory severity to grease approval, and MUST NOT upgrade an Advisory-category finding to Blocker severity to push a stylistic preference. The categories above are the contract.

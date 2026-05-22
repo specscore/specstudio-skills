@@ -1,6 +1,6 @@
 # Plan: Reviewer Gates MVP
 
-**Status:** Implementing
+**Status:** Completed
 **Source Feature:** reviewer-gates
 **Date:** 2026-05-22
 **Owner:** alex
@@ -38,7 +38,7 @@ Implement the gate runner that consumes Task 1's validated reviewer list and exe
 ### Task 3: Wire `specstudio:specify` to consume `gates.specify`
 
 **Verifies:** reviewer-gates#ac:specify-loads-gate-not-builtin
-**Status:** pending
+**Status:** done
 **Depends-On:** 1, 2
 
 Modify `skills/specify/SKILL.md` to resolve its reviewer list exclusively from `gates.specify.reviewers` via Task 1's loader and dispatch via Task 2's runner. Remove the hardcoded baseline-reviewer dispatch from the skill body. Remove the separate "User Review Gate" step — the user-approval phrase is now collected via a `type: human` entry in the gate's reviewer list. The existing reviewer prompt at `skills/specify/references/reviewer-prompt.md` stays in place; it is referenced by a `type: ai` entry users add to their own `specscore.yaml`. Update this repo's `specscore.yaml` with a minimal `gates.specify` config that registers the baseline-reviewer entry + a human entry, so dogfooding this Plan's own subsequent `plan.updated` cycles keeps working.
