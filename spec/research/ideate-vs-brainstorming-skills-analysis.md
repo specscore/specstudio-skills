@@ -12,7 +12,7 @@
 
 The strategic argument (two skills not one, divergent vs. gating roles, lifecycle alignment) **stands**. The concrete artifact schemas in §7.1 and §8 (YAML front-matter with `type:` / `id:` / `promotes_to:` fields) **do not** — they pre-date the discovery that canonical SpecScore explicitly rejects YAML front-matter and uses bold-prefixed body metadata (`**Status:**`, `**Date:**`, `**Owner:**`, `**Promotes To:**`, …) with title-prefix dispatch (`# Idea: …`, `# Feature: …`).
 
-Treat any YAML schema example below as historical record of the original proposal. The authoritative current schema is the canonical SpecScore spec at [`synchestra-io/specscore`](https://github.com/synchestra-io/specscore), reflected in `skills/ideate/SKILL.md`, `skills/specify/SKILL.md`, and `skills/shared/specscore-lint-rules.md`.
+Treat any YAML schema example below as historical record of the original proposal. The authoritative current schema is the canonical SpecScore spec at [`specscore/specscore`](https://github.com/specscore/specscore), reflected in `skills/ideate/SKILL.md`, `skills/specify/SKILL.md`, and `skills/shared/specscore-lint-rules.md`.
 
 ---
 

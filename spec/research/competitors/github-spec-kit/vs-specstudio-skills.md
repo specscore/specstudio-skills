@@ -19,7 +19,7 @@ Same job — *get from prompt to spec without writing the wrong thing* — solve
 |---|---|---|
 | **CLI + template stack** | `github/spec-kit` | Python `specify` CLI; per-agent install matrix; 7-stage slash-command funnel; prose templates; manifest-driven plugins |
 | **Skill set, freeform output** | `obra/superpowers` (`brainstorming`) + `addyosmani/agent-skills` (`idea-refine`, `spec-driven-development`, …) | Markdown skill files invoked via the host runtime's Skill tool; produce prose markdown to `docs/` |
-| **Skill set, schema-validated output** | `synchestra-io/specstudio-skills` (`specstudio:ideate`, `specstudio:specify`) | Same Skill-tool invocation surface, but artifacts land in `spec/` and are gated by `specscore lint` |
+| **Skill set, schema-validated output** | `specscore/specstudio-skills` (`specstudio:ideate`, `specstudio:specify`) | Same Skill-tool invocation surface, but artifacts land in `spec/` and are gated by `specscore lint` |
 
 **SpecStudio skills are the schema-bearing skill-layer expression of the same SDD methodology Spec Kit popularized at the CLI layer.** They share Spec Kit's funnel shape (idea → spec → …) but inherit Superpowers' hard-gate discipline and agent-skills' divergent/convergent ideation, then bind every artifact to a typed SpecScore tree so the output is machine-checkable rather than prose-by-convention.
 

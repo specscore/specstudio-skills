@@ -1,6 +1,6 @@
 # Feature: Sidekick Consilium
 
-> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/specstudio-skills/spec/features/sidekick-consilium?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/specstudio-skills/spec/features/sidekick-consilium?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/specstudio-skills/spec/features/sidekick-consilium?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/specstudio-skills/spec/features/sidekick-consilium?op=request-change) |
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/specscore/specstudio-skills/spec/features/sidekick-consilium?op=explore) | [Edit](https://specscore.studio/app/github.com/specscore/specstudio-skills/spec/features/sidekick-consilium?op=edit) | [Ask question](https://specscore.studio/app/github.com/specscore/specstudio-skills/spec/features/sidekick-consilium?op=ask) | [Request change](https://specscore.studio/app/github.com/specscore/specstudio-skills/spec/features/sidekick-consilium?op=request-change) |
 
 **Status:** Approved
 **Date:** 2026-05-18
@@ -270,7 +270,7 @@ The event is emitted exactly once per successful task completion. On `failed` or
 
 ### The deterministic arbiter (cross-repo contract)
 
-These REQs contract the behavior of the `specscore consilium verdict` subcommand. The subcommand's *implementation* lives in [`synchestra-io/specscore-cli`](https://github.com/synchestra-io/specscore-cli) and is tracked via a companion plan stub authored at plan time.
+These REQs contract the behavior of the `specscore consilium verdict` subcommand. The subcommand's *implementation* lives in [`specscore/specscore-cli`](https://github.com/specscore/specscore-cli) and is tracked via a companion plan stub authored at plan time.
 
 #### REQ: specscore-consilium-verdict-subcommand
 
@@ -342,7 +342,7 @@ A `consilium-review` task is created lazily by the consilium skill at drain time
 
 #### REQ: single-writer-claim-semantics
 
-When the skill claims a task, the transition `queued → claimed` MUST be atomic at the Synchestra task layer. If two `/consilium` invocations race on the same task, the loser observes `claimed` and skips that task without re-claiming. This is the cross-repo contract for the `consilium-review` task type implementation in `synchestra-io/synchestra`.
+When the skill claims a task, the transition `queued → claimed` MUST be atomic at the Synchestra task layer. If two `/consilium` invocations race on the same task, the loser observes `claimed` and skips that task without re-claiming. This is the cross-repo contract for the `consilium-review` task type implementation in `specscore/synchestra`.
 
 ### Calibration and quality gate
 
@@ -524,10 +524,10 @@ In **this repo** (`specstudio-skills`):
 3. **`specscore.yaml` schema extension** — adds the `consilium:` top-level block with `roster` and `gate` sub-keys, contracted in REQs `roster-exclude-and-custom` and `gate-knob-set`. Phase 2 will additively add `consilium.auto_promote` to the same block.
 4. **`sidekick-idea.reviewed` event addendum** — extends `skills/shared/synchestra-events.md` (per the Phase 0 precedent) with the new event's envelope and payload.
 
-In **`synchestra-io/specscore-cli`** (cross-repo):
+In **`specscore/specscore-cli`** (cross-repo):
 5. **`specscore consilium verdict` subcommand** — the deterministic arbiter. Contracted in REQs `specscore-consilium-verdict-subcommand`, `arbiter-gate-rules`, `arbiter-reproducibility`, and `roster-validation`. Implementation tracked via companion plan stub at plan time.
 
-In **`synchestra-io/synchestra`** (cross-repo):
+In **`specscore/synchestra`** (cross-repo):
 6. **`consilium-review` task type** — the queue resource. Contracted in REQs `consilium-review-task-lifecycle`, `idempotent-task-creation`, and `single-writer-claim-semantics`. Implementation tracked via companion plan stub at plan time.
 
 Conceptually shared (no code artifact):

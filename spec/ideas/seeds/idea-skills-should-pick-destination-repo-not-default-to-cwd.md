@@ -17,7 +17,7 @@ In multi-repo SpecScore workspaces, Idea-generation skills — `specstudio:ideat
 
 ## Concrete dogfood evidence
 
-The `artifact-frontmatter-convention` Idea was captured into `specscore/specstudio-skills` (commit `c4114cb`, 2026-05-19) even though it belongs in `specscore/specscore`. Relocated 2026-05-20 (commits `160ae03` in skills, `7e32851` in specscore). The relocate also required rewriting `synchestra-io/*` org references and disambiguating "this repo" wording — pure rework caused by the wrong initial destination.
+The `artifact-frontmatter-convention` Idea was captured into `specscore/specstudio-skills` (commit `c4114cb`, 2026-05-19) even though it belongs in `specscore/specscore`. Relocated 2026-05-20 (commits `160ae03` in skills, `7e32851` in specscore). The relocate also required rewriting `specscore/*` org references and disambiguating "this repo" wording — pure rework caused by the wrong initial destination.
 
 ## Promoted
 

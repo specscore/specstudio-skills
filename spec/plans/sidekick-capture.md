@@ -4,7 +4,7 @@
 
 **Goal:** Ship Phase 0 of the `sidekick-ideas` Idea: capture infrastructure that lets host skills durably record sideline ideas as lint-clean seed files without derailing primary work.
 
-**Architecture:** A new `specstudio:sidekick` skill writes seed files at `spec/ideas/seeds/<slug>.md` per a documented schema (8-key YAML frontmatter + H1 heading + optional ≤2000-char markdown body); a shared directive at `skills/shared/sidekick-capture.md` instructs host skills (`specstudio:ideate`, `specstudio:specify`) on heuristic and explicit capture paths; the `sidekick-idea.captured` event is emitted on successful write via the existing envelope+payload convention in `skills/shared/synchestra-events.md`. The seed lint rule's CLI implementation is cross-repo (`synchestra-io/specscore-cli`) and tracked by a companion plan stub.
+**Architecture:** A new `specstudio:sidekick` skill writes seed files at `spec/ideas/seeds/<slug>.md` per a documented schema (8-key YAML frontmatter + H1 heading + optional ≤2000-char markdown body); a shared directive at `skills/shared/sidekick-capture.md` instructs host skills (`specstudio:ideate`, `specstudio:specify`) on heuristic and explicit capture paths; the `sidekick-idea.captured` event is emitted on successful write via the existing envelope+payload convention in `skills/shared/synchestra-events.md`. The seed lint rule's CLI implementation is cross-repo (`specscore/specscore-cli`) and tracked by a companion plan stub.
 
 **Tech Stack:** Markdown skill authoring (Claude Code skill format); YAML frontmatter; bash for slug derivation and file writes; SHA-256 for content hashing (e.g., `shasum -a 256`); `.specscore/events.jsonl` for event transport per existing convention; `specscore spec lint` for verification.
 
@@ -1077,7 +1077,7 @@ Per Rehearse Integration section (Feature sidekick-capture).
 **Files:**
 - Create: `spec/plans/sidekick-capture-lint-rule-companion.md`
 
-**Why a stub:** REQ `seed-lint-rule` in the Feature specifies the lint rule's *contract*, but the *implementation* lives in `synchestra-io/specscore-cli` (a different repo). A full implementation plan for that work belongs in the specscore-cli repo. This stub in *this* repo flags the dependency, lists the rule's behavior succinctly, and is what a maintainer reads to understand "the lint rule isn't here yet — it goes there."
+**Why a stub:** REQ `seed-lint-rule` in the Feature specifies the lint rule's *contract*, but the *implementation* lives in `specscore/specscore-cli` (a different repo). A full implementation plan for that work belongs in the specscore-cli repo. This stub in *this* repo flags the dependency, lists the rule's behavior succinctly, and is what a maintainer reads to understand "the lint rule isn't here yet — it goes there."
 
 - [ ] **Step 1: Write the companion stub**
 
@@ -1086,7 +1086,7 @@ Create `spec/plans/sidekick-capture-lint-rule-companion.md`:
 ```markdown
 # Sidekick Capture Lint Rule — Cross-Repo Companion Plan Stub
 
-**Status:** Stub. This plan exists in *this* repo to record the dependency. The actual implementation work happens in [`synchestra-io/specscore-cli`](https://github.com/synchestra-io/specscore-cli).
+**Status:** Stub. This plan exists in *this* repo to record the dependency. The actual implementation work happens in [`specscore/specscore-cli`](https://github.com/specscore/specscore-cli).
 
 **Source contract:** REQ `seed-lint-rule` in [`spec/features/sidekick-capture/README.md`](../features/sidekick-capture/README.md).
 
@@ -1137,7 +1137,7 @@ rm spec/ideas/seeds/_test.md
 
 ## Tracking
 
-- Open an issue in `synchestra-io/specscore-cli` titled "Add `sidekick-seed` lint rule" with a link to this stub and to REQ `seed-lint-rule`.
+- Open an issue in `specscore/specscore-cli` titled "Add `sidekick-seed` lint rule" with a link to this stub and to REQ `seed-lint-rule`.
 - Until the rule ships, the contract is enforceable only by visual review; Phase 0 still functions because the sidekick skill enforces frontmatter and body shape at write time (defense-in-depth per the directive).
 ```
 
@@ -1148,11 +1148,11 @@ Expected: `0 violations found`
 
 - [ ] **Step 3: Open the upstream issue** (manual; not automated by this plan)
 
-In `synchestra-io/specscore-cli`, open:
+In `specscore/specscore-cli`, open:
 
 > **Title:** Add `sidekick-seed` lint rule
 >
-> **Body:** New lint rule contract: see [`specstudio-skills` plan stub](https://github.com/synchestra-io/specstudio-skills/blob/main/spec/plans/sidekick-capture-lint-rule-companion.md) and the source REQ at [`spec/features/sidekick-capture/README.md` REQ `seed-lint-rule`](https://github.com/synchestra-io/specstudio-skills/blob/main/spec/features/sidekick-capture/README.md#req-seed-lint-rule).
+> **Body:** New lint rule contract: see [`specstudio-skills` plan stub](https://github.com/specscore/specstudio-skills/blob/main/spec/plans/sidekick-capture-lint-rule-companion.md) and the source REQ at [`spec/features/sidekick-capture/README.md` REQ `seed-lint-rule`](https://github.com/specscore/specstudio-skills/blob/main/spec/features/sidekick-capture/README.md#req-seed-lint-rule).
 
 Note the issue URL in the commit message in the next step.
 
@@ -1163,7 +1163,7 @@ git add spec/plans/sidekick-capture-lint-rule-companion.md
 git commit -m "plan(sidekick-capture): companion stub for cross-repo lint rule
 
 The seed-lint-rule contract specified in Feature sidekick-capture lives
-in this repo; the implementation lives in synchestra-io/specscore-cli.
+in this repo; the implementation lives in specscore/specscore-cli.
 This stub records the dependency, restates the rule's behavior, and
 points at the upstream tracking issue.
 

@@ -127,7 +127,7 @@ Capture stdout/stderr/exit-code. Surface failures cleanly to the user with the u
 When `specscore` is missing AND the user declined to install (Step 2), write the artifacts directly:
 
 1. **`specscore.yaml`**: line 1 is exactly `# SpecScore Repo Config Schema: https://specscore.md/repo-config`. Lines 2+ are an optional `project:` block with whichever fields the wizard supplied (and any inferred from `git remote get-url origin` for `host`/`org`/`repo`, basename for `title`). Omit empty fields rather than emit them as empty strings.
-2. **`spec/README.md`**, **`spec/ideas/README.md`**, **`spec/features/README.md`**: lint-clean indexes per the canonical [Index Feature](https://github.com/synchestra-io/specscore/blob/main/spec/features/index/README.md), [Ideas Index](https://github.com/synchestra-io/specscore/blob/main/spec/features/ideas-index/README.md), [Features Index](https://github.com/synchestra-io/specscore/blob/main/spec/features/features-index/README.md). Use the same content shape `specscore init` produces.
+2. **`spec/README.md`**, **`spec/ideas/README.md`**, **`spec/features/README.md`**: lint-clean indexes per the canonical [Index Feature](https://github.com/specscore/specscore/blob/main/spec/features/index/README.md), [Ideas Index](https://github.com/specscore/specscore/blob/main/spec/features/ideas-index/README.md), [Features Index](https://github.com/specscore/specscore/blob/main/spec/features/features-index/README.md). Use the same content shape `specscore init` produces.
 
 The fallback path MUST produce schema-equivalent artifacts to the CLI path: identical mandatory content, identical section structure, identical metadata fields. Cosmetic differences (whitespace, blank-line counts) are permitted.
 
@@ -163,7 +163,7 @@ The skill MUST NOT distinguish between "version drift" and "user-edit drift" —
 
 When `synchestra` is on PATH (after Step 2), invoke `synchestra init` as a subprocess from the project root. Pass through wizard answers relevant to Synchestra orchestration features (Step 3 question 4) as flags: `--state-mode embedded` (default), `--branch <name>`, `--no-push` if appropriate.
 
-`synchestra init` writes a dedicated `synchestra.yaml` at the repo root (per the [synchestra repo-config Feature](https://github.com/synchestra-io/synchestra/blob/main/spec/features/repo-config/README.md)). It does **not** write extension keys inside `specscore.yaml` — Synchestra-only orchestration metadata lives in its own file, parallel to specscore.yaml. Project identity (title, host, org, repo, repositories) stays in specscore.yaml; synchestra reads it from there. The two files compose without duplication.
+`synchestra init` writes a dedicated `synchestra.yaml` at the repo root (per the [synchestra repo-config Feature](https://github.com/specscore/synchestra/blob/main/spec/features/repo-config/README.md)). It does **not** write extension keys inside `specscore.yaml` — Synchestra-only orchestration metadata lives in its own file, parallel to specscore.yaml. Project identity (title, host, org, repo, repositories) stays in specscore.yaml; synchestra reads it from there. The two files compose without duplication.
 
 In v1, `synchestra init` implements only `--state-mode embedded` (orphan branch + worktree at `.synchestra/`). The `separate-repo` and `hub-managed` modes are recognized but exit 2 with a "not yet implemented" message; treat that exit as a soft failure and continue with embedded mode if the user chose otherwise.
 
@@ -234,8 +234,8 @@ Direct, helpful, honest about partial states and degraded paths. The skill is a 
 - [`spec/features/skills/init/`](../../spec/features/skills/init/README.md) — the Feature spec this skill implements
 - [`spec/features/third-party-integration/`](../../spec/features/third-party-integration/README.md) — the Feature defining the canonical snippet and the platform-detection rule
 - [`spec/features/third-party-integration/snippet.md`](../../spec/features/third-party-integration/snippet.md) — the canonical Producer-shape instruction snippet this skill installs
-- [SpecScore Repo Config Feature](https://github.com/synchestra-io/specscore/blob/main/spec/features/repo-config/README.md) — the schema `specscore.yaml` conforms to
-- [SpecScore CLI init Feature](https://github.com/synchestra-io/specscore-cli/blob/main/spec/features/cli/init/README.md) — the `specscore init` subcommand contract this skill delegates to
-- [`specscore:install`](https://github.com/synchestra-io/ai-plugin-specscore/blob/main/skills/install/SKILL.md) — install delegate for the `specscore` CLI
-- [`synchestra:install`](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/install/SKILL.md) — install delegate for the `synchestra` CLI
+- [SpecScore Repo Config Feature](https://github.com/specscore/specscore/blob/main/spec/features/repo-config/README.md) — the schema `specscore.yaml` conforms to
+- [SpecScore CLI init Feature](https://github.com/specscore/specscore-cli/blob/main/spec/features/cli/init/README.md) — the `specscore init` subcommand contract this skill delegates to
+- [`specscore:install`](https://github.com/specscore/ai-plugin-specscore/blob/main/skills/install/SKILL.md) — install delegate for the `specscore` CLI
+- [`synchestra:install`](https://github.com/specscore/ai-plugin-synchestra/blob/main/skills/install/SKILL.md) — install delegate for the `synchestra` CLI
 - [`shared/synchestra-events.md`](../shared/synchestra-events.md) — event vocabulary `project.initialized` / `project.updated` participate in

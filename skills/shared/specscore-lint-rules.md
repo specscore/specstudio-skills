@@ -4,7 +4,7 @@
 
 Both `specstudio:ideate` and `specstudio:specify` assume `specscore spec lint` enforces the rules below. Skills invoke lint as a verification step — if any rule here changes, the corresponding skill checklist step may need to update.
 
-The rules below are SpecStudio's **expectation** of canonical SpecScore lint behavior — they describe the canonical SpecScore artifact shape (no YAML front-matter; bold-prefixed body metadata; title-prefix dispatch keys). The authoritative spec is the SpecScore feature tree at [`synchestra-io/specscore`](https://github.com/synchestra-io/specscore); when this contract diverges, that repo wins.
+The rules below are SpecStudio's **expectation** of canonical SpecScore lint behavior — they describe the canonical SpecScore artifact shape (no YAML front-matter; bold-prefixed body metadata; title-prefix dispatch keys). The authoritative spec is the SpecScore feature tree at [`specscore/specscore`](https://github.com/specscore/specscore); when this contract diverges, that repo wins.
 
 ## Lint CLI Contract
 

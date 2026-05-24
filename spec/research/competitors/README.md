@@ -1,6 +1,6 @@
 # Competitors & Adjacent Tools
 
-> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/p/github.com/synchestra-io/specstudio-skills/spec/research/competitors?op=explore) | [Edit](https://specscore.studio/app/p/github.com/synchestra-io/specstudio-skills/spec/research/competitors?op=edit) | [Ask question](https://specscore.studio/app/p/github.com/synchestra-io/specstudio-skills/spec/research/competitors?op=ask) | [Request change](https://specscore.studio/app/p/github.com/synchestra-io/specstudio-skills/spec/research/competitors?op=request-change) |
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/p/github.com/specscore/specstudio-skills/spec/research/competitors?op=explore) | [Edit](https://specscore.studio/app/p/github.com/specscore/specstudio-skills/spec/research/competitors?op=edit) | [Ask question](https://specscore.studio/app/p/github.com/specscore/specstudio-skills/spec/research/competitors?op=ask) | [Request change](https://specscore.studio/app/p/github.com/specscore/specstudio-skills/spec/research/competitors?op=request-change) |
 
 How **SpecStudio skills** (`specstudio:ideate`, `specstudio:specify`, …) sit alongside other tools in the Spec-Driven Development (SDD) and AI-engineering-discipline space.
 
@@ -34,7 +34,7 @@ These notes are research, not contracts. The comparison subject is the *skill se
               │ source              │                     │ source
               ▼                     ▼                     ▼
                   ┌────────────────────────────────────────┐
-                  │   synchestra-io/specstudio-skills      │
+                  │   specscore/specstudio-skills      │
                   │   ideate + specify (so far).           │
                   │   Same Skill-tool surface as upstreams.│
                   │   Output: SpecScore-typed artifacts in │
@@ -54,7 +54,7 @@ These notes are research, not contracts. The comparison subject is the *skill se
 | **github/spec-kit** | Python CLI + per-agent install matrix; 7-stage slash-command funnel | Prose markdown in `.specify/specs/{N}-{name}/` | None at the format level (`[NEEDS CLARIFICATION]` is a string, not a schema) | MIT |
 | **obra/superpowers** | Skill set (Claude Code / Copilot CLI / Gemini CLI / Codex / OpenCode) | Freeform markdown in `docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md` | None; relies on `<HARD-GATE>` + reviewer subagent + user approval | MIT |
 | **addyosmani/agent-skills** | Skill set (Claude Code) + reference checklists + agent personas | Freeform markdown in `docs/ideas/<name>.md`, etc. | None; relies on per-skill checklists and anti-rationalization tables | MIT |
-| **synchestra-io/specstudio-skills** | Skill set (Claude Code / Copilot CLI / Gemini CLI) backed by `specscore` CLI | Typed artifacts in `spec/ideas/<slug>.md`, `spec/features/<slug>/` — bold-prefixed body metadata (`**Status:**`, `**Date:**`, …) per the SpecScore convention, plus a fixed section schema | `specscore lint` + reviewer subagent + user approval | Apache-2.0 (skills) + CC BY 4.0 (SpecScore spec text) |
+| **specscore/specstudio-skills** | Skill set (Claude Code / Copilot CLI / Gemini CLI) backed by `specscore` CLI | Typed artifacts in `spec/ideas/<slug>.md`, `spec/features/<slug>/` — bold-prefixed body metadata (`**Status:**`, `**Date:**`, …) per the SpecScore convention, plus a fixed section schema | `specscore lint` + reviewer subagent + user approval | Apache-2.0 (skills) + CC BY 4.0 (SpecScore spec text) |
 
 ---
 

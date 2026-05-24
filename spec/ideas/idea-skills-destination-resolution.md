@@ -15,7 +15,7 @@ How might we prevent `specstudio:sidekick` from silently misfiling captured seed
 
 Sidekick capture is structurally different from deliberate Idea work. When a user invokes `specstudio:ideate` or `specstudio:specify`, they're in deliberation mode and can be expected to be conscious of which repo their work belongs in. Sidekick is fire-and-forget — the user is mid-flow on a different task, the host AI agent detects a sideline idea, and the skill writes the seed wherever cwd happens to be. Neither the user nor the agent stops to ask "wait, which repo?"
 
-On 2026-05-19, the `artifact-frontmatter-convention` Idea was misfiled into `specscore/specstudio-skills` during an `ideate` session (commit `c4114cb`) and relocated by hand 2026-05-20 (~30 minutes of work: copy file, rewrite stale `synchestra-io/*` org references to `specscore/*`, disambiguate "this repo" wording, commit on both sides with cross-linking messages; commits `7e32851` in `specscore/specscore`, `160ae03` in `specstudio-skills`). That specific misfile is treated here as an ideate-side user-awareness gap rather than a skill responsibility — but the relocate mechanics it surfaced are the same ones a sidekick misfile would need. This Idea uses that case as the model for the recovery skill, while scoping the *preventive* part (destination resolution) to sidekick where the structural cognitive gap lives.
+On 2026-05-19, the `artifact-frontmatter-convention` Idea was misfiled into `specscore/specstudio-skills` during an `ideate` session (commit `c4114cb`) and relocated by hand 2026-05-20 (~30 minutes of work: copy file, rewrite stale `specscore/*` org references to `specscore/*`, disambiguate "this repo" wording, commit on both sides with cross-linking messages; commits `7e32851` in `specscore/specscore`, `160ae03` in `specstudio-skills`). That specific misfile is treated here as an ideate-side user-awareness gap rather than a skill responsibility — but the relocate mechanics it surfaced are the same ones a sidekick misfile would need. This Idea uses that case as the model for the recovery skill, while scoping the *preventive* part (destination resolution) to sidekick where the structural cognitive gap lives.
 
 `specstudio:sidekick` lives in `specscore/specstudio-skills`. Each SpecScore-managed sibling repo already carries a `specscore.yaml` declaring its identity (`project.title`, `org`, `repo`) — an unused signal that's a natural input for routing.
 
@@ -33,7 +33,7 @@ A companion **`specstudio:relocate-idea` skill** automates the manual relocate r
 
 - **Pre-flight clean-tree check.** Refuses to start if any affected repo (source, target, or any sibling with link updates queued) has uncommitted changes in the paths the verb would touch. Aborts early with a clear `Repo <X> has uncommitted changes in <path> — clean up and retry` message.
 - Copying the artifact file from source to target (handling both `spec/ideas/<slug>.md` Ideas and `spec/ideas/seeds/<slug>.md` seeds).
-- Rewriting cross-repo references inside the artifact itself (`synchestra-io/*` → `specscore/*`, "this repo" disambiguation).
+- Rewriting cross-repo references inside the artifact itself (`specscore/*` → `specscore/*`, "this repo" disambiguation).
 - **Finding and updating every reference to the old path/slug across all sibling SpecScore-managed repos.** References live in: `spec/ideas/README.md` indexes; other Ideas via `**Related Ideas:**` / `**Supersedes:**`; Features via `**Source Ideas:**`; seeds via back-link sections.
 - **Auto-committing per repo by default**, with cross-linking commit messages so the relocate is traceable in git history. `--no-commit` flag stages changes everywhere without committing, for users who want to review before pulling the trigger. On first-failure during commit phase, the verb stops and reports exactly which repos were committed and which weren't, leaving the user to manually roll back already-committed repos if desired.
 
@@ -62,7 +62,7 @@ In `specscore/specscore-cli`:
 1. New `specscore idea relocate <artifact-path> <target-repo>` CLI verb that does all of:
    - Pre-flight clean-tree check across source, target, and every sibling repo whose docs reference the original path. Aborts with a clear error if any has uncommitted changes in the touched paths.
    - Copies the artifact file to the target repo's matching directory.
-   - Rewrites cross-repo references inside the artifact (`synchestra-io/*` → `specscore/*`, "this repo" disambiguation, footer paths).
+   - Rewrites cross-repo references inside the artifact (`specscore/*` → `specscore/*`, "this repo" disambiguation, footer paths).
    - Finds every reference to the original slug/path across all sibling SpecScore-managed repos (markdown docs in `spec/**/*.md` only — code annotations deferred to v1.5).
    - Updates each found reference to point at the new path.
    - **Auto-commits per repo by default** (source: file removal + index update; target: file addition + index update; siblings: link updates). Cross-links commit SHAs in messages. Stop-and-report on first commit failure.

@@ -1,6 +1,6 @@
 # Sidekick Capture Lint Rule — Cross-Repo Companion Plan Stub
 
-**Status:** Stub. This plan exists in *this* repo to record the dependency. The actual implementation work happens in [`synchestra-io/specscore-cli`](https://github.com/synchestra-io/specscore-cli).
+**Status:** Stub. This plan exists in *this* repo to record the dependency. The actual implementation work happens in [`specscore/specscore-cli`](https://github.com/specscore/specscore-cli).
 
 **Source contract:** REQ `seed-lint-rule` in [`spec/features/sidekick-capture/README.md`](../features/sidekick-capture/README.md).
 
@@ -51,5 +51,5 @@ rm spec/ideas/seeds/_test.md
 
 ## Tracking
 
-- **Upstream issue:** [`synchestra-io/specscore-cli#6`](https://github.com/synchestra-io/specscore-cli/issues/6) — "Add `sidekick-seed` lint rule"
+- **Upstream issue:** [`specscore/specscore-cli#6`](https://github.com/specscore/specscore-cli/issues/6) — "Add `sidekick-seed` lint rule"
 - Until the rule ships, the contract is enforceable only by visual review; Phase 0 still functions because the sidekick skill enforces frontmatter and body shape at write time (defense-in-depth per the directive).

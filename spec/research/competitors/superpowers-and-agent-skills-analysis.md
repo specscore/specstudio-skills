@@ -28,7 +28,7 @@ The Superpowers / agent-skills inventories below (Section 1) and the gap analysi
 
 Three open-source projects occupy adjacent spaces in AI-driven development:
 
-- **SpecScore** (synchestra-io) — specification format and tooling
+- **SpecScore** (specscore) — specification format and tooling
 - **Superpowers** (obra) — agentic workflow skills
 - **Agent-Skills** (addyosmani) — engineering discipline enforcement
 

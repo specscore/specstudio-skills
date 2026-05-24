@@ -1,6 +1,6 @@
 # Feature: Dogfood Test
 
-> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/specstudio-skills/spec/features/dogfood-test?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/specstudio-skills/spec/features/dogfood-test?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/specstudio-skills/spec/features/dogfood-test?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/specstudio-skills/spec/features/dogfood-test?op=request-change) |
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/specscore/specstudio-skills/spec/features/dogfood-test?op=explore) | [Edit](https://specscore.studio/app/github.com/specscore/specstudio-skills/spec/features/dogfood-test?op=edit) | [Ask question](https://specscore.studio/app/github.com/specscore/specstudio-skills/spec/features/dogfood-test?op=ask) | [Request change](https://specscore.studio/app/github.com/specscore/specstudio-skills/spec/features/dogfood-test?op=request-change) |
 **Status:** Deprecated
 **Source Ideas:** —
 **Supersedes:** —

@@ -1,6 +1,6 @@
 # Feature: Ideate Skill
 
-> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/specstudio-skills/spec/features/skills/ideate?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/specstudio-skills/spec/features/skills/ideate?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/specstudio-skills/spec/features/skills/ideate?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/specstudio-skills/spec/features/skills/ideate?op=request-change) |
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/specscore/specstudio-skills/spec/features/skills/ideate?op=explore) | [Edit](https://specscore.studio/app/github.com/specscore/specstudio-skills/spec/features/skills/ideate?op=edit) | [Ask question](https://specscore.studio/app/github.com/specscore/specstudio-skills/spec/features/skills/ideate?op=ask) | [Request change](https://specscore.studio/app/github.com/specscore/specstudio-skills/spec/features/skills/ideate?op=request-change) |
 
 **Status:** Approved
 
@@ -216,7 +216,7 @@ The skill MUST NOT yes-machine weak ideas. When a direction has clear problems, 
 | Feature | Interaction |
 |---|---|
 | [Specify Skill](../specify/README.md) | `ideate` is the upstream gate of `specify`. `specify` consumes the approved Idea via `Source Ideas` linkage; `ideate` never invokes `specify` itself — the user does. |
-| [SpecScore Idea](https://github.com/synchestra-io/specscore/blob/main/spec/features/idea/README.md) | The schema, lint rules, and lifecycle of the produced artifact are owned by SpecScore's Idea feature. `ideate` is a producer, not a definer of that schema. |
+| [SpecScore Idea](https://github.com/specscore/specscore/blob/main/spec/features/idea/README.md) | The schema, lint rules, and lifecycle of the produced artifact are owned by SpecScore's Idea feature. `ideate` is a producer, not a definer of that schema. |
 | Synchestra Events | Emits `idea.drafted` and `idea.approved`. Consumers — including `specify` and Hub — observe these to advance their own state. |
 | `specscore idea new` CLI | Preferred crystallization path. The skill probes for the CLI once per invocation and falls back to direct write only when absent. |
 

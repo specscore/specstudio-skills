@@ -1,6 +1,6 @@
 # Consilium-Review Task Type — Cross-Repo Companion Plan Stub
 
-**Status:** Stub. This plan exists in *this* repo to record the dependency. The actual implementation work happens in [`synchestra-io/synchestra`](https://github.com/synchestra-io/synchestra).
+**Status:** Stub. This plan exists in *this* repo to record the dependency. The actual implementation work happens in [`specscore/synchestra`](https://github.com/specscore/synchestra).
 
 **Source contract:** REQs `consilium-review-task-lifecycle`, `idempotent-task-creation`, and `single-writer-claim-semantics` in [`spec/features/sidekick-consilium/README.md`](../features/sidekick-consilium/README.md).
 
@@ -29,7 +29,7 @@ synchestra task claim <task-id>
 
 ## Tracking
 
-- **Upstream issue:** [synchestra-io/synchestra#5](https://github.com/synchestra-io/synchestra/issues/5)
+- **Upstream issue:** [specscore/synchestra#5](https://github.com/specscore/synchestra/issues/5)
 - Until the task type ships, the consilium skill (Task 8) cannot claim tasks or write verdicts.
 
 ---

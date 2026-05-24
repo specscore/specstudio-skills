@@ -7,7 +7,7 @@
 - https://github.com/github/spec-kit/blob/main/extensions/EXTENSION-API-REFERENCE.md
 - https://deepwiki.com/github/spec-kit (community-maintained architecture overview)
 - https://github.com/polarizertech/spec-kit-extensions (community extensions incubator)
-- Sibling repos in `synchestra-io/`: `specscore` (open spec format, CC BY 4.0; CLI at `specscore-cli`, Apache-2.0) and `synchestra` (Go CLI + MCP + Hub, Apache-2.0)
+- Sibling repos in `specscore/`: `specscore` (open spec format, CC BY 4.0; CLI at `specscore-cli`, Apache-2.0) and `synchestra` (Go CLI + MCP + Hub, Apache-2.0)
 
 **Related docs in this directory:**
 - [`extension-integration.md`](extension-integration.md) — concrete mapping: how SpecScore can ship as a Spec Kit *preset* and Synchestra as a Spec Kit *extension*, with manifest examples and hook points

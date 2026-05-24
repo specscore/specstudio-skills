@@ -121,7 +121,7 @@ The log write is **best-effort**. On any failure (directory creation fails, file
 
 | Anti-pattern | Why it's wrong |
 |---|---|
-| Reading the source artifact, doing the in-file `synchestra-io/` → `specscore/` rewrite locally, then "letting the CLI commit" | The CLI's contract is the *whole* relocate, not a tail end. Splitting the rewrite into the skill creates two implementations of the same substitution rules. |
+| Reading the source artifact, doing the in-file `specscore/` → `specscore/` rewrite locally, then "letting the CLI commit" | The CLI's contract is the *whole* relocate, not a tail end. Splitting the rewrite into the skill creates two implementations of the same substitution rules. |
 | Paraphrasing the CLI's stderr ("The CLI hit a conflict; you may want to ...") | The CLI's stderr includes exact rollback commands per [REQ:stop-on-first-commit-failure](https://github.com/specscore/specscore-cli/blob/main/spec/features/cli/idea/relocate/README.md#req-stop-on-first-commit-failure). Paraphrasing strips actionability. |
 | Auto-running `git commit` in the source repo because "the CLI's --no-commit left things staged" | If the user passed `--no-commit`, they want to commit manually. The skill's exit reproduces the CLI's behavior — staged-not-committed is the requested outcome. |
 | Adding `--include-code` or other flags the CLI doesn't yet support | The CLI's scope is the SpecScore-doc relocate. Code-annotation cleanup is deferred to a later CLI version. The skill should not invent flags the CLI rejects. |

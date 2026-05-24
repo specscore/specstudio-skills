@@ -9,4 +9,4 @@ status: queued
 synchestra_task: null
 ---
 
-# Rebrand 'View in SpecStudio' blockquote to 'View in SpecScore.Studio' linking to specscore.studio (cross-repo: synchestra-io/specscore and synchestra-io/specscore-cli)
+# Rebrand 'View in SpecStudio' blockquote to 'View in SpecScore.Studio' linking to specscore.studio (cross-repo: specscore/specscore and specscore/specscore-cli)

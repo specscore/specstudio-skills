@@ -37,11 +37,11 @@ Follow the steps in order. Do not skip ahead. The first failed step is terminal.
 
 ### Step 1 — Read `specscore.yaml`
 
-Read the repo-root `specscore.yaml`. Preserve the file's key order in your working model — this loader MUST NOT rewrite the file, but a consumer that later writes to `specscore.yaml` for unrelated reasons MUST preserve every key under `gates:` verbatim per [SpecScore Repo Config](https://github.com/synchestra-io/specscore/blob/main/spec/features/repo-config/README.md)'s `unknown-fields-preserved` requirement (see also [reviewer-gates#ac:gates-block-preserved](../../../spec/features/reviewer-gates/README.md#ac-gates-block-preserved)).
+Read the repo-root `specscore.yaml`. Preserve the file's key order in your working model — this loader MUST NOT rewrite the file, but a consumer that later writes to `specscore.yaml` for unrelated reasons MUST preserve every key under `gates:` verbatim per [SpecScore Repo Config](https://github.com/specscore/specscore/blob/main/spec/features/repo-config/README.md)'s `unknown-fields-preserved` requirement (see also [reviewer-gates#ac:gates-block-preserved](../../../spec/features/reviewer-gates/README.md#ac-gates-block-preserved)).
 
 If `specscore.yaml` does not exist or cannot be parsed as YAML, refuse with:
 
-> Error: cannot read `specscore.yaml` at repo root. The `<skill>` skill requires a `gates.<skill>` configuration. See https://github.com/synchestra-io/specstudio-skills/blob/main/spec/features/reviewer-gates/README.md for the canonical schema.
+> Error: cannot read `specscore.yaml` at repo root. The `<skill>` skill requires a `gates.<skill>` configuration. See https://github.com/specscore/specstudio-skills/blob/main/spec/features/reviewer-gates/README.md for the canonical schema.
 
 ### Step 2 — Resolve `gates.<skill>.reviewers`
 
@@ -55,7 +55,7 @@ Resolve the path `gates.<skill>.reviewers` against the parsed config. Three fail
 
 In any of these three cases emit:
 
-> Error: `gates.<skill>.reviewers` is missing or empty in `specscore.yaml`. The `<skill>` skill MUST NOT run without a configured reviewer gate (per [reviewer-gates#req:missing-gates-block-refuses](../../../spec/features/reviewer-gates/README.md#req-missing-gates-block-refuses)). Add at minimum one `type: human` entry — see https://github.com/synchestra-io/specstudio-skills/blob/main/spec/features/reviewer-gates/README.md for the canonical schema. Recommended minimal configuration:
+> Error: `gates.<skill>.reviewers` is missing or empty in `specscore.yaml`. The `<skill>` skill MUST NOT run without a configured reviewer gate (per [reviewer-gates#req:missing-gates-block-refuses](../../../spec/features/reviewer-gates/README.md#req-missing-gates-block-refuses)). Add at minimum one `type: human` entry — see https://github.com/specscore/specstudio-skills/blob/main/spec/features/reviewer-gates/README.md for the canonical schema. Recommended minimal configuration:
 >
 > ```yaml
 > gates:
@@ -75,13 +75,13 @@ Iterate the `reviewers` list in declared order. For each entry, apply Steps 3a�
 
 After validating every entry, also confirm that all `name:` values are unique within this gate's `reviewers:` list (case-sensitive string comparison). Duplicate names refuse per [reviewer-gates#req:reviewer-entry-required-fields](../../../spec/features/reviewer-gates/README.md#req-reviewer-entry-required-fields) with:
 
-> Error: duplicate reviewer `name:` `<value>` in `gates.<skill>.reviewers`. Names MUST be unique within a gate (per [reviewer-gates#req:reviewer-entry-required-fields](../../../spec/features/reviewer-gates/README.md#req-reviewer-entry-required-fields)). See https://github.com/synchestra-io/specstudio-skills/blob/main/spec/features/reviewer-gates/README.md.
+> Error: duplicate reviewer `name:` `<value>` in `gates.<skill>.reviewers`. Names MUST be unique within a gate (per [reviewer-gates#req:reviewer-entry-required-fields](../../../spec/features/reviewer-gates/README.md#req-reviewer-entry-required-fields)). See https://github.com/specscore/specstudio-skills/blob/main/spec/features/reviewer-gates/README.md.
 
 #### Step 3a — `name:` required
 
 Every entry MUST declare `name:` as a non-empty string. The value MUST be lowercase plus hyphens only (regex check: `^[a-z][a-z0-9-]*$`). On any violation refuse with:
 
-> Error: reviewer entry at index `<i>` in `gates.<skill>.reviewers` is missing or has an invalid `name:` (required: lowercase + hyphens). Per [reviewer-gates#req:reviewer-entry-required-fields](../../../spec/features/reviewer-gates/README.md#req-reviewer-entry-required-fields). See https://github.com/synchestra-io/specstudio-skills/blob/main/spec/features/reviewer-gates/README.md.
+> Error: reviewer entry at index `<i>` in `gates.<skill>.reviewers` is missing or has an invalid `name:` (required: lowercase + hyphens). Per [reviewer-gates#req:reviewer-entry-required-fields](../../../spec/features/reviewer-gates/README.md#req-reviewer-entry-required-fields). See https://github.com/specscore/specstudio-skills/blob/main/spec/features/reviewer-gates/README.md.
 
 #### Step 3b — `type:` required and recognized
 
@@ -89,11 +89,11 @@ Every entry MUST declare an explicit `type:` field. There is no implicit default
 
 - If `type:` is absent, refuse — citing [reviewer-gates#req:no-untyped-entry](../../../spec/features/reviewer-gates/README.md#req-no-untyped-entry) (verifies [reviewer-gates#ac:untyped-entry-refused](../../../spec/features/reviewer-gates/README.md#ac-untyped-entry-refused)):
 
-  > Error: reviewer entry `<name>` in `gates.<skill>.reviewers` has no `type:` field. There is no implicit default — entries MUST declare `type: ai` or `type: human` (per [reviewer-gates#req:no-untyped-entry](../../../spec/features/reviewer-gates/README.md#req-no-untyped-entry)). If this entry was migrated from a legacy flat `reviewers:` registry, add `type: ai` and a `prompt:` path explicitly. See https://github.com/synchestra-io/specstudio-skills/blob/main/spec/features/reviewer-gates/README.md.
+  > Error: reviewer entry `<name>` in `gates.<skill>.reviewers` has no `type:` field. There is no implicit default — entries MUST declare `type: ai` or `type: human` (per [reviewer-gates#req:no-untyped-entry](../../../spec/features/reviewer-gates/README.md#req-no-untyped-entry)). If this entry was migrated from a legacy flat `reviewers:` registry, add `type: ai` and a `prompt:` path explicitly. See https://github.com/specscore/specstudio-skills/blob/main/spec/features/reviewer-gates/README.md.
 
 - If `type:` is present but not in `{ai, human}`, refuse — citing [reviewer-gates#req:mvp-type-set](../../../spec/features/reviewer-gates/README.md#req-mvp-type-set) (verifies [reviewer-gates#ac:unknown-type-refused](../../../spec/features/reviewer-gates/README.md#ac-unknown-type-refused)):
 
-  > Error: reviewer entry `<name>` declares `type: <value>`, which is outside the MVP type set `{ai, human}` (per [reviewer-gates#req:mvp-type-set](../../../spec/features/reviewer-gates/README.md#req-mvp-type-set)). Unknown types MUST NOT be treated as `ai`. Extension to additional types (`lint`, `security`, `ux`, etc.) is deferred — see https://github.com/synchestra-io/specstudio-skills/blob/main/spec/features/reviewer-gates/README.md.
+  > Error: reviewer entry `<name>` declares `type: <value>`, which is outside the MVP type set `{ai, human}` (per [reviewer-gates#req:mvp-type-set](../../../spec/features/reviewer-gates/README.md#req-mvp-type-set)). Unknown types MUST NOT be treated as `ai`. Extension to additional types (`lint`, `security`, `ux`, etc.) is deferred — see https://github.com/specscore/specstudio-skills/blob/main/spec/features/reviewer-gates/README.md.
 
 #### Step 3c — If `type: ai`, validate the `ai` entry shape
 
@@ -101,7 +101,7 @@ These checks verify [reviewer-gates#req:ai-entry-shape](../../../spec/features/r
 
 **3c.i — `prompt:` field present.** The entry MUST declare `prompt:` as a non-empty string. If absent or empty, refuse:
 
-> Error: reviewer entry `<name>` of `type: ai` is missing the required `prompt:` field (per [reviewer-gates#req:ai-entry-shape](../../../spec/features/reviewer-gates/README.md#req-ai-entry-shape)). Provide a repo-relative path to a prompt file containing a documented blocker/advisory taxonomy section. See https://github.com/synchestra-io/specstudio-skills/blob/main/spec/features/reviewer-gates/README.md.
+> Error: reviewer entry `<name>` of `type: ai` is missing the required `prompt:` field (per [reviewer-gates#req:ai-entry-shape](../../../spec/features/reviewer-gates/README.md#req-ai-entry-shape)). Provide a repo-relative path to a prompt file containing a documented blocker/advisory taxonomy section. See https://github.com/specscore/specstudio-skills/blob/main/spec/features/reviewer-gates/README.md.
 
 **3c.ii — `prompt:` path is repo-relative and resolves inside the working tree.** The path MUST be expressed relative to the repo root; absolute paths and network URLs are forbidden. Reject any of:
 
@@ -112,11 +112,11 @@ These checks verify [reviewer-gates#req:ai-entry-shape](../../../spec/features/r
 
 On any of the above, refuse:
 
-> Error: reviewer entry `<name>` declares `prompt: <value>`, which does not resolve to a file inside the repo working tree (per [reviewer-gates#req:ai-entry-shape](../../../spec/features/reviewer-gates/README.md#req-ai-entry-shape)). Prompts MUST be repo-relative paths to files inside this repo — absolute filesystem paths and network URLs are forbidden. See https://github.com/synchestra-io/specstudio-skills/blob/main/spec/features/reviewer-gates/README.md.
+> Error: reviewer entry `<name>` declares `prompt: <value>`, which does not resolve to a file inside the repo working tree (per [reviewer-gates#req:ai-entry-shape](../../../spec/features/reviewer-gates/README.md#req-ai-entry-shape)). Prompts MUST be repo-relative paths to files inside this repo — absolute filesystem paths and network URLs are forbidden. See https://github.com/specscore/specstudio-skills/blob/main/spec/features/reviewer-gates/README.md.
 
 **3c.iii — prompt file contains a documented blocker/advisory taxonomy section.** Read the resolved prompt file. The contents MUST contain an explicit section (heading or clearly-labeled block) documenting which finding categories the reviewer treats as `Blocker` versus `Advisory`. A reasonable heuristic for "documented taxonomy section" is: the file contains BOTH the literal word `Blocker` and the literal word `Advisory` (case-sensitive, as section labels — not as casual prose), AND the words appear in a section heading or in a labeled list/table that maps finding categories to severities. If the file contains neither word in this structural sense, refuse:
 
-> Error: reviewer entry `<name>`'s prompt file at `<path>` contains no documented blocker/advisory taxonomy section (per [reviewer-gates#req:ai-entry-shape](../../../spec/features/reviewer-gates/README.md#req-ai-entry-shape)). The prompt MUST explicitly state which finding categories are `Blocker` vs. `Advisory`. See https://github.com/synchestra-io/specstudio-skills/blob/main/spec/features/reviewer-gates/README.md.
+> Error: reviewer entry `<name>`'s prompt file at `<path>` contains no documented blocker/advisory taxonomy section (per [reviewer-gates#req:ai-entry-shape](../../../spec/features/reviewer-gates/README.md#req-ai-entry-shape)). The prompt MUST explicitly state which finding categories are `Blocker` vs. `Advisory`. See https://github.com/specscore/specstudio-skills/blob/main/spec/features/reviewer-gates/README.md.
 
 **3c.iv — Optional `ai` fields.** `model:` (string identifier; opaque to this loader) and `description:` (string ≤ 200 chars) MAY be present. If `description:` is present and exceeds 200 characters, refuse with a short message naming the cap. Unknown extra keys on a `type: ai` entry are NOT permitted in MVP — refuse with a message listing the recognized fields (`name`, `type`, `prompt`, `model`, `description`).
 
@@ -126,11 +126,11 @@ These checks verify [reviewer-gates#req:human-entry-shape](../../../spec/feature
 
 **3d.i — No `prompt:` field.** A `type: human` entry MUST NOT declare a `prompt:` field. Humans have no programmatic prompt. If present, refuse:
 
-> Error: reviewer entry `<name>` of `type: human` declares a `prompt:` field. Humans have no programmatic prompt; the `prompt:` field is forbidden on human entries (per [reviewer-gates#req:human-entry-shape](../../../spec/features/reviewer-gates/README.md#req-human-entry-shape)). See https://github.com/synchestra-io/specstudio-skills/blob/main/spec/features/reviewer-gates/README.md.
+> Error: reviewer entry `<name>` of `type: human` declares a `prompt:` field. Humans have no programmatic prompt; the `prompt:` field is forbidden on human entries (per [reviewer-gates#req:human-entry-shape](../../../spec/features/reviewer-gates/README.md#req-human-entry-shape)). See https://github.com/specscore/specstudio-skills/blob/main/spec/features/reviewer-gates/README.md.
 
 **3d.ii — `min_approvers:` if present, MUST be exactly `1`.** The field is optional and defaults to `1`. Any integer value ≥ 2 is refused in MVP — multi-approver workflows are deferred. Any non-integer or value < 1 is also refused (typing error). On violation, refuse:
 
-> Error: reviewer entry `<name>` of `type: human` declares `min_approvers: <value>`. MVP pins `min_approvers: 1` — values > 1 are deferred (per [reviewer-gates#req:human-entry-shape](../../../spec/features/reviewer-gates/README.md#req-human-entry-shape) and the Feature's `## Not Doing` list). See https://github.com/synchestra-io/specstudio-skills/blob/main/spec/features/reviewer-gates/README.md.
+> Error: reviewer entry `<name>` of `type: human` declares `min_approvers: <value>`. MVP pins `min_approvers: 1` — values > 1 are deferred (per [reviewer-gates#req:human-entry-shape](../../../spec/features/reviewer-gates/README.md#req-human-entry-shape) and the Feature's `## Not Doing` list). See https://github.com/specscore/specstudio-skills/blob/main/spec/features/reviewer-gates/README.md.
 
 **3d.iii — Optional `human` fields.** `description:` (string ≤ 200 chars) MAY be present. Unknown extra keys on a `type: human` entry are NOT permitted in MVP — refuse with a message listing the recognized fields (`name`, `type`, `min_approvers`, `description`).
 

@@ -1,6 +1,6 @@
 # Sidekick Consilium Arbiter — Cross-Repo Companion Plan Stub
 
-**Status:** Stub. This plan exists in *this* repo to record the dependency. The actual implementation work happens in [`synchestra-io/specscore-cli`](https://github.com/synchestra-io/specscore-cli).
+**Status:** Stub. This plan exists in *this* repo to record the dependency. The actual implementation work happens in [`specscore/specscore-cli`](https://github.com/specscore/specscore-cli).
 
 **Source contract:** REQs `specscore-consilium-verdict-subcommand`, `arbiter-gate-rules`, `arbiter-reproducibility`, and `roster-validation` in [`spec/features/sidekick-consilium/README.md`](../features/sidekick-consilium/README.md).
 
@@ -31,7 +31,7 @@ specscore consilium verdict \
 
 ## Tracking
 
-- **Upstream issue:** [synchestra-io/specscore-cli#8](https://github.com/synchestra-io/specscore-cli/issues/8)
+- **Upstream issue:** [specscore/specscore-cli#8](https://github.com/specscore/specscore-cli/issues/8)
 - Until the subcommand ships, the consilium skill (Task 8) cannot complete its arbiter stage and the calibration set (Task 10) cannot run.
 
 ---

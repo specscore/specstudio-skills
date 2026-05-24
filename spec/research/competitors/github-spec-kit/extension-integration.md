@@ -72,7 +72,7 @@ extension:
   version: 0.1.0
   description: Validate Spec Kit outputs against the SpecScore schema and surface drift.
   author: Synchestra
-  repository: https://github.com/synchestra-io/speckit-specscore
+  repository: https://github.com/specscore/speckit-specscore
   license: Apache-2.0
 
 requires:
@@ -131,7 +131,7 @@ extension:
   version: 0.1.0
   description: Multi-agent, async, git-native execution for Spec Kit task lists.
   author: Synchestra
-  repository: https://github.com/synchestra-io/speckit-synchestra
+  repository: https://github.com/specscore/speckit-synchestra
   license: Apache-2.0
   homepage: https://synchestra.io
 
@@ -211,7 +211,7 @@ defaults:
 **The user journey this creates:**
 
 1. User installs Spec Kit, runs `specify init my-project --integration claude`.
-2. User installs the extension: `specify extension add synchestra-io/speckit-synchestra`.
+2. User installs the extension: `specify extension add specscore/speckit-synchestra`.
 3. User runs `/speckit.constitution` → `/speckit.specify` → `/speckit.clarify` → `/speckit.plan` → `/speckit.tasks` *as normal*.
 4. After `/speckit.tasks`, the `after_tasks` hook prompts: "Enqueue these tasks into Synchestra?" → yes → tasks land in `my-project-synchestra/tasks/`.
 5. User can now either:
@@ -236,7 +236,7 @@ extension:
   version: 0.1.0
   description: Run Spec Kit acceptance criteria as executable test scenarios.
   author: Synchestra
-  repository: https://github.com/synchestra-io/speckit-rehearse
+  repository: https://github.com/specscore/speckit-rehearse
   license: Apache-2.0
 
 requires:
@@ -298,12 +298,12 @@ These gaps are not a problem — they're the differentiation. The extension is a
 
 | Question | Answer |
 |---|---|
-| Repo names | `synchestra-io/speckit-specscore`, `synchestra-io/speckit-synchestra`, `synchestra-io/speckit-rehearse` |
+| Repo names | `specscore/speckit-specscore`, `specscore/speckit-synchestra`, `specscore/speckit-rehearse` |
 | Extension `id` field | `specscore-lint`, `synchestra`, `rehearse` (manifest pattern `^[a-z0-9-]+$`) |
 | License | Apache-2.0 (matches the rest of the Synchestra Apache ecosystem; compatible with Spec Kit's MIT for installation, not for code lift) |
 | Versioning | Semver. Pin `requires.speckit_version: ">=0.8.0"` initially; tighten if Spec Kit ships breaking manifest changes. |
 | Discovery | Submit to Spec Kit's community-extensions catalog and `polarizertech/spec-kit-extensions` incubator. |
-| Install command (user-visible) | `specify extension add synchestra-io/speckit-synchestra` |
+| Install command (user-visible) | `specify extension add specscore/speckit-synchestra` |
 
 **Don't use the `speckit-` prefix to imply ownership.** It indicates *integration target*. We are not GitHub.
 
@@ -324,9 +324,9 @@ These gaps are not a problem — they're the differentiation. The extension is a
 ## 6. Implementation Checklist (extracted from `README.md` priorities)
 
 - [ ] Read Spec Kit's `EXTENSION-DEVELOPMENT-GUIDE.md` and `EXTENSION-PUBLISHING-GUIDE.md` end-to-end before writing manifests
-- [ ] Stand up `synchestra-io/speckit-specscore` repo with preset templates + `specscore-lint` companion extension
-- [ ] Stand up `synchestra-io/speckit-synchestra` repo with manifest above + command markdown files
-- [ ] Stand up `synchestra-io/speckit-rehearse` repo with manifest above
+- [ ] Stand up `specscore/speckit-specscore` repo with preset templates + `specscore-lint` companion extension
+- [ ] Stand up `specscore/speckit-synchestra` repo with manifest above + command markdown files
+- [ ] Stand up `specscore/speckit-rehearse` repo with manifest above
 - [ ] Verify each manifest installs cleanly via `specify extension add` against latest Spec Kit
 - [ ] Add a "Use with GitHub Spec Kit" section to synchestra.io and specscore.org marketing
 - [ ] Submit to Spec Kit community-extensions catalog

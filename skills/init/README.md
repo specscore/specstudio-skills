@@ -11,7 +11,7 @@ The `specstudio:init` Claude Code skill — bootstraps a SpecScore-managed proje
 Runs a 3–5-question wizard with defaults pre-filled from project-state detection, then idempotently scaffolds:
 
 1. `specscore.yaml` (via `specscore init` when the CLI is on PATH; AI-agent fallback otherwise) — line 1 is the canonical schema-pointer comment, the `project:` block is populated from flags / prompts / git-remote inference.
-2. `spec/{,ideas,features}/README.md` — lint-clean indexes per the canonical [Index Features](https://github.com/synchestra-io/specscore/blob/main/spec/features/).
+2. `spec/{,ideas,features}/README.md` — lint-clean indexes per the canonical [Index Features](https://github.com/specscore/specscore/blob/main/spec/features/).
 3. The canonical Producer-shape instruction snippet, defined by [`spec/features/third-party-integration/`](../../spec/features/third-party-integration/README.md), pasted into the right platform agent-instructions file (`CLAUDE.md` / `AGENTS.md` / `GEMINI.md` / `.cursor/rules/specstudio.md`) per the explicit platform-detection rule. Always prompts for explicit consent before writing outside `spec/`.
 4. Orchestration-side artifacts via `synchestra init` (when the CLI exists upstream — graceful degradation when it doesn't).
 
@@ -36,8 +36,8 @@ State detection is via filesystem inspection only — no hidden state file.
 
 When `specscore` or `synchestra` is missing from PATH, the skill delegates installation to the dedicated install skills:
 
-- `specscore` missing → invoke [`specscore:install`](https://github.com/synchestra-io/ai-plugin-specscore/blob/main/skills/install/SKILL.md) (with explicit user consent).
-- `synchestra` missing → invoke [`synchestra:install`](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/install/SKILL.md) (same handoff pattern).
+- `specscore` missing → invoke [`specscore:install`](https://github.com/specscore/ai-plugin-specscore/blob/main/skills/install/SKILL.md) (with explicit user consent).
+- `synchestra` missing → invoke [`synchestra:install`](https://github.com/specscore/ai-plugin-synchestra/blob/main/skills/install/SKILL.md) (same handoff pattern).
 
 The skill does NOT run install commands itself. Install URLs, supported methods (curl-pipe-sh, brew, npm, manual), and signature verification all live in the install skills.
 

@@ -1,6 +1,6 @@
 # Feature: Reviewer Gates
 
-> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/specstudio-skills/spec/features/reviewer-gates?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/specstudio-skills/spec/features/reviewer-gates?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/specstudio-skills/spec/features/reviewer-gates?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/specstudio-skills/spec/features/reviewer-gates?op=request-change) |
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/specscore/specstudio-skills/spec/features/reviewer-gates?op=explore) | [Edit](https://specscore.studio/app/github.com/specscore/specstudio-skills/spec/features/reviewer-gates?op=edit) | [Ask question](https://specscore.studio/app/github.com/specscore/specstudio-skills/spec/features/reviewer-gates?op=ask) | [Request change](https://specscore.studio/app/github.com/specscore/specstudio-skills/spec/features/reviewer-gates?op=request-change) |
 
 **Status:** Approved
 **Date:** 2026-05-22
@@ -24,7 +24,7 @@ The MVP shape pinned in [the source Idea](../../ideas/reviewer-gates.md) — a t
 
 #### REQ: gates-block-location
 
-`specscore.yaml` MUST support a top-level `gates:` key. Each child key under `gates:` MUST match a SpecStudio skill's bare name (e.g., `specify`, `plan`, `implement`) — plugin-namespace prefixes such as `specstudio:specify` are NOT allowed in MVP (see `## Not Doing`). The block is preserved across SpecScore tooling reads/writes via the [SpecScore Repo Config Feature](https://github.com/synchestra-io/specscore/blob/main/spec/features/repo-config/README.md)'s `unknown-fields-preserved` requirement; no new file convention or dotfile is introduced.
+`specscore.yaml` MUST support a top-level `gates:` key. Each child key under `gates:` MUST match a SpecStudio skill's bare name (e.g., `specify`, `plan`, `implement`) — plugin-namespace prefixes such as `specstudio:specify` are NOT allowed in MVP (see `## Not Doing`). The block is preserved across SpecScore tooling reads/writes via the [SpecScore Repo Config Feature](https://github.com/specscore/specscore/blob/main/spec/features/repo-config/README.md)'s `unknown-fields-preserved` requirement; no new file convention or dotfile is introduced.
 
 #### REQ: per-gate-shape
 

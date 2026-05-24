@@ -169,7 +169,7 @@ Create `spec/plans/sidekick-consilium-arbiter-companion.md`:
 ```markdown
 # Sidekick Consilium Arbiter — Cross-Repo Companion Plan Stub
 
-**Status:** Stub. This plan exists in *this* repo to record the dependency. The actual implementation work happens in [`synchestra-io/specscore-cli`](https://github.com/synchestra-io/specscore-cli).
+**Status:** Stub. This plan exists in *this* repo to record the dependency. The actual implementation work happens in [`specscore/specscore-cli`](https://github.com/specscore/specscore-cli).
 
 **Source contract:** REQs `specscore-consilium-verdict-subcommand`, `arbiter-gate-rules`, `arbiter-reproducibility`, and `roster-validation` in [`spec/features/sidekick-consilium/README.md`](../features/sidekick-consilium/README.md).
 
@@ -214,7 +214,7 @@ Create `spec/plans/sidekick-consilium-task-companion.md`:
 ```markdown
 # Consilium-Review Task Type — Cross-Repo Companion Plan Stub
 
-**Status:** Stub. This plan exists in *this* repo to record the dependency. The actual implementation work happens in [`synchestra-io/synchestra`](https://github.com/synchestra-io/synchestra).
+**Status:** Stub. This plan exists in *this* repo to record the dependency. The actual implementation work happens in [`specscore/synchestra`](https://github.com/specscore/synchestra).
 
 **Source contract:** REQs `consilium-review-task-lifecycle`, `idempotent-task-creation`, and `single-writer-claim-semantics` in [`spec/features/sidekick-consilium/README.md`](../features/sidekick-consilium/README.md).
 
@@ -253,14 +253,14 @@ synchestra task claim <task-id>
 - [ ] **Step 4: Open upstream issue in specscore-cli for the arbiter**
 
 ```bash
-gh issue create --repo synchestra-io/specscore-cli \
+gh issue create --repo specscore/specscore-cli \
   --title "Add \`specscore consilium verdict\` subcommand" \
   --body "$(cat <<'EOF'
 ## Context
 
-The [`sidekick-consilium` Feature](https://github.com/synchestra-io/specstudio-skills/blob/main/spec/features/sidekick-consilium/README.md) in `synchestra-io/specstudio-skills` ships the contract for a new deterministic CLI arbiter that turns 9 typed votes (from a 9-role panel) into a verdict. REQs `specscore-consilium-verdict-subcommand`, `arbiter-gate-rules`, `arbiter-reproducibility`, and `roster-validation` define the contract.
+The [`sidekick-consilium` Feature](https://github.com/specscore/specstudio-skills/blob/main/spec/features/sidekick-consilium/README.md) in `specscore/specstudio-skills` ships the contract for a new deterministic CLI arbiter that turns 9 typed votes (from a 9-role panel) into a verdict. REQs `specscore-consilium-verdict-subcommand`, `arbiter-gate-rules`, `arbiter-reproducibility`, and `roster-validation` define the contract.
 
-Tracking stub in the producing repo: [`spec/plans/sidekick-consilium-arbiter-companion.md`](https://github.com/synchestra-io/specstudio-skills/blob/main/spec/plans/sidekick-consilium-arbiter-companion.md).
+Tracking stub in the producing repo: [`spec/plans/sidekick-consilium-arbiter-companion.md`](https://github.com/specscore/specstudio-skills/blob/main/spec/plans/sidekick-consilium-arbiter-companion.md).
 
 ## What needs to ship
 
@@ -283,14 +283,14 @@ Capture the issue number returned by `gh`. Update `spec/plans/sidekick-consilium
 - [ ] **Step 5: Open upstream issue in synchestra for the task type**
 
 ```bash
-gh issue create --repo synchestra-io/synchestra \
+gh issue create --repo specscore/synchestra \
   --title "Add \`consilium-review\` task type" \
   --body "$(cat <<'EOF'
 ## Context
 
-The [`sidekick-consilium` Feature](https://github.com/synchestra-io/specstudio-skills/blob/main/spec/features/sidekick-consilium/README.md) in `synchestra-io/specstudio-skills` ships the contract for a new Synchestra task type that queues sidekick seeds for review and stores the structured verdict. REQs `consilium-review-task-lifecycle`, `idempotent-task-creation`, and `single-writer-claim-semantics` define the contract.
+The [`sidekick-consilium` Feature](https://github.com/specscore/specstudio-skills/blob/main/spec/features/sidekick-consilium/README.md) in `specscore/specstudio-skills` ships the contract for a new Synchestra task type that queues sidekick seeds for review and stores the structured verdict. REQs `consilium-review-task-lifecycle`, `idempotent-task-creation`, and `single-writer-claim-semantics` define the contract.
 
-Tracking stub in the producing repo: [`spec/plans/sidekick-consilium-task-companion.md`](https://github.com/synchestra-io/specstudio-skills/blob/main/spec/plans/sidekick-consilium-task-companion.md).
+Tracking stub in the producing repo: [`spec/plans/sidekick-consilium-task-companion.md`](https://github.com/specscore/specstudio-skills/blob/main/spec/plans/sidekick-consilium-task-companion.md).
 
 ## What needs to ship
 
@@ -316,8 +316,8 @@ Add two rows under the Contents table:
 
 ```markdown
 | [sidekick-consilium](sidekick-consilium.md) | [sidekick-consilium](../features/sidekick-consilium/README.md) | Phase 1 of the sidekick-ideas Idea: the consilium worker that drains captured seeds and produces deterministic verdicts. 11 tasks. |
-| [sidekick-consilium-arbiter-companion](sidekick-consilium-arbiter-companion.md) | — | Cross-repo companion stub: the `specscore consilium verdict` subcommand lives in `synchestra-io/specscore-cli`. |
-| [sidekick-consilium-task-companion](sidekick-consilium-task-companion.md) | — | Cross-repo companion stub: the `consilium-review` task type lives in `synchestra-io/synchestra`. |
+| [sidekick-consilium-arbiter-companion](sidekick-consilium-arbiter-companion.md) | — | Cross-repo companion stub: the `specscore consilium verdict` subcommand lives in `specscore/specscore-cli`. |
+| [sidekick-consilium-task-companion](sidekick-consilium-task-companion.md) | — | Cross-repo companion stub: the `consilium-review` task type lives in `specscore/synchestra`. |
 ```
 
 - [ ] **Step 7: Lint and commit**
@@ -339,10 +339,10 @@ Land the shared concepts before per-component tasks:
   for the markdown contract every role file (default + custom) follows.
 - spec/plans/sidekick-consilium-arbiter-companion.md — tracks the
   cross-repo specscore consilium verdict subcommand. Upstream issue
-  opened in synchestra-io/specscore-cli.
+  opened in specscore/specscore-cli.
 - spec/plans/sidekick-consilium-task-companion.md — tracks the cross-
   repo consilium-review task type. Upstream issue opened in
-  synchestra-io/synchestra.
+  specscore/synchestra.
 - spec/plans/README.md — index entries for the three new plans.
 
 Per REQ custom-role-markdown-contract, REQ specscore-consilium-verdict-
