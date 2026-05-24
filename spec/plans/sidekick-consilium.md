@@ -1214,7 +1214,7 @@ Append:
 Before claiming any task, verify the cross-repo dependencies are present:
 
 1. `command -v specscore` — the arbiter subcommand lives here (`specscore consilium verdict`).
-2. `command -v synchestra` — the task lifecycle lives here (`orchestrator task claim`, `orchestrator task update`).
+2.  — the task lifecycle lives here (`orchestrator task claim`, `orchestrator task update`).
 3. `specscore --version` — must include the `consilium verdict` subcommand. If absent, exit cleanly with a message: "Phase 1 requires `specscore` with the `consilium verdict` subcommand (cross-repo dependency, tracked in `spec/plans/sidekick-consilium-arbiter-companion.md`). Install or upgrade and re-run."
 4. `orchestrator task types` — must include `consilium-review`. If absent, exit cleanly with the analogous message referencing the task-type companion plan.
 

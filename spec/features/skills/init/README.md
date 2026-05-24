@@ -7,7 +7,7 @@
 
 ## Summary
 
-The `specstudio:init` skill bootstraps a SpecScore-managed project in one wizard-driven step. Detects current project state by direct repo inspection, asks 3–5 batched wizard questions with defaults prefilled, then idempotently scaffolds: (a) the `spec/` tree with lint-clean indexes via `specscore init`, (b) `specscore.yaml` with the canonical schema-pointer header and a default `project:` block, (c) the canonical Producer-shape instruction snippet (defined by [`third-party-integration`](../../third-party-integration/README.md)) appended to the right platform agent-instructions file per the platform-detection rule, and (d) any orchestration-side artifacts via `synchestra init`. Prefers the deterministic CLIs (`specscore init`, `synchestra init`) with AI-agent fallback when a CLI is not on PATH; delegates CLI installation symmetrically to [`specscore:install`](https://github.com/specscore/ai-plugin-specscore/blob/main/skills/install/SKILL.md) and [`specscore:install`](https://github.com/specscore/ai-plugin-synchestra/blob/main/skills/install/SKILL.md). Two modes: default (full wizard) and `--update` (drift-only reconciliation, no wizard). Implementation lives at [`skills/init/`](../../../../skills/init/).
+The `specstudio:init` skill bootstraps a SpecScore-managed project in one wizard-driven step. Detects current project state by direct repo inspection, asks 3–4 batched wizard questions with defaults prefilled, then idempotently scaffolds: (a) the `spec/` tree with lint-clean indexes via `specscore init`, (b) `specscore.yaml` with the canonical schema-pointer header and a default `project:` block, and (c) the canonical Producer-shape instruction snippet (defined by [`third-party-integration`](../../third-party-integration/README.md)) appended to the right platform agent-instructions file per the platform-detection rule. Prefers the deterministic `specscore init` CLI with AI-agent fallback when the CLI is not on PATH; delegates CLI installation to [`specscore:install`](https://github.com/specscore/ai-plugin-specscore/blob/main/skills/install/SKILL.md). Two modes: default (full wizard) and `--update` (drift-only reconciliation, no wizard). Implementation lives at [`skills/init/`](../../../../skills/init/).
 
 ## Problem
 
@@ -32,7 +32,7 @@ The skill detects the project's current init state by direct repo inspection bef
 
 #### REQ: invocation-triggers
 
-The skill MUST respond to the triggers `specstudio:init`, `/specstudio:init`, "set up specstudio", "init synchestra project", and "bootstrap a spec repo". It MAY respond to additional natural-language phrasings of the same intent.
+The skill MUST respond to the triggers `specstudio:init`, `/specstudio:init`, "set up specstudio", and "bootstrap a spec repo". It MAY respond to additional natural-language phrasings of the same intent.
 
 #### REQ: skill-modes
 
@@ -70,7 +70,6 @@ The wizard's question set is fixed in MVP. The five questions (some MAY be skipp
 1. **Platform agent-instructions target.** Which file to install the canonical snippet into. Skipped when only one platform file exists.
 2. **Optional spec subdirectories.** A single batched question presenting both subdirs (`spec/research/` and `spec/decisions/`) with their visible defaults — `decisions/` defaulted to `yes` (selected) and `research/` defaulted to `no` (unselected). The user toggles either or both before submitting; no sub-prompt or chained question. The mandatory subdirs (`spec/ideas/`, `spec/features/`) are always created and not surfaced as options.
 3. **Custom viewer.** Whether to register a non-default `viewer:` block in `specscore.yaml`. Default: no (Repo Config defaults apply).
-4. **Synchestra orchestration features.** Whether to enable optional `synchestra init` features (state repo pointer, runtime caches). Default: ask.
 5. **Greenfield confirmation.** When state detection finds non-trivial pre-existing structure (e.g., a `docs/` tree with what look like spec artifacts), confirm before scaffolding. Skipped when greenfield is unambiguous.
 
 Future questions added by this skill require an additive Feature revision and a versioning increment to this Feature's documented behavior.
@@ -81,15 +80,11 @@ The skill checks for `specscore` and `orchestrator` on PATH and delegates instal
 
 #### REQ: cli-detection
 
-The skill MUST run `command -v specscore` and `command -v synchestra` as part of project-state-detection (see `project-state-detection`). Results are recorded as either "present" or "missing"; presence does NOT imply version compatibility — version pinning is out of MVP scope.
+The skill MUST run `command -v specscore` as part of project-state-detection (see `project-state-detection`). The result is recorded as either "present" or "missing"; presence does NOT imply version compatibility — version pinning is out of MVP scope.
 
 #### REQ: specscore-install-delegation
 
 When `specscore` is missing, the skill MUST invoke the [`specscore:install`](https://github.com/specscore/ai-plugin-specscore/blob/main/skills/install/SKILL.md) skill via the platform's skill-invocation mechanism (e.g., the Claude Code `Skill` tool, the equivalent on other platforms). Before invoking, the skill MUST ask the user for explicit consent: "specscore is not on PATH. Invoke specscore:install to install it now? (yes / no)". On `yes`, invoke; on `no`, abort with "specscore is required for full bootstrap; please install manually and re-run init."
-
-#### REQ: synchestra-install-delegation
-
-When `orchestrator` is missing, the skill MUST invoke the [`specscore:install`](https://github.com/specscore/ai-plugin-synchestra/blob/main/skills/install/SKILL.md) skill via the same mechanism, with the same consent gate. Decline aborts with the same shape of message ("synchestra is required for orchestration-side bootstrap; please install manually and re-run init"). The skill MUST handle each install delegation independently — declining one does not skip the consent gate for the other.
 
 #### REQ: post-install-resume
 
@@ -152,24 +147,6 @@ When `--update` mode (or default mode rerun) detects that the target file alread
 3. Ask the user to choose: **replace** (overwrite the pasted block with the canonical), **keep** (leave the pasted block as-is; report drift but do not act), or **abort** (exit init without writing). The skill MUST NOT auto-merge; merging is a user decision in their own editor when neither replace nor keep fits.
 4. On replace, write atomically (single-file write, no partial state).
 
-### Orchestration-side bootstrap (`synchestra init`)
-
-The skill delegates orchestration-side artifacts to `synchestra init`, mirroring the specscore-side delegation.
-
-#### REQ: prefer-synchestra-init-cli
-
-When `orchestrator` is on PATH, the skill MUST invoke `synchestra init` (as a subprocess) for orchestration-side artifacts: state-repo pointer setup, runtime cache directory creation, any `.gitignore` rules Synchestra requires for its caches. The skill MUST pass through wizard answers relevant to the orchestrator orchestration features (per `wizard-questions-fixed-set` question 4).
-
-#### REQ: ai-agent-fallback-synchestra
-
-When `orchestrator` is missing AND the user declined to install it (per `synchestra-install-delegation`), the skill MUST fall back to a limited AI-agent path: it MAY write a placeholder `.specscore/` directory with a README explaining "synchestra runtime not yet installed; run `specstudio:init --update` after installing synchestra". The fallback MUST NOT attempt to replicate `synchestra init`'s full behavior — orchestration-side semantics are owned upstream. Fallback's only goal is to leave the repo in a state where re-running init after installing synchestra completes the orchestration setup cleanly.
-
-#### REQ: synchestra-cli-contract-dependency
-
-The init Feature depends on the upstream `synchestra init` CLI subcommand contract (flag set, exit codes, idempotence guarantees) defined by [`synchestra@spec/features/cli/init/`](https://github.com/specscore/synchestra/blob/main/spec/features/cli/init/README.md). When the upstream contract changes, this Feature revises in place to match. The contract guarantees: `synchestra init` writes a dedicated `synchestra.yaml` at the repo root (per the [synchestra repo-config Feature](https://github.com/specscore/synchestra/blob/main/spec/features/repo-config/README.md)) — synchestra-only orchestration metadata lives in its own file, NOT as extension keys inside `specscore.yaml`. The two files compose without duplication; the skill never writes synchestra fields into specscore.yaml.
-
-The upstream `synchestra init` v1 implements only `--state-mode embedded`; `--state-mode separate-repo` and `--state-mode hub-managed` are recognized but exit 2 with a "not yet implemented" message. When the user requests an unimplemented mode, the skill MUST treat that exit as a soft failure and either fall back to embedded mode (with the user's explicit consent) or report degradation and continue. When `orchestrator` is absent (declined install), the synchestra-side bootstrap degrades per `ai-agent-fallback-synchestra`.
-
 ### Idempotence and event emission
 
 Reruns are safe and reconcile drift; events fire only when state changed.
@@ -202,7 +179,7 @@ When state detection determines no action is needed (per `skip-condition-fully-i
 
 #### REQ: explicit-consent-on-writes
 
-The skill MUST require affirmative user consent before writing any file outside `spec/`. Specifically: snippet install (target file is at repo root or under `.cursor/rules/`), `synchestra init` orchestration artifacts that touch non-`spec/` paths, and `.gitignore` modifications via `synchestra init`. Consent gates MUST display the exact target path and the change summary before requesting yes/no. The skill MUST NOT bundle multiple unrelated writes behind a single consent prompt.
+The skill MUST require affirmative user consent before writing any file outside `spec/`. Specifically: snippet install (target file is at repo root or under `.cursor/rules/`),  orchestration artifacts that touch non-`spec/` paths, and `.gitignore` modifications via . Consent gates MUST display the exact target path and the change summary before requesting yes/no. The skill MUST NOT bundle multiple unrelated writes behind a single consent prompt.
 
 #### REQ: honest-pushback
 
@@ -216,7 +193,7 @@ The init skill orchestrates six functional components. Each is small enough to r
 
 - **What:** Reads the repo to determine current init state. Outputs a structured record: `{git_initialized, spec_tree_status, specscore_yaml_status, agent_instruction_files, snippet_versions_per_file, cli_versions}`.
 - **How used:** Runs once at skill invocation, before any user-facing prompt. The output drives wizard defaults and skip-condition logic.
-- **Depends on:** Filesystem access; `command -v specscore` and `command -v synchestra` shell calls; `specscore` binary (when present) for parsing existing `specscore.yaml` schema-conformance.
+- **Depends on:** Filesystem access; `command -v specscore` and  shell calls; `specscore` binary (when present) for parsing existing `specscore.yaml` schema-conformance.
 
 ### 2. Wizard
 
@@ -226,7 +203,7 @@ The init skill orchestrates six functional components. Each is small enough to r
 
 ### 3. CLI delegators
 
-- **What:** Wrappers around `specscore init` and `synchestra init` subprocess invocations. Pass through wizard answers, capture stdout/stderr/exit-code, surface failures cleanly.
+- **What:** Wrappers around `specscore init`  subprocess invocations. Pass through wizard answers, capture stdout/stderr/exit-code, surface failures cleanly.
 - **How used:** Invoked after the wizard, conditionally based on CLI presence.
 - **Depends on:** `specscore` CLI binary (preferred path);  binary (preferred path); the AI-agent fallback paths (when CLI is absent and install was declined).
 
@@ -246,7 +223,7 @@ The init skill orchestrates six functional components. Each is small enough to r
 
 - **What:** Publishes `project.initialized` or `project.updated` to the orchestrator Hub per the canonical event vocabulary in `shared/events.md`. Payload assembled from state detector output plus the artifacts-created log.
 - **How used:** Invoked exactly once at the end of a state-changing init run. Skipped on no-op runs.
-- **Depends on:** The event bus (when running under Synchestra orchestration); local-only emission as a JSON line to stderr when not running under Synchestra (mirrors how `idea.drafted` etc. surface in this repo today).
+- **Depends on:** The event bus (when running under an external orchestrator); local-only emission as a JSON line to stderr when not running under an external orchestrator (mirrors how `idea.drafted` etc. surface in this repo today).
 
 ### Component interaction diagram
 
@@ -278,7 +255,7 @@ Invocation
 | [SpecScore Repo Config](https://github.com/specscore/specscore/blob/main/spec/features/repo-config/README.md) | Hard upstream dependency. The created `specscore.yaml` conforms to its schema. The init Feature does not own the schema; it conforms. |
 | [`specscore:install`](https://github.com/specscore/ai-plugin-specscore/blob/main/skills/install/SKILL.md) | Hard prerequisite. Invoked when `specscore` is missing and the user consents to install. The install skill's contract (input/output, exit semantics) is load-bearing for `post-install-resume`. |
 | [`specscore:install`](https://github.com/specscore/ai-plugin-synchestra/blob/main/skills/install/SKILL.md) | Hard prerequisite. Symmetric to `specscore:install`; same handoff contract. |
-| `synchestra init` CLI subcommand | Soft upstream dependency. When present, this Feature invokes it for orchestration-side bootstrap. When absent, the synchestra-side bootstrap is gracefully degraded (`synchestra-cli-contract-dependency`). |
+|  CLI subcommand | Soft upstream dependency. When present, this Feature invokes it for orchestration-side bootstrap. When absent, the synchestra-side bootstrap is gracefully degraded (`synchestra-cli-contract-dependency`). |
 | Synchestra Events | Emits `project.initialized` and `project.updated`, both with the canonical change-context payload shape used by `idea.*` and `feature.*` events. Consumers — Hub, watchers — observe these to advance their own state. |
 | Future `specstudio:migrate` (forward reference) | When state detection finds a non-canonical pre-existing layout, the skill recommends `specstudio:migrate` (which does not yet exist as a skill or a Feature). Forward-referencing the migrate skill is acceptable because this Feature does not invoke or import it — it only mentions it in user-facing recommendations. When `specstudio:migrate` ships, this Feature revises in place to add an explicit invocation hook. |
 
@@ -330,7 +307,7 @@ Invocation
 
 **Given** a fresh repo with both `specscore` and `orchestrator` on PATH and both `init` subcommands shipped, and a default-mode init wizard with non-default answers (e.g., `spec/research/` opted in via question 2; Synchestra orchestration features enabled via question 4)
 **When** the bootstrap step runs after the wizard completes
-**Then** the skill invokes `specscore init` and `synchestra init` as subprocesses (observable in the trace as exec calls); the wizard's resolved answers appear either as documented CLI flags passed to the corresponding subprocess invocation OR as `Edit` operations applied immediately after the subprocess returns; the resulting `spec/research/` directory exists with a lint-clean index when question 2 was opted in; orchestration artifacts written by `synchestra init` exist when question 4 enabled them. Wizard answers that match a CLI's documented flag MUST go through the flag (not post-CLI `Edit`); inventing flags that the CLI does not document is forbidden per `prefer-specscore-init-cli`'s flag discipline.
+**Then** the skill invokes `specscore init`  as subprocesses (observable in the trace as exec calls); the wizard's resolved answers appear either as documented CLI flags passed to the corresponding subprocess invocation OR as `Edit` operations applied immediately after the subprocess returns; the resulting `spec/research/` directory exists with a lint-clean index when question 2 was opted in; orchestration artifacts written by  exist when question 4 enabled them. Wizard answers that match a CLI's documented flag MUST go through the flag (not post-CLI `Edit`); inventing flags that the CLI does not document is forbidden per `prefer-specscore-init-cli`'s flag discipline.
 
 ### AC: snippet-install-with-consent-and-version
 
@@ -368,15 +345,15 @@ Invocation
 
 **Requirements:** skills/init#req:prefer-synchestra-init-cli, skills/init#req:ai-agent-fallback-synchestra, skills/init#req:synchestra-cli-contract-dependency
 
-**Given** a repo where  is on PATH but `synchestra init` (the subcommand) does not yet exist (upstream has not shipped it)
+**Given** a repo where  is on PATH but  (the subcommand) does not yet exist (upstream has not shipped it)
 **When** the orchestration-side bootstrap step runs
-**Then** the skill reports "synchestra orchestration setup deferred — upstream `synchestra init` not yet shipped"; continues with the specscore-side bootstrap and the snippet-install step without aborting; emits `project.initialized` (or `project.updated`) with `cli_versions.synchestra` populated but the orchestration artifacts absent from `artifacts_created`. The user is informed; no error.
+**Then** the skill reports "synchestra orchestration setup deferred — upstream  not yet shipped"; continues with the specscore-side bootstrap and the snippet-install step without aborting; emits `project.initialized` (or `project.updated`) with `cli_versions.synchestra` populated but the orchestration artifacts absent from `artifacts_created`. The user is informed; no error.
 
 ### AC: explicit-consent-on-out-of-spec-writes
 
 **Requirements:** skills/init#req:explicit-consent-on-writes, skills/init#req:honest-pushback
 
-**Given** an invocation that would write outside `spec/` (snippet install to `CLAUDE.md`/`AGENTS.md`/etc., `.gitignore` modification via `synchestra init`, orchestration artifacts in `.specscore/`)
+**Given** an invocation that would write outside `spec/` (snippet install to `CLAUDE.md`/`AGENTS.md`/etc., `.gitignore` modification via , orchestration artifacts in `.specscore/`)
 **When** the skill reaches each such write
 **Then** it displays the exact target path and the change summary; requests yes/no consent; the consent prompt is per-write, not bundled across unrelated writes; on decline, that specific write is skipped without aborting other bootstrap steps; when state detection finds an existing non-canonical spec layout, the skill surfaces the layout and recommends manual migration (noting that "a future `specstudio:migrate` skill will automate this — until then, migration is by hand"), only continuing if the user explicitly waives. The recommendation MUST NOT direct the adopter at the `specstudio:migrate` skill as if it currently exists.
 
@@ -406,7 +383,7 @@ Rehearse stubs are scaffolded with `**Status:** pending` per the rehearse-heuris
 - **`project.updated` change_summary discipline reuse.** This Feature borrows the `change_summary` pattern from `idea.updated` and `feature.updated` (factual, ≤2 sentences, no editorializing). The exact discipline is documented in `events.md` for those events; whether `project.updated` payloads need additional discipline (e.g., enumerating which managed artifacts changed) is open. Revise additively if a consumer needs more structure.
 - **Multi-platform paste targets — update-all semantics.** The platform-detection rule's "ask the user (with multi-select option to update all)" branch implicitly supports updating multiple agent-instructions files in one invocation. The semantic of "update all" in `--update` mode (when versions differ across files) is unspecified — does the skill ask per-file or apply one decision to all? Resolve when a real adopter has multi-platform divergence.
 - **`.cursor/rules/<filename>.md` naming.** The platform-detection rule lists `.cursor/rules/specstudio.md` as the canonical Cursor target file. If the user already has files under `.cursor/rules/` for other purposes, the snippet might collide or be misfiled. Open: should the file name be `specstudio.md` always, or should the skill ask? Default to `specstudio.md`; revisit if collision becomes common.
-- **Authoring of `synchestra init` CLI contract.** This Feature has a soft dependency on `synchestra init` existing upstream. If it has not shipped by the time this Feature reaches Implementing status, the synchestra-side bootstrap is degraded per `synchestra-cli-contract-dependency`. Track upstream readiness; the synchestra repo's roadmap owns the timeline.
+- **Authoring of  CLI contract.** This Feature has a soft dependency on  existing upstream. If it has not shipped by the time this Feature reaches Implementing status, the synchestra-side bootstrap is degraded per `synchestra-cli-contract-dependency`. Track upstream readiness; the synchestra repo's roadmap owns the timeline.
 - **Reviewer registration UX home.** REQ `specscore-yaml-conformance` explicitly excludes init from pre-populating the `reviewers:` extension key (defined by [`third-party-integration`](../../third-party-integration/README.md)). That leaves "where do reviewers actually get added to `specscore.yaml`?" unanswered. Candidates: (a) a future `specstudio:reviewers:add` skill, (b) adopters edit the file by hand, (c) a sub-flow in `specstudio:specify` when a registered-but-uninstalled reviewer is referenced. Defer to the downstream Feature that owns reviewer registration UX; init only conforms to the schema, it does not own this decision.
 
 ---
