@@ -241,7 +241,7 @@ Write to `spec/ideas/<slug>.md` using **exactly this schema**. The schema follow
 
 Notes:
 - The canonical id is the filename slug; there is no separate `id` field.
-- `**Promotes To:**` is **managed state** — Synchestra populates it when a Feature is created that references this Idea. Authors MUST NOT edit it manually.
+- `**Promotes To:**` is **managed state** — Lifecycle tooling populates it when a Feature is created that references this Idea. Authors MUST NOT edit it manually.
 - `**Supersedes:**` and `**Related Ideas:**` MUST be present with value `—` when empty.
 - `**Archive Reason:**` MUST be present when (and only when) `**Status:** Archived`.
 
@@ -324,12 +324,12 @@ Both `idea.drafted` (re-emissions) and `idea.updated` events carry three change-
 
 ## Promotion to Feature(s)
 
-**Out of scope for this skill.** Synchestra handles promotion:
+**Out of scope for this skill.** Lifecycle tooling handles promotion:
 
-1. When `specstudio:specify` (or the user) creates a Feature with a `**Source Ideas:**` line that references this Idea's slug, Synchestra detects the link.
-2. Synchestra transitions the Idea `**Status:** Approved → Specified`.
+1. When `specstudio:specify` (or the user) creates a Feature with a `**Source Ideas:**` line that references this Idea's slug, Lifecycle tooling detects the link.
+2. Lifecycle tooling transitions the Idea `**Status:** Approved → Specified`.
 3. Synchestra auto-populates the Idea's `**Promotes To:**` line with the list of Feature slugs.
-4. Synchestra emits `idea.specified`.
+4. Lifecycle tooling emits `idea.specified`.
 
 **Do not manually edit `**Promotes To:**`.** It's managed state.
 
@@ -356,7 +356,7 @@ Both `idea.drafted` (re-emissions) and `idea.updated` events carry three change-
 - Yes-machining weak ideas instead of pushing back
 - Empty "Not Doing" list
 - Writing to `docs/ideas/` instead of `spec/ideas/`
-- Manually editing `**Promotes To:**` (managed state — Synchestra owns it)
+- Manually editing `**Promotes To:**` (managed state)
 - Jumping to `specstudio:specify` before user approval
 - Silently bootstrapping `spec/ideas/` without telling the user
 - Looping `specscore spec lint --fix` more than once

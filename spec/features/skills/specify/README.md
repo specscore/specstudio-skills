@@ -24,7 +24,7 @@ The skill is invoked when an Idea has been approved, or when the user has clear 
 
 #### REQ: invocation-triggers
 
-The skill MUST respond to the triggers `specify`, `/specify`, "spec this out", and the Synchestra event `idea.approved`. It MAY respond to additional natural-language phrasings of the same intent.
+The skill MUST respond to the triggers `specify`, `/specify`, "spec this out", and the event `idea.approved`. It MAY respond to additional natural-language phrasings of the same intent.
 
 #### REQ: accepts-idea-or-intent
 
@@ -194,7 +194,7 @@ When the skill creates files (the bootstrapped `spec/features/`, `spec/features/
 
 ### Event emission
 
-The skill participates in the Synchestra event vocabulary.
+The skill participates in the event vocabulary.
 
 #### REQ: event-specified
 

@@ -23,7 +23,7 @@ The MVP is intentionally narrow: single Feature per Plan, strict linear task ord
 
 ## Triggers
 
-`plan`, `/plan`, `specstudio:plan`, "plan this feature", or the Synchestra event `feature.approved`.
+`plan`, `/plan`, `specstudio:plan`, "plan this feature", or the event `feature.approved`.
 
 ## What it does NOT do
 

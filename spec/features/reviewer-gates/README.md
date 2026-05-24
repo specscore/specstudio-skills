@@ -115,7 +115,7 @@ The skill `skills/specify/SKILL.md`, the Feature `spec/features/skills/specify/R
 - **Future consumers (out of MVP scope).** `specstudio:plan`, `specstudio:implement`, `specstudio:verify`, `specstudio:recap`. Each will be a separate follow-on Feature; this contract is designed consumer-agnostic so future wiring needs only schema reads, not contract changes.
 - **Reviewer dispatch surfaces.** `type: ai` dispatches via the consumer skill's Agent tool with the prompt file as the system prompt. `type: human` dispatches via the consumer skill's existing user-prompt + approval-phrase recognizer.
 - **Verdict aggregation.** Stateless per-gate. The gate's verdict is `Approved` iff every reviewer's last verdict in the current run is `Approved`. No persisted state between gate runs; rerun discipline is captured in `rerun-policy`.
-- **Outputs.** This Feature defines no artifact writes and no new Synchestra events. Consumer skills emit their own events (e.g., `feature.approved`); this Feature is purely a contract.
+- **Outputs.** This Feature defines no artifact writes and no new events. Consumer skills emit their own events (e.g., `feature.approved`); this Feature is purely a contract.
 
 ## Interaction with Other Features
 

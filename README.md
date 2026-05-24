@@ -1,6 +1,6 @@
 # SpecScore Studio Skills
 
-**Spec-driven development, by Synchestra.**
+**Spec-driven development.**
 
 AI skills (and a coming Web UI) for efficient spec-driven development — the full lifecycle: **ideate ⇒ specify ⇒ plan ⇒ implement ⇒ verify ⇒ recap ⇒ ship.** SpecStudio turns vague ideas into lintable, testable specifications and gates implementation on those specifications being clear, complete, and approved. Reviews are stage-internal — see [Reviewer Gates](spec/features/reviewer-gates/README.md).
 

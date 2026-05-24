@@ -165,11 +165,11 @@ On confirmed user approval (per `approval-explicit-phrase` or `approval-vague-co
 
 ### Event emission
 
-The skill participates in the Synchestra event vocabulary defined in [`shared/events.md`](../../../../skills/shared/events.md).
+The skill participates in the event vocabulary defined in [`shared/events.md`](../../../../skills/shared/events.md).
 
 #### REQ: event-drafted
 
-While the artifact's `**Status:**` is `Draft`, the skill MUST emit `idea.drafted` after every successful `specscore spec lint` pass that follows a write or edit. The first emission carries the same event name as subsequent ones — Synchestra dedupes by event uuid.
+While the artifact's `**Status:**` is `Draft`, the skill MUST emit `idea.drafted` after every successful `specscore spec lint` pass that follows a write or edit. The first emission carries the same event name as subsequent ones — Consumers dedupe by event uuid.
 
 #### REQ: event-approved
 

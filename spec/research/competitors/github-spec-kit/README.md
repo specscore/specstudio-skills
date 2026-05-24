@@ -234,7 +234,7 @@ Synchestra has the pieces (lint, deps, refs) but doesn't bundle them into a sing
 Public registry of community skills, archetypes, presets. Lightweight (a curated README pointing at GitHub repos) but signals platform.
 
 **9. `.specify/`-style state separation inside the product repo (alternative to a separate state repo).**
-For users who really do not want a second repo, allow Synchestra to operate in a `.synchestra/` subdirectory. Trades audit-trail purity for onboarding ease. Already in flight as `embedded-state` plan — Spec Kit's success suggests it should be a supported mode, not a fallback.
+For users who really do not want a second repo, allow Synchestra to operate in a `.specscore/` subdirectory. Trades audit-trail purity for onboarding ease. Already in flight as `embedded-state` plan — Spec Kit's success suggests it should be a supported mode, not a fallback.
 
 **10. Brownfield templates / explicit modernization mode.**
 Spec Kit names the brownfield use-case. Ship example SpecScore templates for "modernize a legacy module" and "add a feature to existing code" with the call-out in marketing.

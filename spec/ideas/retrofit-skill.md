@@ -150,7 +150,7 @@ Together these enable a controlled comparison: retrofit a project that already h
 - Subagent parallelism in Phase 2: cap at N=? Dispatch all zones at once or batch by depth/risk? Probably batch — defer to plan time, but the dedup cost grows quadratically with N so a hard ceiling is wise.
 - Multi-repo sibling-repo discovery: explicit user list, a manifest, sibling directories on disk, or remote-org enumeration? MVP probably says "user lists them"; future could enrich.
 - Interaction with `specscore.yaml`: does a retrofit run write a config entry recording the retrofitted set so subsequent runs are idempotent / incremental? Lean yes, defer details.
-- Should the skill emit a Synchestra event (`feature.retrofitted`) distinct from `feature.drafted` so downstream tooling can treat retrofitted Features differently?
+- Should the skill emit a event (`feature.retrofitted`) distinct from `feature.drafted` so downstream tooling can treat retrofitted Features differently?
 - Dedup mechanics — concrete merge rules: file-path overlap ratio threshold? AST symbol overlap? Embedding similarity? Working titles will collide on common verbs ("validation", "auth middleware") and divergent descriptions of the same thing will false-split. Deserves its own spec-time treatment.
 - Shared researcher brief — what exactly does it contain, and how is it kept under a context-size budget across N researchers? Likely: architecture summary digest (from map), detected-frameworks glossary, cross-cutting-concern registry built up across researchers (which means researchers can't all be truly parallel — there's a serial phase or eventual-consistency tradeoff).
 - AC provenance trailer — exact format, and how it interacts with `specscore` lint. Lint rule extension?

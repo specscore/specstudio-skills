@@ -16,7 +16,7 @@ The `specstudio:plan` skill turns an approved SpecScore Feature into a lint-clea
 
 ## Problem
 
-`specstudio:specify` produces lint-clean Features with `Given / When / Then` acceptance criteria. The next step — decomposing those ACs into ordered, executable tasks — currently has no SpecStudio skill. Users fall back to generic planning skills (`superpowers:writing-plans`, `agent-skills:planning-and-task-breakdown`), which are SpecScore-blind: they do not consume Feature body metadata, do not map tasks to AC IDs, do not lint, and do not emit Synchestra events.
+`specstudio:specify` produces lint-clean Features with `Given / When / Then` acceptance criteria. The next step — decomposing those ACs into ordered, executable tasks — currently has no SpecStudio skill. Users fall back to generic planning skills (`superpowers:writing-plans`, `agent-skills:planning-and-task-breakdown`), which are SpecScore-blind: they do not consume Feature body metadata, do not map tasks to AC IDs, do not lint, and do not emit events.
 
 The result is that spec↔code coherence — the central SpecStudio principle — breaks at exactly the handoff where it matters most: the moment ACs become work. A `plan` skill that consumes a Feature, produces tasks bound to its AC IDs, and gates on full coverage closes that gap.
 
@@ -28,7 +28,7 @@ The skill is invoked when a Feature is approved and the user is ready to decompo
 
 #### REQ: invocation-triggers
 
-The skill MUST respond to the triggers `plan`, `/plan`, `specstudio:plan`, "plan this feature", and the Synchestra event `feature.approved`. It MAY respond to additional natural-language phrasings of the same intent.
+The skill MUST respond to the triggers `plan`, `/plan`, `specstudio:plan`, "plan this feature", and the event `feature.approved`. It MAY respond to additional natural-language phrasings of the same intent.
 
 #### REQ: requires-approved-feature
 
@@ -299,7 +299,7 @@ When the skill creates files (the bootstrapped `spec/plans/`, `spec/plans/README
 
 ### Event emission
 
-The skill participates in the Synchestra event vocabulary.
+The skill participates in the event vocabulary.
 
 #### REQ: event-drafted
 

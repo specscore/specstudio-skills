@@ -77,7 +77,7 @@ Refines raw, vague ideas into SpecScore Idea artifacts through structured diverg
 Turns an approved Idea (or a clear buildable intent) into a SpecScore Feature with requirements and `Given / When / Then` acceptance criteria.
 
 - **Output:** lint-clean `spec/features/<slug>/` containing the Feature, requirements, ACs, and optional Rehearse test stubs.
-- **Triggers:** `specify`, `/specify`, "spec this out", or the `idea.approved` Synchestra event.
+- **Triggers:** `specify`, `/specify`, "spec this out", or the `idea.approved` event.
 - **Gate:** No code, plans, or scaffolding until the Feature is lint-clean and user-approved.
 - **Source:** [`specify/SKILL.md`](./specify/SKILL.md)
 
@@ -86,7 +86,7 @@ Turns an approved Idea (or a clear buildable intent) into a SpecScore Feature wi
 Turns an approved Feature into a single-file Plan at `spec/plans/<slug>.md` — an ordered, AC-mapped task list. Closes the gap where users previously fell back to SpecScore-blind planning skills.
 
 - **Output:** lint-clean `spec/plans/<slug>.md` with tasks numbered 1..N, each bound to ≥1 AC ID from the source Feature.
-- **Triggers:** `plan`, `/plan`, `specstudio:plan`, "plan this feature", or the `feature.approved` Synchestra event.
+- **Triggers:** `plan`, `/plan`, `specstudio:plan`, "plan this feature", or the `feature.approved` event.
 - **Gate:** AC coverage (every AC covered or explicitly deferred, lint rule `P-001`), lint, baseline reviewer + any third-party reviewers (AND composition), user approval. No transition to `specstudio:implement` until all five hold.
 - **Source:** [`plan/SKILL.md`](./plan/SKILL.md)
 
@@ -95,7 +95,7 @@ Turns an approved Feature into a single-file Plan at `spec/plans/<slug>.md` — 
 Consumes an approved Plan; dispatches one subagent per task in parallel batches computed from the Plan's `**Depends-On:**` dependency graph; stages every batch's changes with a mandatory `Verifies: <feature-slug>#ac:<ac-slug>, ...` commit-message trailer that the user pastes when committing. Linear in user interaction (one approval per batch), parallel in execution (subagent fan-out within a batch).
 
 - **Output:** staged source-code changes (one or more `git diff --staged` batches across the Plan's lifetime), plus per-task `**Status:**` writes on the Plan file; in `**Mode:** stub` Plans, also writes back task bodies with post-hoc 1–2 sentence summaries.
-- **Triggers:** `implement`, `/implement`, `specstudio:implement`, "implement this plan", or the `plan.approved` Synchestra event.
+- **Triggers:** `implement`, `/implement`, `specstudio:implement`, "implement this plan", or the `plan.approved` event.
 - **Gate:** Plan Status ∈ {Approved, Implementing}, Source Feature Status ∈ {Approved, Implementing, Stable}, lint after every batch, line-overlap conflict detection post-batch, explicit per-batch user approval, user-commit-before-next-batch. Promotion boundary is `specstudio:verify` only.
 - **Source:** [`implement/SKILL.md`](./implement/SKILL.md)
 
@@ -129,7 +129,7 @@ Scope TBD. Next step: `ideate` it.
 
 A thin shell over the [`specscore idea relocate`](https://github.com/specscore/specscore-cli/blob/main/spec/features/cli/idea/relocate/README.md) CLI verb. Relocates an Idea (`spec/ideas/<slug>.md`) or sidekick seed (`spec/ideas/seeds/<slug>.md`) from the current repo to another SpecScore-managed repo. The CLI handles every mechanic — pre-flight clean-tree checks, file copy + in-file rewrite, cross-repo link cleanup, per-repo commits, rollback on failure. The skill's job is argument collection, shell-out, verbatim output surfacing, and a single best-effort mismatch-log line on success.
 
-- **Output:** the CLI verb's per-repo lines plus summary (verbatim), and one JSON line appended to `.synchestra/destination-resolution-log.jsonl` in the source repo's cwd on exit 0.
+- **Output:** the CLI verb's per-repo lines plus summary (verbatim), and one JSON line appended to `.specscore/destination-resolution-log.jsonl` in the source repo's cwd on exit 0.
 - **Triggers:** `specstudio:relocate-idea`, `/relocate-idea`, "relocate this idea", "move this seed to another repo".
 - **Gate:** `specscore` must be on PATH (delegate install to `/specscore:install` if missing). The skill surfaces the CLI's exit code verbatim — no paraphrasing of rollback commands on commit failure.
 - **Companion Feature:** [`sidekick-capture/destination-resolution`](../spec/features/sidekick-capture/destination-resolution/README.md) — defines this skill alongside the sidekick pre-write destination-resolution hook.
@@ -137,4 +137,4 @@ A thin shell over the [`specscore idea relocate`](https://github.com/specscore/s
 
 ## `shared/`
 
-Not a skill. [`shared/`](./shared/) holds cross-cutting reference material the SKILL.md files load on demand: the philosophy, path conventions, lint rules, the Synchestra event vocabulary, the Rehearse heuristic, and the question cadence. Treat these as the kit every skill imports from, not as something a user invokes.
+Not a skill. [`shared/`](./shared/) holds cross-cutting reference material the SKILL.md files load on demand: the philosophy, path conventions, lint rules, the event vocabulary, the Rehearse heuristic, and the question cadence. Treat these as the kit every skill imports from, not as something a user invokes.

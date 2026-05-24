@@ -12,4 +12,4 @@ Produces a `spec/features/<slug>/` directory containing the Feature README, requ
 
 `ideate` is skippable when the problem and scope are already obvious — `specify` accepts a clear buildable intent directly. If the intent isn't actually clear, the skill pushes back rather than producing a low-quality Feature.
 
-Triggers: `specify`, `/specify`, "spec this out", or the `idea.approved` Synchestra event.
+Triggers: `specify`, `/specify`, "spec this out", or the `idea.approved` event.

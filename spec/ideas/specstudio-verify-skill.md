@@ -22,7 +22,7 @@ Ship a minimum-viable verify skill that closes the end-to-end pipeline with a si
 ## Alternatives Considered
 
 - **V1 — Reviewer-shape contract + one verifier.** Define a stable JSONL stdin/stdout contract for verifiers in `skills/shared/` and ship one builtin that honors it. Lost because the contract would be overfit to the AI-subagent shape with N=1 implementation; a real second backend (pytest adapter, Rehearse runtime) is needed to design the contract honestly. Reopens as a dedicated Idea later.
-- **V2 — Verdict bus (sink, not runner).** `verify` is a sink that aggregates verdicts emitted to `.synchestra/verify-results.jsonl` by any external runner (CI, pytest, manual reviewer). Lost on MVP scope — execution-timing decoupling is real value but solves a problem we don't have yet, and adds a freshness/staleness model that doubles surface area.
+- **V2 — Verdict bus (sink, not runner).** `verify` is a sink that aggregates verdicts emitted to `.specscore/verify-results.jsonl` by any external runner (CI, pytest, manual reviewer). Lost on MVP scope — execution-timing decoupling is real value but solves a problem we don't have yet, and adds a freshness/staleness model that doubles surface area.
 - **V3 — Consilium-for-ACs.** Reuse the consilium 5-stage pipeline with a panel voting per AC. Lost on cost and weight — too expensive for a routine "did I land the feature" check, but viable as a *non-default* verifier once pluggability lands.
 - **V4 — Whole-repo scoping (no trailer dependency).** Verifier sees the full working tree, no git-log walk. Lost because it discards the AC↔commit linkage `implement` already enforces and produces noisier verdicts. The trailer convention is the discipline; verify should reward it.
 
@@ -49,7 +49,7 @@ A two-week spike that ships skills/verify/SKILL.md plus spec/features/skills/ver
 | Should-be-true | A Markdown report with a top-of-file YAML summary block is sufficient for `recap`/`review`/`ship` to gate on without a separate JSON file. | Stub `recap` to grep the YAML block; confirm it can extract per-AC verdicts cleanly. |
 | Should-be-true | Two-week MVP timebox is realistic for one subagent-dispatching skill with no contract design and no pluggability. | Compare scope to `specstudio:implement` (which shipped) — both dispatch subagents per unit (task vs AC); `verify` has less orchestration overhead (no batches, no dependency graph). |
 | Might-be-true | ACs without any matching `Verifies:` trailer should be reported as `unmapped` rather than `fail`. | Decide at spec time; defer to user-review of the Feature. |
-| Might-be-true | The report path `spec/features/<slug>/_verify/<sha>.md` is the right location vs. `.synchestra/verify/<feature>/<sha>.md` (tracked vs. untracked). | Decide at spec time. Tracked makes reports reviewable in PRs; untracked keeps churn out of git history. |
+| Might-be-true | The report path `spec/features/<slug>/_verify/<sha>.md` is the right location vs. `.specscore/verify/<feature>/<sha>.md` (tracked vs. untracked). | Decide at spec time. Tracked makes reports reviewable in PRs; untracked keeps churn out of git history. |
 
 
 ## SpecScore Integration
@@ -60,7 +60,7 @@ A two-week spike that ships skills/verify/SKILL.md plus spec/features/skills/ver
 
 ## Open Questions
 
-- Report location: tracked (`spec/features/<slug>/_verify/<sha>.md`) vs. untracked (`.synchestra/verify/<feature>/<sha>.md`)? Tracked makes reports PR-reviewable; untracked keeps git history quiet. Decide at `specify` time.
+- Report location: tracked (`spec/features/<slug>/_verify/<sha>.md`) vs. untracked (`.specscore/verify/<feature>/<sha>.md`)? Tracked makes reports PR-reviewable; untracked keeps git history quiet. Decide at `specify` time.
 - ACs with no matching `Verifies:` trailer: report as `unmapped` (info) or `fail` (gating)? Leaning toward `unmapped` so `verify` is honest about scope, but `ship` should treat `unmapped` as blocking.
 - What does the skill do when run on a Feature whose source code has no commits yet (just spec)? Likely: every AC is `unmapped`; report is still generated; exit non-zero. Confirm at `specify` time.
 - Subagent dispatch: serial vs. parallel per AC? Implement's parallel batch model is a reasonable precedent, but `verify` has no inter-AC dependencies — full parallel is the obvious default. Decide at `plan` time.

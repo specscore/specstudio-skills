@@ -27,7 +27,7 @@ The central guarantee: **every commit references the AC IDs it satisfies** via t
 
 ## Triggers
 
-`implement`, `/implement`, `specstudio:implement`, "implement this plan", "implement this task", or the Synchestra event `plan.approved`.
+`implement`, `/implement`, `specstudio:implement`, "implement this plan", "implement this task", or the event `plan.approved`.
 
 ## What it does NOT do
 

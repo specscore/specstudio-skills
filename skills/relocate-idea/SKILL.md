@@ -5,7 +5,7 @@ description: |
   an Idea or sidekick-seed artifact from the current repo to another
   SpecScore-managed repo by shell-execing the CLI and surfacing its
   output verbatim. On success, appends one JSON line to
-  `.synchestra/destination-resolution-log.jsonl` in the source-repo
+  `.specscore/destination-resolution-log.jsonl` in the source-repo
   cwd so future destination-resolution tuning can learn from
   misroute corrections.
   Triggers: "specstudio:relocate-idea", "/relocate-idea", "relocate
@@ -69,7 +69,7 @@ The skill MUST NOT add additional flags, environment variables, or pre/post comm
 
 1. Surface the CLI's full stdout to the host conversation verbatim. The format the CLI emits is the [stdout-format contract](https://github.com/specscore/specscore-cli/blob/main/spec/features/cli/idea/relocate/README.md#req-stdout-format) — per-repo lines plus a summary line. Do not paraphrase, summarize, or add inference.
 
-2. Append one JSON line to `.synchestra/destination-resolution-log.jsonl` (see "Mismatch log" below).
+2. Append one JSON line to `.specscore/destination-resolution-log.jsonl` (see "Mismatch log" below).
 
 3. Exit 0.
 
@@ -83,7 +83,7 @@ The skill MUST NOT add additional flags, environment variables, or pre/post comm
 
 ## Mismatch log
 
-On exit-0 success only, append one single-line JSON object to `.synchestra/destination-resolution-log.jsonl` in the user's cwd at the moment the skill was invoked (the source repo — i.e., the repo where the misfiled artifact lived before the relocate). Create the `.synchestra/` directory lazily if it doesn't exist.
+On exit-0 success only, append one single-line JSON object to `.specscore/destination-resolution-log.jsonl` in the user's cwd at the moment the skill was invoked (the source repo — i.e., the repo where the misfiled artifact lived before the relocate). Create the `.specscore/` directory lazily if it doesn't exist.
 
 ### Record schema
 

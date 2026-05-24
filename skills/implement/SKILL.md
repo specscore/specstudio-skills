@@ -8,7 +8,7 @@ description: |
   diff. Stages-only (mirrors ideate/specify/plan); provides a
   Verifies: commit-message trailer template the user pastes.
   Trigger: "implement", "/implement", "implement this plan",
-  "specstudio:implement", or Synchestra event `plan.approved`.
+  "specstudio:implement", or event `plan.approved`.
 aliases: [implement]
 ---
 
@@ -32,7 +32,7 @@ The only skill invoked after `specstudio:implement` is `specstudio:verify` (or â
 ## When to Use
 
 - An approved Plan at `spec/plans/<slug>.md` is ready for implementation (`**Status:**` is `Approved` or `Implementing`).
-- The Synchestra event `plan.approved` has fired and the user has confirmed they want to implement.
+- The event `plan.approved` has fired and the user has confirmed they want to implement.
 - The user wants to resume an in-flight Plan after a prior `implement` session (Plan Status: `Implementing`).
 
 **Refuse and redirect when:**

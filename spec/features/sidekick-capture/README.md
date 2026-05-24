@@ -7,7 +7,7 @@
 
 ## Summary
 
-Phase 0 of the [`sidekick-ideas`](../../ideas/sidekick-ideas.md) Idea: a new `specstudio:sidekick` skill, a shared capture directive at `skills/shared/sidekick-capture.md`, the seed artifact format at `spec/ideas/seeds/<slug>.md`, two-way back-links from each seed's source artifact (Feature, Idea, or Plan) to the generated seed via a `## Sidekick Seeds Generated` section, and the `sidekick-idea.captured` Synchestra event. The skill is deliberately narrow — it validates a one-liner, writes a seed file, updates the source artifact's back-link section (when `captured_during` resolves to an existing file), emits an event, and exits. No deliberation, no dedupe across sessions, no auto-promotion happens at this layer; those behaviors belong to the Phase 1 consilium and Phase 2 promotion Features that subscribe to the event. Seeds pile up usefully in `spec/ideas/seeds/` even before the consilium is built — the system is a notebook before it is a court.
+Phase 0 of the [`sidekick-ideas`](../../ideas/sidekick-ideas.md) Idea: a new `specstudio:sidekick` skill, a shared capture directive at `skills/shared/sidekick-capture.md`, the seed artifact format at `spec/ideas/seeds/<slug>.md`, two-way back-links from each seed's source artifact (Feature, Idea, or Plan) to the generated seed via a `## Sidekick Seeds Generated` section, and the `sidekick-idea.captured` event. The skill is deliberately narrow — it validates a one-liner, writes a seed file, updates the source artifact's back-link section (when `captured_during` resolves to an existing file), emits an event, and exits. No deliberation, no dedupe across sessions, no auto-promotion happens at this layer; those behaviors belong to the Phase 1 consilium and Phase 2 promotion Features that subscribe to the event. Seeds pile up usefully in `spec/ideas/seeds/` even before the consilium is built — the system is a notebook before it is a court.
 
 The Feature is the smallest independently-shippable slice of the Idea. It produces concrete value on its own (a sideline-idea notebook captured without derailing host work) and produces the artifacts every downstream Phase will consume.
 
@@ -51,7 +51,7 @@ On valid input, the skill MUST write a new seed file at `spec/ideas/seeds/<slug>
 
 #### REQ: emits-captured-event
 
-On successful write, the skill MUST emit a `sidekick-idea.captured` event with the payload defined in REQ `event-payload-schema`. On write failure (filesystem error, validation failure, collision-disambiguation exhaustion), the skill MUST NOT emit the event. Event emission MUST follow the existing Synchestra event-bus convention; the exact transport (in-process call, file-watcher, direct HTTP) is an implementation choice and not constrained here.
+On successful write, the skill MUST emit a `sidekick-idea.captured` event with the payload defined in REQ `event-payload-schema`. On write failure (filesystem error, validation failure, collision-disambiguation exhaustion), the skill MUST NOT emit the event. Event emission MUST follow the existing event-bus convention; the exact transport (in-process call, file-watcher, direct HTTP) is an implementation choice and not constrained here.
 
 ### The shared capture directive
 
@@ -183,7 +183,7 @@ The Feature ships five components with explicit boundaries.
 
 4. **Seed lint rule** — a new rule registered with `specscore spec lint` that targets `spec/ideas/seeds/*.md`. Source location for the rule's CLI implementation is the `specscore` CLI repository; this Feature specifies the contract only.
 
-5. **`sidekick-idea.captured` event** — emitted on every successful capture via the Synchestra event-bus convention (`skills/shared/events.md`). Payload defined in REQ `event-payload-schema`. Producer: this Feature; consumers: future Phase 1 consilium Feature.
+5. **`sidekick-idea.captured` event** — emitted on every successful capture via the event-bus convention (`skills/shared/events.md`). Payload defined in REQ `event-payload-schema`. Producer: this Feature; consumers: future Phase 1 consilium Feature.
 
 The five components are loosely coupled. The skill produces the seed and the event; the directive instructs hosts how to invoke; the format and lint rule constrain what counts as a valid seed; the event lets downstream Features react without coupling to the skill's internals.
 
@@ -365,7 +365,7 @@ Rehearse stubs are scaffolded with `**Status:** pending` per the rehearse-heuris
 
 - **One-liner length cap (500 chars).** Picked to comfortably fit a "what + brief context" capture (e.g., "persist debug logs across restarts so post-mortems don't lose context — three places we wished we had session-level logs that survived a `/clear`") while still discouraging full paragraphs that should be the body, not the one-liner. Not anchored to a concrete external constraint. If real captures routinely brush the cap, raise it; if real captures average ≤ 80 chars, leave it. Validate after a week of use.
 - **Seeds-directory pre-creation by `init`.** Deferred per Not Doing. If a future adopter is surprised by the directory appearing only on first capture, revisit and add to `specstudio:init`'s scaffolding.
-- **Event transport mechanism.** REQ `emits-captured-event` requires emission via the Synchestra event-bus convention but does not constrain how. Open: does Synchestra currently provide an in-process emission helper, or do skills emit by writing to a known path that a watcher consumes? Resolve when implementing the skill — likely by reading the existing convention from `skills/shared/events.md`.
+- **Event transport mechanism.** REQ `emits-captured-event` requires emission via the event-bus convention but does not constrain how. Open: does Synchestra currently provide an in-process emission helper, or do skills emit by writing to a known path that a watcher consumes? Resolve when implementing the skill — likely by reading the existing convention from `skills/shared/events.md`.
 - **Back-link drift reconciliation in `specscore spec lint --fix`.** Phase 0 writes back-links at capture time (REQ `writes-back-link-to-source-artifact`), but failed writes (REQ `back-link-best-effort`) and out-of-band edits to source artifacts can produce drift between `spec/ideas/seeds/` and the back-link sections. A future cross-repo lint rule should reconcile this (same pattern as ideas-index sync). Tracked at the [`sidekick-ideas`](../../ideas/sidekick-ideas.md) Idea level; not blocking Phase 0.
 - **Concurrent capture against the same source artifact.** Two parallel `/sidekick` invocations whose `captured_during` resolves to the same file may race on the append. REQ `back-link-best-effort` handles this implicitly — one writer wins, the other warns and the seed still lands — but if concurrent capture turns out to be a common shape (e.g., a host fans out multiple captures in one turn), revisit with an explicit locking or retry rule. Defer until real evidence of impact.
 

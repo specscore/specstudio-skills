@@ -81,7 +81,7 @@ Full detail: [`../ideate-vs-brainstorming-skills-analysis.md`](../ideate-vs-brai
 ### vs. **addyosmani/agent-skills** (`idea-refine`, `spec-driven-development`, …)
 
 - **Same divergent/convergent shape, mandatory artifact.** SpecStudio's `ideate` keeps the 3-phase structure and the framework library (SCAMPER, HMW, JTBD, …) — but makes the Idea artifact mandatory and lint-clean instead of an optional save.
-- **Promotion graph.** agent-skills' `docs/ideas/<name>.md` is a one-pager dead-end; SpecStudio Ideas have a `promotes_to` field that Synchestra populates when Features are born from them, so the lineage stays queryable.
+- **Promotion graph.** agent-skills' `docs/ideas/<name>.md` is a one-pager dead-end; SpecStudio Ideas have a `promotes_to` field that Lifecycle tooling populates when Features are born from them, so the lineage stays queryable.
 - **Reference checklists and personas as future work.** agent-skills' OWASP / WCAG / Core Web Vitals reference docs and `code-reviewer` / `security-auditor` / `test-engineer` personas are real assets we don't yet match; see action items in [`superpowers-and-agent-skills-analysis.md`](superpowers-and-agent-skills-analysis.md).
 
 Full detail: [`superpowers-and-agent-skills-analysis.md`](superpowers-and-agent-skills-analysis.md).

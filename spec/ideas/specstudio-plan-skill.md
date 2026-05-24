@@ -15,7 +15,7 @@ How might we turn an approved SpecScore Feature into a small set of verifiable, 
 
 SpecStudio today ships two skills: `ideate` produces a lint-clean `spec/ideas/<slug>.md`, and `specify` produces a lint-clean `spec/features/<slug>/`. The README's roadmap names `plan` as the next lifecycle phase, but no skill exists to bridge from a lint-clean Feature to actionable work.
 
-In the gap, users fall back to generic planning skills (`superpowers:writing-plans`, `agent-skills:planning-and-task-breakdown`). Those skills are fine as process, but they are SpecScore-blind: they do not consume Feature body metadata, they do not map tasks to acceptance-criteria IDs, they do not lint, and they do not emit Synchestra events. That means the spec↔code coherence story — a stated SpecStudio principle — breaks exactly at the handoff where it matters most.
+In the gap, users fall back to generic planning skills (`superpowers:writing-plans`, `agent-skills:planning-and-task-breakdown`). Those skills are fine as process, but they are SpecScore-blind: they do not consume Feature body metadata, they do not map tasks to acceptance-criteria IDs, they do not lint, and they do not emit events. That means the spec↔code coherence story — a stated SpecStudio principle — breaks exactly at the handoff where it matters most.
 
 This Idea proposes a `specstudio:plan` skill that consumes an approved Feature and produces a lint-clean `spec/plans/<slug>.md` of ordered, AC-mapped tasks, preserving the same gate discipline `ideate` and `specify` already enforce.
 

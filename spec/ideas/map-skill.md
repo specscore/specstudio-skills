@@ -62,7 +62,7 @@ No user-approval gates mid-flow — the artifact is read-only synthesis; users r
 
 ## MVP Scope
 
-A two-week spike. Single-repo only. JavaScript/TypeScript and Python detection in the framework-glossary inference; other languages get a 'detected but not deeply classified' label. Output to `spec/research/<slug>-map.md` with JSON sidecar. Success criterion (falsifiable): produce a map for `specstudio-skills` plus one external repo of comparable size, and have a human reviewer rate ≥80% of the architecture summary and zone proposal as accurate. No multi-repo, no caching, no Synchestra events in MVP — those are explicit follow-ons.
+A two-week spike. Single-repo only. JavaScript/TypeScript and Python detection in the framework-glossary inference; other languages get a 'detected but not deeply classified' label. Output to `spec/research/<slug>-map.md` with JSON sidecar. Success criterion (falsifiable): produce a map for `specstudio-skills` plus one external repo of comparable size, and have a human reviewer rate ≥80% of the architecture summary and zone proposal as accurate. No multi-repo, no caching, no events in MVP — those are explicit follow-ons.
 
 ## Not Doing (and Why)
 
@@ -119,7 +119,7 @@ A two-week spike. Single-repo only. JavaScript/TypeScript and Python detection i
 - `--scope <subdir>` × repo-state-capture interaction — when scoped to a subdir, does the HEAD SHA reflect whole-repo or scoped subtree? Proposal: whole-repo SHA + the scoped path is captured as a separate field so downstream tools can distinguish "this map covers a subset of repo at SHA X." Confirm at spec time.
 - ~~How does map handle monorepos~~ *(answered in design: v1 refuses-and-recommends; multi-architecture is a follow-on Idea)*
 - File-staleness signal — when is a map "out of date"? Date alone is weak (the repo might not have changed). Tree-hash check, commit SHA at generation, or both?
-- Should map emit a Synchestra event (`map.produced`)? For what consumer? Retrofit reads the file directly today; an event only matters if something else listens.
+- Should map emit a event (`map.produced`)? For what consumer? Retrofit reads the file directly today; an event only matters if something else listens.
 - Map output is not currently a "managed artifact" in the SpecScore lifecycle sense — does it need a lifecycle (Draft → Approved → Stale)? Or is it always just "freshly generated"?
 - Privacy: maps disclose architectural details and may expose internal service names, framework choices, infra topology. For a public open-source repo, fine. For internal codebases shared via this artifact, the user needs to know what gets disclosed. UX implication: a default `.gitignore` rule on map output? Or explicit "this map will be committed unless you `gitignore` it" warning?
 - Cost-budget enforcement — what happens when a repo is too large for the 2-minute target? Refuse, downgrade to a partial map, or warn and proceed? MVP probably warns and proceeds with a partial-map indicator.

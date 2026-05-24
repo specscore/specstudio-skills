@@ -165,7 +165,7 @@ When `synchestra` is on PATH (after Step 2), invoke `synchestra init` as a subpr
 
 `synchestra init` writes a dedicated `synchestra.yaml` at the repo root (per the [synchestra repo-config Feature](https://github.com/specscore/synchestra/blob/main/spec/features/repo-config/README.md)). It does **not** write extension keys inside `specscore.yaml` — Synchestra-only orchestration metadata lives in its own file, parallel to specscore.yaml. Project identity (title, host, org, repo, repositories) stays in specscore.yaml; synchestra reads it from there. The two files compose without duplication.
 
-In v1, `synchestra init` implements only `--state-mode embedded` (orphan branch + worktree at `.synchestra/`). The `separate-repo` and `hub-managed` modes are recognized but exit 2 with a "not yet implemented" message; treat that exit as a soft failure and continue with embedded mode if the user chose otherwise.
+In v1, `synchestra init` implements only `--state-mode embedded` (orphan branch + worktree at `.specscore/`). The `separate-repo` and `hub-managed` modes are recognized but exit 2 with a "not yet implemented" message; treat that exit as a soft failure and continue with embedded mode if the user chose otherwise.
 
 When `synchestra` is missing AND the user declined to install: report "synchestra orchestration setup deferred — `synchestra` CLI is not installed" and continue. The skill does NOT attempt to replicate the orphan-branch / worktree provisioning via AI-agent fallback — orchestration-side semantics are owned upstream and require git operations that belong inside the CLI.
 
@@ -209,7 +209,7 @@ Direct, helpful, honest about partial states and degraded paths. The skill is a 
 - Bundling multiple unrelated writes behind a single consent prompt.
 - Distinguishing "user-edit drift" from "version drift" in any user-facing way (both are the same prompt).
 - Falling back to AI-agent path for `synchestra init` (orchestration-side semantics live upstream — degrade gracefully, don't replicate).
-- Creating a state file (`.specstudio/init-state.yaml`, `.synchestra/init.lock`) for idempotence; the filesystem IS the state.
+- Creating a state file (`.specstudio/init-state.yaml`, `.specscore/init.lock`) for idempotence; the filesystem IS the state.
 - Treating "not a git repository" as an error instead of a graceful skip-auto-stage condition.
 
 ## Verification

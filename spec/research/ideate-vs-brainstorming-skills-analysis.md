@@ -543,7 +543,7 @@ skills/
 
 ## 10. Resolved Questions and Decisions
 
-1. **Idea promotion mechanics — RESOLVED.** An Idea may have empty `promotes_to` in `Draft` and `Approved` states. When one or more Features are created from an Idea, Synchestra transitions its status to `Specified` and **auto-populates `promotes_to`** with the list of Feature IDs. The Idea author never edits `promotes_to` manually. Lifecycle: `Draft → Under Review → Approved → Specified → Archived`.
+1. **Idea promotion mechanics — RESOLVED.** An Idea may have empty `promotes_to` in `Draft` and `Approved` states. When one or more Features are created from an Idea, Lifecycle tooling transitions its status to `Specified` and **auto-populates `promotes_to`** with the list of Feature IDs. The Idea author never edits `promotes_to` manually. Lifecycle: `Draft → Under Review → Approved → Specified → Archived`.
 
 2. **Revision semantics — RESOLVED.** Features **revise in place**; git history is the record of design changes. A revision does not create a new slug or file. `supersedes:` is reserved for the rare case where a Feature is replaced wholesale by a differently-scoped successor (e.g., the original Feature is archived). Lint should tolerate evolution of a Feature's body across revisions as long as the schema remains valid.
 

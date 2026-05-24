@@ -37,7 +37,7 @@ A companion **`specstudio:relocate-idea` skill** automates the manual relocate r
 - **Finding and updating every reference to the old path/slug across all sibling SpecScore-managed repos.** References live in: `spec/ideas/README.md` indexes; other Ideas via `**Related Ideas:**` / `**Supersedes:**`; Features via `**Source Ideas:**`; seeds via back-link sections.
 - **Auto-committing per repo by default**, with cross-linking commit messages so the relocate is traceable in git history. `--no-commit` flag stages changes everywhere without committing, for users who want to review before pulling the trigger. On first-failure during commit phase, the verb stops and reports exactly which repos were committed and which weren't, leaving the user to manually roll back already-committed repos if desired.
 
-When the user invokes the relocate skill (i.e., the host agent's pick was accepted but turned out wrong, or the user overrode and the override was still wrong), the skill appends a record to an opt-in, workspace-local learning log at `.synchestra/destination-resolution-log.jsonl`. The log captures enough context to tune the deliberation prompt over time. No telemetry leaves the user's machine.
+When the user invokes the relocate skill (i.e., the host agent's pick was accepted but turned out wrong, or the user overrode and the override was still wrong), the skill appends a record to an opt-in, workspace-local learning log at `.specscore/destination-resolution-log.jsonl`. The log captures enough context to tune the deliberation prompt over time. No telemetry leaves the user's machine.
 
 ## Alternatives Considered
 
@@ -77,7 +77,7 @@ In `specscore/specstudio-skills`:
 3. `specstudio:sidekick` invokes the helper before any write when ≥2 candidate repos exist. The agent's response is displayed as the inline confirmation: `Routing to <repo> because <reason> — press enter to accept, type other to override.` The user presses enter (route to agent's pick) or types an alternative repo name (route there).
 4. Standard sidekick success line on completion (`Captured: <slug> at <path>`); the user already saw the destination at confirmation time.
 5. `specstudio:relocate-idea` skill: thin shell that invokes `specscore idea relocate` and surfaces its output. Triggerable as `/relocate-idea`.
-6. Opt-in mismatch logging: when relocate runs, append a JSON line to `.synchestra/destination-resolution-log.jsonl` in cwd. Schema deferred to Feature-spec time; minimum context to retrospect on agent decisions.
+6. Opt-in mismatch logging: when relocate runs, append a JSON line to `.specscore/destination-resolution-log.jsonl` in cwd. Schema deferred to Feature-spec time; minimum context to retrospect on agent decisions.
 
 Out of scope for MVP:
 

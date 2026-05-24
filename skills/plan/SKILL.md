@@ -8,7 +8,7 @@ description: |
   reviewer-subagent approval, and user approval. Optionally scaffolds
   follow-on artifacts via downstream skills.
   Trigger: "plan", "/plan", "plan this feature", "specstudio:plan", or
-  Synchestra event `feature.approved`.
+  event `feature.approved`.
 aliases: [plan]
 ---
 
@@ -32,7 +32,7 @@ The only skill invoked after `specstudio:plan` is `specstudio:implement` (or —
 ## When to Use
 
 - A SpecScore Feature is `**Status:** Approved` and the user is ready to decompose it into work.
-- The Synchestra event `feature.approved` has fired and the user has confirmed they want to plan.
+- The event `feature.approved` has fired and the user has confirmed they want to plan.
 - The user wants to revise an existing approved Plan (revise-in-place by default).
 
 **Refuse and redirect when:**
@@ -248,7 +248,7 @@ On confirmed approval:
 
 ## Event Emission
 
-The skill participates in the Synchestra event vocabulary with **three events**:
+The skill participates in the event vocabulary with **three events**:
 
 | Event | When |
 |---|---|

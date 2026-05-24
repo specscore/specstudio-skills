@@ -162,7 +162,7 @@ When `synchestra` is on PATH, the skill MUST invoke `synchestra init` (as a subp
 
 #### REQ: ai-agent-fallback-synchestra
 
-When `synchestra` is missing AND the user declined to install it (per `synchestra-install-delegation`), the skill MUST fall back to a limited AI-agent path: it MAY write a placeholder `.synchestra/` directory with a README explaining "synchestra runtime not yet installed; run `specstudio:init --update` after installing synchestra". The fallback MUST NOT attempt to replicate `synchestra init`'s full behavior — orchestration-side semantics are owned upstream. Fallback's only goal is to leave the repo in a state where re-running init after installing synchestra completes the orchestration setup cleanly.
+When `synchestra` is missing AND the user declined to install it (per `synchestra-install-delegation`), the skill MUST fall back to a limited AI-agent path: it MAY write a placeholder `.specscore/` directory with a README explaining "synchestra runtime not yet installed; run `specstudio:init --update` after installing synchestra". The fallback MUST NOT attempt to replicate `synchestra init`'s full behavior — orchestration-side semantics are owned upstream. Fallback's only goal is to leave the repo in a state where re-running init after installing synchestra completes the orchestration setup cleanly.
 
 #### REQ: synchestra-cli-contract-dependency
 
@@ -180,7 +180,7 @@ Re-running `specstudio:init` (default mode) on a fully-initialized project with 
 
 #### REQ: no-state-file
 
-Idempotence MUST be achieved via direct repo inspection only. The skill MUST NOT create a `.specstudio/init-state.yaml`, `.synchestra/init.lock`, or any other file whose purpose is to track init state. The repo's actual filesystem state is the single source of truth; reconciliation never lies about what's there.
+Idempotence MUST be achieved via direct repo inspection only. The skill MUST NOT create a `.specstudio/init-state.yaml`, `.specscore/init.lock`, or any other file whose purpose is to track init state. The repo's actual filesystem state is the single source of truth; reconciliation never lies about what's there.
 
 #### REQ: never-clobber-user-edits
 
@@ -246,7 +246,7 @@ The init skill orchestrates six functional components. Each is small enough to r
 
 - **What:** Publishes `project.initialized` or `project.updated` to Synchestra Hub per the canonical event vocabulary in `shared/events.md`. Payload assembled from state detector output plus the artifacts-created log.
 - **How used:** Invoked exactly once at the end of a state-changing init run. Skipped on no-op runs.
-- **Depends on:** The Synchestra event bus (when running under Synchestra orchestration); local-only emission as a JSON line to stderr when not running under Synchestra (mirrors how `idea.drafted` etc. surface in this repo today).
+- **Depends on:** The event bus (when running under Synchestra orchestration); local-only emission as a JSON line to stderr when not running under Synchestra (mirrors how `idea.drafted` etc. surface in this repo today).
 
 ### Component interaction diagram
 
@@ -376,7 +376,7 @@ Invocation
 
 **Requirements:** skills/init#req:explicit-consent-on-writes, skills/init#req:honest-pushback
 
-**Given** an invocation that would write outside `spec/` (snippet install to `CLAUDE.md`/`AGENTS.md`/etc., `.gitignore` modification via `synchestra init`, orchestration artifacts in `.synchestra/`)
+**Given** an invocation that would write outside `spec/` (snippet install to `CLAUDE.md`/`AGENTS.md`/etc., `.gitignore` modification via `synchestra init`, orchestration artifacts in `.specscore/`)
 **When** the skill reaches each such write
 **Then** it displays the exact target path and the change summary; requests yes/no consent; the consent prompt is per-write, not bundled across unrelated writes; on decline, that specific write is skipped without aborting other bootstrap steps; when state detection finds an existing non-canonical spec layout, the skill surfaces the layout and recommends manual migration (noting that "a future `specstudio:migrate` skill will automate this — until then, migration is by hand"), only continuing if the user explicitly waives. The recommendation MUST NOT direct the adopter at the `specstudio:migrate` skill as if it currently exists.
 

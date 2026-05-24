@@ -8,7 +8,7 @@
 
 ## Summary
 
-Sub-Feature of [`sidekick-capture`](../README.md). Adds a pre-write destination-resolution step to `specstudio:sidekick` so that, in multi-repo SpecScore workspaces, the host AI agent deliberates about which repo the captured seed belongs in before the write happens. The agent's pick + one-line reason is surfaced as an inline confirmation prompt the human can accept (press enter) or override (type a different repo slug or path). Ships alongside a new `specstudio:relocate-idea` skill — a thin shell over the [`specscore idea relocate`](https://github.com/specscore/specscore-cli/blob/main/spec/features/cli/idea/relocate/README.md) CLI verb — that handles the recovery path when the picked destination turns out wrong, with opt-in local mismatch logging at `.synchestra/destination-resolution-log.jsonl` for future prompt-template tuning.
+Sub-Feature of [`sidekick-capture`](../README.md). Adds a pre-write destination-resolution step to `specstudio:sidekick` so that, in multi-repo SpecScore workspaces, the host AI agent deliberates about which repo the captured seed belongs in before the write happens. The agent's pick + one-line reason is surfaced as an inline confirmation prompt the human can accept (press enter) or override (type a different repo slug or path). Ships alongside a new `specstudio:relocate-idea` skill — a thin shell over the [`specscore idea relocate`](https://github.com/specscore/specscore-cli/blob/main/spec/features/cli/idea/relocate/README.md) CLI verb — that handles the recovery path when the picked destination turns out wrong, with opt-in local mismatch logging at `.specscore/destination-resolution-log.jsonl` for future prompt-template tuning.
 
 ## Problem
 
@@ -130,11 +130,11 @@ The skill MUST surface the CLI verb's stdout and stderr to the host conversation
 
 #### REQ: relocate-skill-writes-mismatch-log
 
-On successful invocation of the CLI verb (exit `0`), the skill MUST append a single JSON line to `.synchestra/destination-resolution-log.jsonl` in **the user's cwd at the moment the relocate skill was invoked** (which is the repo containing the misfiled artifact before the relocate happens — not the target repo, and not necessarily the artifact's original write location if multiple relocates have been chained). The directory MUST be created lazily if absent. Log writing is best-effort: any failure to write the log line MUST NOT mask the relocate's success, MUST NOT modify the CLI's exit code, and MUST emit a single short warning line to the host conversation.
+On successful invocation of the CLI verb (exit `0`), the skill MUST append a single JSON line to `.specscore/destination-resolution-log.jsonl` in **the user's cwd at the moment the relocate skill was invoked** (which is the repo containing the misfiled artifact before the relocate happens — not the target repo, and not necessarily the artifact's original write location if multiple relocates have been chained). The directory MUST be created lazily if absent. Log writing is best-effort: any failure to write the log line MUST NOT mask the relocate's success, MUST NOT modify the CLI's exit code, and MUST emit a single short warning line to the host conversation.
 
 #### REQ: mismatch-log-record-schema
 
-Each line of `.synchestra/destination-resolution-log.jsonl` MUST be a single-line JSON object containing at minimum these fields:
+Each line of `.specscore/destination-resolution-log.jsonl` MUST be a single-line JSON object containing at minimum these fields:
 
 ```json
 {
@@ -269,12 +269,12 @@ Given the CLI verb exits non-zero with stderr containing recovery commands (e.g.
 ### AC: relocate-skill-appends-log-on-success
 **Requirements:** [#req:relocate-skill-writes-mismatch-log](#req-relocate-skill-writes-mismatch-log), [#req:mismatch-log-record-schema](#req-mismatch-log-record-schema)
 
-Given the CLI verb exits `0`, the skill appends one JSON-formatted line to `.synchestra/destination-resolution-log.jsonl` in the source repo's working directory. The line is valid JSON containing at minimum `ts`, `kind`, `slug`, `original_repo`, `correct_repo`. The `.synchestra/` directory is created if absent.
+Given the CLI verb exits `0`, the skill appends one JSON-formatted line to `.specscore/destination-resolution-log.jsonl` in the source repo's working directory. The line is valid JSON containing at minimum `ts`, `kind`, `slug`, `original_repo`, `correct_repo`. The `.specscore/` directory is created if absent.
 
 ### AC: relocate-skill-log-write-failure-non-blocking
 **Requirements:** [#req:relocate-skill-writes-mismatch-log](#req-relocate-skill-writes-mismatch-log)
 
-Given the CLI verb exits `0` but the log file is unwritable (e.g., disk full, `.synchestra/` is read-only), the skill displays a single warning line to the host conversation and exits with the CLI's exit code (still `0`). The relocate's success is not masked.
+Given the CLI verb exits `0` but the log file is unwritable (e.g., disk full, `.specscore/` is read-only), the skill displays a single warning line to the host conversation and exits with the CLI's exit code (still `0`). The relocate's success is not masked.
 
 ## Open Questions
 

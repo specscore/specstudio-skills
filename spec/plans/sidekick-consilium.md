@@ -1318,7 +1318,7 @@ git log --oneline --since="30 days ago" -- "$CAPTURED_DURING" 2>&1 | head -20
 ls -t spec/ideas/seeds/ 2>/dev/null | head -10
 ```
 
-Assemble the outputs into a single context bundle file at `.synchestra/consilium/<task-id>/raw-context.md`. This file is the researcher's primary input.
+Assemble the outputs into a single context bundle file at `.specscore/consilium/<task-id>/raw-context.md`. This file is the researcher's primary input.
 
 **Transcript:** finalize with `ended_at: <now>, outcome: ok, commands: […], output_summary: <truncated combined output>`. On any command failure, set `outcome: failed, error: <stderr first line>` and transition the task to `failed` with reason `gather-failed`.
 ````
@@ -1338,7 +1338,7 @@ Dispatch one Agent tool call with:
 - The seed file's full content + the raw context bundle from Stage 1
 - The researcher prompt body from `skills/consilium/roles/researcher.md` (read it and include verbatim as the agent's instruction prompt)
 
-Capture the agent's response. Write it to `.synchestra/consilium/<task-id>/briefing.md`.
+Capture the agent's response. Write it to `.specscore/consilium/<task-id>/briefing.md`.
 
 **Validate the briefing**:
 - Must contain the four `##` sections per the researcher's contract (Related artifacts, Code references, Recent git activity, Prior captures within dedupe window).
@@ -1415,21 +1415,21 @@ Append:
 Write the votes, roster snapshot, and active gate config to temporary YAML files:
 
 ```bash
-mkdir -p .synchestra/consilium/<task-id>
-echo "$VOTES_YAML" > .synchestra/consilium/<task-id>/votes.yaml
-echo "$ROSTER_YAML" > .synchestra/consilium/<task-id>/roster.yaml
-specscore consilium config --print-gate > .synchestra/consilium/<task-id>/gate.yaml
+mkdir -p .specscore/consilium/<task-id>
+echo "$VOTES_YAML" > .specscore/consilium/<task-id>/votes.yaml
+echo "$ROSTER_YAML" > .specscore/consilium/<task-id>/roster.yaml
+specscore consilium config --print-gate > .specscore/consilium/<task-id>/gate.yaml
 ```
 
 Invoke the arbiter:
 
 ```bash
 specscore consilium verdict \
-  --votes .synchestra/consilium/<task-id>/votes.yaml \
-  --roster .synchestra/consilium/<task-id>/roster.yaml \
-  --gate .synchestra/consilium/<task-id>/gate.yaml \
+  --votes .specscore/consilium/<task-id>/votes.yaml \
+  --roster .specscore/consilium/<task-id>/roster.yaml \
+  --gate .specscore/consilium/<task-id>/gate.yaml \
   --seed "$SEED_PATH" \
-  > .synchestra/consilium/<task-id>/verdict.yaml
+  > .specscore/consilium/<task-id>/verdict.yaml
 ```
 
 The arbiter's stdout YAML contains: `verdict`, `rule_trace`, `excluded_votes`, `denominators`.
@@ -1480,11 +1480,11 @@ Per REQ `verdict-source-of-truth-in-task`, the task carries the full structured 
 
 ```bash
 synchestra task update <task-id> \
-  --field roster_snapshot=@.synchestra/consilium/<task-id>/roster.yaml \
-  --field votes=@.synchestra/consilium/<task-id>/votes.yaml \
-  --field briefing_pack=@.synchestra/consilium/<task-id>/briefing.md \
-  --field arbiter_output=@.synchestra/consilium/<task-id>/verdict.yaml \
-  --field pipeline_transcript=@.synchestra/consilium/<task-id>/transcript.yaml \
+  --field roster_snapshot=@.specscore/consilium/<task-id>/roster.yaml \
+  --field votes=@.specscore/consilium/<task-id>/votes.yaml \
+  --field briefing_pack=@.specscore/consilium/<task-id>/briefing.md \
+  --field arbiter_output=@.specscore/consilium/<task-id>/verdict.yaml \
+  --field pipeline_transcript=@.specscore/consilium/<task-id>/transcript.yaml \
   --field tokens_total=<computed_total> \
   --field scribe_summary=<scribe paragraph>
 ```

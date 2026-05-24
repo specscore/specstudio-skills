@@ -69,7 +69,7 @@ A single approved SpecScore Feature at `spec/features/third-party-integration/` 
 
 ## Open Questions
 
-- **Reviewer registration mechanism — pick one of three at spec time.** Candidates: (a) project-level config file (e.g. `.synchestra/reviewers.yaml`); (b) plugin manifest entries declared by the third-party skill pack itself; (c) convention-based directory discovery (e.g. scan `spec/reviewers/<name>/` for prompts). The decision needs to be made during `specstudio:specify`, not deferred again.
+- **Reviewer registration mechanism — pick one of three at spec time.** Candidates: (a) project-level config file (e.g. `.specscore/reviewers.yaml`); (b) plugin manifest entries declared by the third-party skill pack itself; (c) convention-based directory discovery (e.g. scan `spec/reviewers/<name>/` for prompts). The decision needs to be made during `specstudio:specify`, not deferred again.
 - **Does the contract apply to non-Claude agents (Cursor, Copilot, Gemini CLI, Codex)?** Each platform handles skills differently; the contract may need platform-conditional clauses or may explicitly scope to Claude-compatible runtimes for MVP.
 - **Contract versioning rule.** When SpecStudio later refines the contract, how do third-party skill authors discover and adapt? Default proposal (revise-in-place; `supersedes` only on breaking change with a deprecation window) needs to be made explicit in the Feature.
 - **Does "Capability" need sub-shapes?** Visual companions, diagram renderers, and accessibility auditors may share a runtime-tool shape but emit very different artifact types. Decide whether one Capability contract covers all or whether sub-shapes are needed.

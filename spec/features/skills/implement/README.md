@@ -33,7 +33,7 @@ The skill is invoked when an approved Plan is ready for implementation.
 
 #### REQ: invocation-triggers
 
-The skill MUST respond to the triggers `implement`, `/implement`, `specstudio:implement`, "implement this plan", "implement this task", and the Synchestra event `plan.approved`. It MAY respond to additional natural-language phrasings of the same intent.
+The skill MUST respond to the triggers `implement`, `/implement`, `specstudio:implement`, "implement this plan", "implement this task", and the event `plan.approved`. It MAY respond to additional natural-language phrasings of the same intent.
 
 #### REQ: requires-approved-plan
 
@@ -290,7 +290,7 @@ When the skill or any dispatched subagent creates or modifies a file, that file 
 
 ### Event emission
 
-The skill participates in the Synchestra event vocabulary.
+The skill participates in the event vocabulary.
 
 #### REQ: event-batch-started
 
