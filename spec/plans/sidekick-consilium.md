@@ -218,7 +218,7 @@ Create `spec/plans/sidekick-consilium-task-companion.md`:
 
 **Source contract:** REQs `consilium-review-task-lifecycle`, `idempotent-task-creation`, and `single-writer-claim-semantics` in [`spec/features/sidekick-consilium/README.md`](../features/sidekick-consilium/README.md).
 
-## What needs to ship in synchestra
+## What needs to ship in the orchestrator
 
 A new task type `consilium-review` registered with Synchestra. The type:
 
@@ -280,7 +280,7 @@ EOF
 
 Capture the issue number returned by `gh`. Update `spec/plans/sidekick-consilium-arbiter-companion.md`'s "Upstream issue: TBD" line with the actual issue URL.
 
-- [ ] **Step 5: Open upstream issue in synchestra for the task type**
+- [ ] **Step 5: Open upstream issue in the orchestrator for the task type**
 
 ```bash
 gh issue create --repo specscore/synchestra \
@@ -402,7 +402,7 @@ payload:
   tokens_total: <int>
 ```
 
-**Consumer:** `synchestra:whats-next` reads this event to surface `consilium-review` tasks with `needs-human-review` verdicts at the top of the prioritization report. Phase 2 auto-promote (future Feature) will subscribe to `verdict: should-implement` events.
+**Consumer:** `specscore:whats-next` reads this event to surface `consilium-review` tasks with `needs-human-review` verdicts at the top of the prioritization report. Phase 2 auto-promote (future Feature) will subscribe to `verdict: should-implement` events.
 ````
 
 - [ ] **Step 3: Lint and commit**
@@ -556,8 +556,8 @@ You are the Researcher for a sidekick consilium reviewing a captured sideline id
 **Inputs you receive:**
 1. The seed file's full content (frontmatter + H1 one-liner + optional body)
 2. A raw context bundle pre-assembled by the CLI gather stage, containing:
-   - Output of `synchestra:feature` for any feature paths the seed mentions
-   - Output of `synchestra:code` for source files referenced in `captured_during`
+   - Output of `specscore feature` for any feature paths the seed mentions
+   - Output of `specscore code` for source files referenced in `captured_during`
    - Recent `git log` over relevant paths
    - A list of prior captured seeds within the dedupe window (same project)
 

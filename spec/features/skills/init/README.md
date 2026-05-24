@@ -7,7 +7,7 @@
 
 ## Summary
 
-The `specstudio:init` skill bootstraps a SpecScore-managed project in one wizard-driven step. Detects current project state by direct repo inspection, asks 3–5 batched wizard questions with defaults prefilled, then idempotently scaffolds: (a) the `spec/` tree with lint-clean indexes via `specscore init`, (b) `specscore.yaml` with the canonical schema-pointer header and a default `project:` block, (c) the canonical Producer-shape instruction snippet (defined by [`third-party-integration`](../../third-party-integration/README.md)) appended to the right platform agent-instructions file per the platform-detection rule, and (d) any orchestration-side artifacts via `synchestra init`. Prefers the deterministic CLIs (`specscore init`, `synchestra init`) with AI-agent fallback when a CLI is not on PATH; delegates CLI installation symmetrically to [`specscore:install`](https://github.com/specscore/ai-plugin-specscore/blob/main/skills/install/SKILL.md) and [`synchestra:install`](https://github.com/specscore/ai-plugin-synchestra/blob/main/skills/install/SKILL.md). Two modes: default (full wizard) and `--update` (drift-only reconciliation, no wizard). Implementation lives at [`skills/init/`](../../../../skills/init/).
+The `specstudio:init` skill bootstraps a SpecScore-managed project in one wizard-driven step. Detects current project state by direct repo inspection, asks 3–5 batched wizard questions with defaults prefilled, then idempotently scaffolds: (a) the `spec/` tree with lint-clean indexes via `specscore init`, (b) `specscore.yaml` with the canonical schema-pointer header and a default `project:` block, (c) the canonical Producer-shape instruction snippet (defined by [`third-party-integration`](../../third-party-integration/README.md)) appended to the right platform agent-instructions file per the platform-detection rule, and (d) any orchestration-side artifacts via `synchestra init`. Prefers the deterministic CLIs (`specscore init`, `synchestra init`) with AI-agent fallback when a CLI is not on PATH; delegates CLI installation symmetrically to [`specscore:install`](https://github.com/specscore/ai-plugin-specscore/blob/main/skills/install/SKILL.md) and [`specscore:install`](https://github.com/specscore/ai-plugin-synchestra/blob/main/skills/install/SKILL.md). Two modes: default (full wizard) and `--update` (drift-only reconciliation, no wizard). Implementation lives at [`skills/init/`](../../../../skills/init/).
 
 ## Problem
 
@@ -20,7 +20,7 @@ SpecStudio's bootstrap is currently scattered: `specstudio:ideate` lazily create
 This Feature preserves the core of the [`specstudio-init-skill`](../../../ideas/specstudio-init-skill.md) Idea's Recommended Direction (wizard pattern, CLI/skill split, CLAUDE.md/AGENTS.md detection rule, `project.initialized` event, idempotent rerun, no state file, delegation to install skills). Two deliberate spec-time refinements depart from the Idea's text and are surfaced here so they can be reviewed explicitly:
 
 1. **Explicit `--update` mode flag** (REQ `skill-modes`). The Idea described a single-mode skill that is "Idempotent on rerun via direct repo inspection" — implying overloaded default-mode behaviour for both fresh init and drift reconciliation. The Feature splits drift-only reconciliation into a distinct invocation `specstudio:init --update`. Rationale: a drift-only flow has no wizard, no scaffolding, and asks per-artifact diff/replace/keep questions; a fresh init has a 3–5-question wizard and creates new artifacts. Overloading default-mode would force the skill to ask both kinds of question and skip whichever doesn't apply, which is error-prone and harder to test. Splitting clarifies the user model — `init` creates, `init --update` reconciles — without changing the underlying repo-state-driven logic.
-2. **Split event vocabulary: `project.initialized` and `project.updated`** (REQ `event-project-initialized`, `event-project-updated`). The Idea named one event: "After successful initialization the skill emits a `project.initialized` event for Synchestra Hub to consume." The Feature splits this so `project.initialized` fires exactly once per project (greenfield-only) and `project.updated` fires on subsequent state-changing reruns. Rationale: this matches the discipline already established for `idea.drafted` / `idea.updated` and `feature.specified` / `feature.updated` (per `events.md`) — first emission marks the lifecycle transition, subsequent emissions carry change-context for consumers tracking ongoing state. Treating every state-changing rerun as another `project.initialized` would conflate creation with update for downstream consumers.
+2. **Split event vocabulary: `project.initialized` and `project.updated`** (REQ `event-project-initialized`, `event-project-updated`). The Idea named one event: "After successful initialization the skill emits a `project.initialized` event for  to consume." The Feature splits this so `project.initialized` fires exactly once per project (greenfield-only) and `project.updated` fires on subsequent state-changing reruns. Rationale: this matches the discipline already established for `idea.drafted` / `idea.updated` and `feature.specified` / `feature.updated` (per `events.md`) — first emission marks the lifecycle transition, subsequent emissions carry change-context for consumers tracking ongoing state. Treating every state-changing rerun as another `project.initialized` would conflate creation with update for downstream consumers.
 
 If either departure is rejected on review, restore the Idea's design — the change is contained: `--update` collapses back into default-mode rerun, and `project.updated` collapses into a second `project.initialized` (or no event on update). Both reversions are mechanical edits to the relevant REQs and ACs.
 
@@ -89,7 +89,7 @@ When `specscore` is missing, the skill MUST invoke the [`specscore:install`](htt
 
 #### REQ: synchestra-install-delegation
 
-When `orchestrator` is missing, the skill MUST invoke the [`synchestra:install`](https://github.com/specscore/ai-plugin-synchestra/blob/main/skills/install/SKILL.md) skill via the same mechanism, with the same consent gate. Decline aborts with the same shape of message ("synchestra is required for orchestration-side bootstrap; please install manually and re-run init"). The skill MUST handle each install delegation independently — declining one does not skip the consent gate for the other.
+When `orchestrator` is missing, the skill MUST invoke the [`specscore:install`](https://github.com/specscore/ai-plugin-synchestra/blob/main/skills/install/SKILL.md) skill via the same mechanism, with the same consent gate. Decline aborts with the same shape of message ("synchestra is required for orchestration-side bootstrap; please install manually and re-run init"). The skill MUST handle each install delegation independently — declining one does not skip the consent gate for the other.
 
 #### REQ: post-install-resume
 
@@ -232,9 +232,9 @@ The init skill orchestrates six functional components. Each is small enough to r
 
 ### 4. Install delegators
 
-- **What:** Hand off to `specscore:install` / `synchestra:install` skills via the platform's skill-invocation mechanism. Capture the return state; re-run `command -v` to confirm the install succeeded.
+- **What:** Hand off to `specscore:install` / `specscore:install` skills via the platform's skill-invocation mechanism. Capture the return state; re-run `command -v` to confirm the install succeeded.
 - **How used:** Invoked from `cli-detection` results when a CLI is missing. Each delegator runs at most once per init invocation.
-- **Depends on:** The existing [`specscore:install`](https://github.com/specscore/ai-plugin-specscore/blob/main/skills/install/SKILL.md) and [`synchestra:install`](https://github.com/specscore/ai-plugin-synchestra/blob/main/skills/install/SKILL.md) skills (hard prerequisites — both skills MUST exist by the time this Feature ships).
+- **Depends on:** The existing [`specscore:install`](https://github.com/specscore/ai-plugin-specscore/blob/main/skills/install/SKILL.md) and [`specscore:install`](https://github.com/specscore/ai-plugin-synchestra/blob/main/skills/install/SKILL.md) skills (hard prerequisites — both skills MUST exist by the time this Feature ships).
 
 ### 5. Snippet installer
 
@@ -261,7 +261,7 @@ Invocation
    ↓                                     ↓
 [Wizard]                                 (no wizard)
    ↓                                     ↓
-[CLI delegators] ←──→ [Install delegators] ─→ specscore:install / synchestra:install
+[CLI delegators] ←──→ [Install delegators] ─→ specscore:install / specscore:install
    ↓                                     ↓
 [Snippet installer] ──────────────── reads third-party-integration/snippet.md
    ↓                                     ↓
@@ -277,7 +277,7 @@ Invocation
 | [Third-Party Skill Integration](../../third-party-integration/README.md) | Hard upstream dependency. The init Feature consumes the canonical Producer-shape instruction snippet at `spec/features/third-party-integration/snippet.md`; without that snippet, the snippet-install step is skipped (`snippet-source`). The platform-detection rule is canonical here, not there. |
 | [SpecScore Repo Config](https://github.com/specscore/specscore/blob/main/spec/features/repo-config/README.md) | Hard upstream dependency. The created `specscore.yaml` conforms to its schema. The init Feature does not own the schema; it conforms. |
 | [`specscore:install`](https://github.com/specscore/ai-plugin-specscore/blob/main/skills/install/SKILL.md) | Hard prerequisite. Invoked when `specscore` is missing and the user consents to install. The install skill's contract (input/output, exit semantics) is load-bearing for `post-install-resume`. |
-| [`synchestra:install`](https://github.com/specscore/ai-plugin-synchestra/blob/main/skills/install/SKILL.md) | Hard prerequisite. Symmetric to `specscore:install`; same handoff contract. |
+| [`specscore:install`](https://github.com/specscore/ai-plugin-synchestra/blob/main/skills/install/SKILL.md) | Hard prerequisite. Symmetric to `specscore:install`; same handoff contract. |
 | `synchestra init` CLI subcommand | Soft upstream dependency. When present, this Feature invokes it for orchestration-side bootstrap. When absent, the synchestra-side bootstrap is gracefully degraded (`synchestra-cli-contract-dependency`). |
 | Synchestra Events | Emits `project.initialized` and `project.updated`, both with the canonical change-context payload shape used by `idea.*` and `feature.*` events. Consumers — Hub, watchers — observe these to advance their own state. |
 | Future `specstudio:migrate` (forward reference) | When state detection finds a non-canonical pre-existing layout, the skill recommends `specstudio:migrate` (which does not yet exist as a skill or a Feature). Forward-referencing the migrate skill is acceptable because this Feature does not invoke or import it — it only mentions it in user-facing recommendations. When `specstudio:migrate` ships, this Feature revises in place to add an explicit invocation hook. |
@@ -314,7 +314,7 @@ Invocation
 
 **Given** an invocation in a repo where one or both CLIs are missing
 **When** state detection records the missing CLI
-**Then** the skill asks the user for explicit consent before invoking the corresponding install skill; on consent, invokes `specscore:install` and/or `synchestra:install` via the platform's skill-invocation mechanism; on each install skill's return, re-runs `command -v` to confirm; on still-missing, aborts with a clear next-step message; on decline, aborts the bootstrap step that prompted the install with a clear "manual install required, re-run init" message; the skill MUST NOT loop install delegation more than once per CLI within a single invocation.
+**Then** the skill asks the user for explicit consent before invoking the corresponding install skill; on consent, invokes `specscore:install` and/or `specscore:install` via the platform's skill-invocation mechanism; on each install skill's return, re-runs `command -v` to confirm; on still-missing, aborts with a clear next-step message; on decline, aborts the bootstrap step that prompted the install with a clear "manual install required, re-run init" message; the skill MUST NOT loop install delegation more than once per CLI within a single invocation.
 
 ### AC: cli-vs-fallback-equivalence
 

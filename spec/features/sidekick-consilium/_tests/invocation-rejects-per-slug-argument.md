@@ -15,7 +15,7 @@ feature: sidekick-consilium
 
 ## Verification approach
 
-Run `/consilium some-slug` against a fixture project with at least one queued task; assert non-zero exit code and exact error string on stderr. Confirm via `synchestra:task` listing that the queued task's state is unchanged (no claim transition occurred).
+Run `/consilium some-slug` against a fixture project with at least one queued task; assert non-zero exit code and exact error string on stderr. Confirm via `specscore:task` listing that the queued task's state is unchanged (no claim transition occurred).
 
 ---
 *This document follows the https://specscore.md/scenario-specification*

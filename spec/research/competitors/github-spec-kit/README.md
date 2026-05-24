@@ -94,10 +94,10 @@ These are advantages Spec Kit explicitly does not address.
 SpecScore is a versioned, validated, lintable format. Spec Kit's "specs" are prose markdown with conventions but no machine-checked structure — `[NEEDS CLARIFICATION]` markers are a string convention, not a schema. *Anything Spec Kit produces could be made stricter by piping through SpecScore.*
 
 ### 3.2. Multi-agent coordination
-Spec Kit assumes one agent, one session, one user. `/speckit.implement` is a single linear run. Synchestra's optimistic-locking state repo lets many agents on many machines pick tasks off a shared queue without stepping on each other. There is no equivalent in Spec Kit's model.
+Spec Kit assumes one agent, one session, one user. `/speckit.implement` is a single linear run. the orchestrator's optimistic-locking state repo lets many agents on many machines pick tasks off a shared queue without stepping on each other. There is no equivalent in Spec Kit's model.
 
 ### 3.3. Async / remote execution (Hub)
-Spec Kit's lifetime = your terminal. Close the laptop and the run dies. Synchestra Hub keeps execution running on a VM and resumes when you reconnect. Nothing in Spec Kit does this.
+Spec Kit's lifetime = your terminal. Close the laptop and the run dies.  keeps execution running on a VM and resumes when you reconnect. Nothing in Spec Kit does this.
 
 ### 3.4. Hierarchical, recursive WBS
 Spec Kit's task model is **flat per spec** — `tasks.md` is a single ordered list with `[P]` parallel markers. SpecScore tasks contain sub-tasks contain sub-sub-tasks; the directory tree *is* the work breakdown. For non-trivial work, flat task lists hit a wall.
@@ -213,7 +213,7 @@ Spec Kit's `extension.yml` schema, namespaced commands, and pre/post hooks are e
 ### ★★★★ High value
 
 **4. Layered template overrides (`overrides/` → presets → extensions → core).**
-Four-tier resolution priority for every template/skill/script. Lets organizations customize without forking. Synchestra's skills are currently flat.
+Four-tier resolution priority for every template/skill/script. Lets organizations customize without forking. the orchestrator's skills are currently flat.
 *Lands in:* skills loader + spec template engine.
 
 **5. Per-agent install matrix.**
@@ -273,7 +273,7 @@ Plugin manifests should declare which Synchestra/SpecScore versions they target.
 
 Different layers. Stackable. The layer Spec Kit *doesn't* solve (substrate, multi-agent, async, portability) is the layer where SpecScore + Synchestra are uniquely positioned to win.
 
-The biggest strategic risk is **not** Spec Kit eating Synchestra's category — it's Synchestra refusing to integrate, getting outcompeted at top-of-funnel, and arriving at the substrate fight without the audience that already self-selected as spec-driven.
+The biggest strategic risk is **not** Spec Kit eating the orchestrator's category — it's Synchestra refusing to integrate, getting outcompeted at top-of-funnel, and arriving at the substrate fight without the audience that already self-selected as spec-driven.
 
 ### Recommended priorities (next 4–8 weeks)
 

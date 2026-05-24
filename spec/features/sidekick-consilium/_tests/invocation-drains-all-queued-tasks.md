@@ -15,7 +15,7 @@ feature: sidekick-consilium
 
 ## Verification approach
 
-Seed a fixture project with two or more `consilium-review` tasks in `queued` status and matching seed files; invoke `/consilium`; after the run, assert via `synchestra:task` listing that zero queued `consilium-review` tasks remain and each prior task has reached `complete` or `failed`. Capture the skill's stdout to confirm one verdict line per task.
+Seed a fixture project with two or more `consilium-review` tasks in `queued` status and matching seed files; invoke `/consilium`; after the run, assert via `specscore:task` listing that zero queued `consilium-review` tasks remain and each prior task has reached `complete` or `failed`. Capture the skill's stdout to confirm one verdict line per task.
 
 ---
 *This document follows the https://specscore.md/scenario-specification*

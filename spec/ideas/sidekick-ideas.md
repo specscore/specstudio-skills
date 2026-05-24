@@ -15,7 +15,7 @@ How might we capture promising side-ideas during focused work without derailing 
 
 While running focused work in `specstudio:ideate`, `specstudio:specify`, or `agent-skills:build`, the host agent regularly notices tangential improvement ideas — refactors, missing tests, adjacent features, UX wins — that are out of scope for the current task. Today these get dropped: either the agent derails to chase them, the user is interrupted to triage them, or they are forgotten. None of those outcomes is good.
 
-This repo already provides the artifact substrate for capture (`spec/ideas/` + `specscore:idea` scaffolder + lint), the queue substrate (`synchestra:task` lifecycle + events), and the prioritization layer (`synchestra:whats-next`). What is missing is (a) a discipline for the host agent to *write-and-keep-going*, (b) a deterministic deliberation step that turns captured seeds into actionable verdicts, and (c) a strict, auditable gate that auto-promotes the strongest seeds into Feature specs and plans without ever auto-generating code.
+This repo already provides the artifact substrate for capture (`spec/ideas/` + `specscore:idea` scaffolder + lint), the queue substrate (`specscore:task` lifecycle + events), and the prioritization layer (`specscore:whats-next`). What is missing is (a) a discipline for the host agent to *write-and-keep-going*, (b) a deterministic deliberation step that turns captured seeds into actionable verdicts, and (c) a strict, auditable gate that auto-promotes the strongest seeds into Feature specs and plans without ever auto-generating code.
 
 Prior art: multi-agent debate frameworks (CAMEL, ChatDev, MetaGPT, AutoGen GroupChat) cover deliberation but lack the opportunistic-capture front end; AutoGPT-style task spawning covers mid-flow capture but lacks expert review and a human-safe gate; IDE "suggestion" sidebars (Cursor, Copilot Workspace) are single-model and do not deliberate. The novel combination here is *opportunistic capture + deterministic expert panel + auto-promotion ceiling that stops short of code*.
 
@@ -25,11 +25,11 @@ A three-layer system where **capture is woven into existing skills**, **Synchest
 
 **Layer 1 — Capture (woven into host skills).** A shared directive in `skills/shared/` instructs `ideate`, `specify`, and `build` to watch for out-of-scope improvements. The host agent supports both *heuristic capture* (it spots cues like "would be nice if…", "another approach is…") and *explicit capture* (`/sidekick <one-liner>`). Either path writes a lightweight seed at `spec/ideas/seeds/<slug>.md` and emits a `sidekick-idea.captured` event. The host agent then keeps going on its original task — the discipline of *write-and-continue* is the whole point.
 
-**Layer 2 — Synchestra orchestration (queue + audit trail).** The captured event creates a `consilium-review` task in the orchestrator task board, idempotent on the content-hash of the seed's one-liner. The seed artifact and the verdict-bearing task together are the durable record. `synchestra:whats-next` can already see and prioritize these. Verdicts persist across sessions, machines, and teammates.
+**Layer 2 — Synchestra orchestration (queue + audit trail).** The captured event creates a `consilium-review` task in the orchestrator task board, idempotent on the content-hash of the seed's one-liner. The seed artifact and the verdict-bearing task together are the durable record. `specscore:whats-next` can already see and prioritize these. Verdicts persist across sessions, machines, and teammates.
 
-**Layer 3 — Consilium worker (deliberation + strict gate).** A new `synchestra:consilium` skill drains pending tasks through a five-stage pipeline:
+**Layer 3 — Consilium worker (deliberation + strict gate).** A new `specscore:consilium` skill drains pending tasks through a five-stage pipeline:
 
-1. **CLI gather (deterministic).** The Synchestra CLI runs graph queries — `synchestra:feature` for related features, `synchestra:code` for code-to-spec refs, recent git log over relevant paths, prior-seed lookup over the dedupe window — and assembles a raw context bundle.
+1. **CLI gather (deterministic).** The Synchestra CLI runs graph queries — `specscore feature` for related features, `specscore code` for code-to-spec refs, recent git log over relevant paths, prior-seed lookup over the dedupe window — and assembles a raw context bundle.
 2. **Researcher agent (one LLM call).** The researcher reads the raw bundle and produces a **briefing pack**: a structured *fact-only* document (no scoring, no judgments) of related artifacts, prior decisions, and relevant code locations. The briefing is attached to the seed and becomes part of the audit trail. Its job is to ensure all experts reason over the same evidence and to eliminate duplicated repo-crawling across the panel.
 3. **Expert panel (9 parallel role agents).** A fixed default panel — 3 Builders (Engineer, Architect, QA), 3 Customers (PM, UX, Marketing), 3 Adversaries (YAGNI Cop, Skeptic, optional Security/Ops) — each receives the seed + the briefing pack as their shared base context and returns a structured YAML vote. Every expert retains read-access tools and may do role-specific deeper research when needed: the briefing is a floor, not a ceiling. This is what prevents the panel from pre-converging on a researcher blind spot, while still capturing the token win for the (common) case where the briefing is sufficient.
 4. **CLI arbiter (deterministic).** The Synchestra CLI validates votes against schema, applies the adversary-veto rule and the builder+customer-consensus rule, sets the verdict, transitions task status, and emits the `sidekick-idea.reviewed` event.
@@ -62,7 +62,7 @@ The MVP nails one job: **a user mid-flow in `specstudio:specify` (or any host sk
 Concretely, the MVP is Phases 0 + 1 of the design:
 
 - **Phase 0 — Capture.** Shared capture directive woven into `ideate`, `specify`, and `build`. Seed artifact format defined and lint-validated. Both heuristic and explicit (`/sidekick`) capture paths working. Seeds pile up usefully in `spec/ideas/seeds/` even with no panel running — the system is a notebook before it is a court.
-- **Phase 1 — Manual consilium.** `consilium-review` task type added to the orchestrator with idempotent dedupe. `synchestra:consilium` skill that, when invoked, claims one or more pending tasks and runs the full five-stage pipeline: CLI gather → researcher (briefing pack) → 9-role panel in parallel → CLI arbiter → scribe. Writes the briefing, verdict, and Panel summary back to the seed and task. No auto-promote yet — the verdict is the deliverable.
+- **Phase 1 — Manual consilium.** `consilium-review` task type added to the orchestrator with idempotent dedupe. `specscore:consilium` skill that, when invoked, claims one or more pending tasks and runs the full five-stage pipeline: CLI gather → researcher (briefing pack) → 9-role panel in parallel → CLI arbiter → scribe. Writes the briefing, verdict, and Panel summary back to the seed and task. No auto-promote yet — the verdict is the deliverable.
 
 MVP success is measured by running the consilium on 5–10 real seeds captured during normal work and confirming: (a) the host agents did not derail during capture, (b) the panel produced verdicts that the user would have made themselves with the same information, (c) the Panel summary is the part of the seed the user actually reads.
 
@@ -99,14 +99,14 @@ MVP success is measured by running the consilium on 5–10 real seeds captured d
   - `synchestra/task-types/consilium-review` — the queue resource type, idempotency rule, lifecycle hooks.
   - `skills/consilium` — the worker skill orchestrating the five-stage pipeline (CLI gather → researcher → panel → CLI arbiter → scribe). Roster config, parallel role-agent fan-out, briefing/verdict/summary write-back. Roles live as markdown under `skills/consilium/roles/<role>.md`.
   - `skills/consilium/researcher` — the pre-panel researcher: reads the CLI-gathered raw bundle, emits a fact-only briefing pack. Prompt template lives alongside the skill. Scribe and researcher prompts share a *no-judgment* contract.
-  - `cli/consilium/gather` — deterministic context-bundle assembly: calls `synchestra:feature`, `synchestra:code`, git log over relevant paths, and dedupe-window seed lookup. Output schema is versioned so the researcher prompt is stable.
+  - `cli/consilium/gather` — deterministic context-bundle assembly: calls `specscore feature`, `specscore code`, git log over relevant paths, and dedupe-window seed lookup. Output schema is versioned so the researcher prompt is stable.
   - `cli/consilium/verdict` — the deterministic CLI arbiter (schema validation + veto rule + consensus rule + verdict emission). Lives in the SpecScore CLI or a sibling, with unit-test fixtures.
   - `skills/consilium/auto-promote` (Phase 2) — the strict-gate promotion chain that invokes `specstudio:specify` and `specstudio:plan`.
-  - `hooks/consilium-drain` (Phase 3) — Claude Code `Stop` hook or scheduled `loop` that auto-invokes `synchestra:consilium`.
+  - `hooks/consilium-drain` (Phase 3) — Claude Code `Stop` hook or scheduled `loop` that auto-invokes `specscore:consilium`.
 - **Existing Features affected:**
   - `skills/ideate`, `skills/specify` (specstudio) — gain the capture directive; primary outputs unchanged.
   - `agent-skills:build` and similar host skills — same capture directive added.
-  - `synchestra:whats-next` — must learn to surface `consilium-review` tasks and seeds with `needs-human-review` verdicts.
+  - `specscore:whats-next` — must learn to surface `consilium-review` tasks and seeds with `needs-human-review` verdicts.
   - `specscore spec lint` — extended with the seed-schema lint rule.
 - **Dependencies:**
   - Synchestra task system and event bus (already present).

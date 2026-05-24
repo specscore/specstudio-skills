@@ -15,7 +15,7 @@ feature: sidekick-consilium
 
 ## Verification approach
 
-Run `/consilium` against a fixture project with one queued task; after completion, load the task payload via `synchestra:task` and assert `tokens_total` is present, is a non-negative integer, and is non-zero. Cross-check the value matches the sum of per-stage token counts captured in `pipeline_transcript`.
+Run `/consilium` against a fixture project with one queued task; after completion, load the task payload via `specscore:task` and assert `tokens_total` is present, is a non-negative integer, and is non-zero. Cross-check the value matches the sum of per-stage token counts captured in `pipeline_transcript`.
 
 ---
 *This document follows the https://specscore.md/scenario-specification*

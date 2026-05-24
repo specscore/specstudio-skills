@@ -192,7 +192,7 @@ hooks:
   before_implement:
     command: speckit.synchestra.dispatch
     optional: true
-    prompt: "Run via Synchestra Hub instead of locally? (close laptop → work continues)"
+    prompt: "Run via  instead of locally? (close laptop → work continues)"
     description: Offer remote async execution as an alternative to local /speckit.implement.
 
   after_implement:
@@ -287,7 +287,7 @@ What we *cannot* do as a Spec Kit extension, and therefore must keep on the orch
 | **Schema validation at commit time** | Pre-commit/pre-push/CI hooks run on the user's repo, not via Spec Kit's lifecycle. Extensions can lint *during* a flow; only Synchestra/SpecScore tooling can guard *every* commit. |
 | **Multi-repo coordination** | Spec Kit assumes one project, one repo. Multi-repo branching/merge is Synchestra-side. |
 | **Hierarchical WBS / nested tasks** | Spec Kit's `tasks.md` is flat by design. We can render a flat list; recursion requires the SpecScore-backed Synchestra state repo. |
-| **Outstanding Questions lifecycle** | `/speckit.clarify` is one-shot. Persistent OQs that survive across sessions/agents require Synchestra's state repo conventions. |
+| **Outstanding Questions lifecycle** | `/speckit.clarify` is one-shot. Persistent OQs that survive across sessions/agents require the orchestrator's state repo conventions. |
 | **Plugin SPI for Synchestra-on-its-own** | Spec Kit's manifest is for Spec Kit users only. We still need a Synchestra-native plugin SPI for the (large) population who never touch Spec Kit. |
 
 These gaps are not a problem — they're the differentiation. The extension is a *gateway* into the orchestrator substrate, not a replacement for it.
@@ -314,7 +314,7 @@ These gaps are not a problem — they're the differentiation. The extension is a
 | Risk | Mitigation |
 |---|---|
 | Spec Kit ships breaking manifest changes (1.0 → 2.0) | Pin `requires.speckit_version`; keep extensions in their own repos so we can release patches independently of the orchestrator core. |
-| GitHub absorbs equivalent functionality (e.g. native multi-agent in Spec Kit core) | Synchestra's substrate value (portable schema, multi-repo, Hub, async) doesn't disappear — it becomes the layer below. We'd lose the "extension is the only way to get this" framing but keep the underlying differentiation. |
+| GitHub absorbs equivalent functionality (e.g. native multi-agent in Spec Kit core) | the orchestrator's substrate value (portable schema, multi-repo, Hub, async) doesn't disappear — it becomes the layer below. We'd lose the "extension is the only way to get this" framing but keep the underlying differentiation. |
 | User confusion: "is this Synchestra or Spec Kit?" | Keep the README crystal: Spec Kit = author, SpecScore = format, Synchestra = run. Use Spec Kit's vocabulary in extension docs. |
 | Extension becomes the only Synchestra anyone tries | Make sure `orchestrator` standalone CLI ships with first-class onboarding too. The Spec Kit extension is one path, not the path. |
 | Maintenance burden of three extensions | Three small repos, shared release tooling. Each extension is < 1k LoC of glue around our existing CLIs — most "code" is markdown command files. |

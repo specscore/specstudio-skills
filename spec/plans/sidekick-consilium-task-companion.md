@@ -4,7 +4,7 @@
 
 **Source contract:** REQs `consilium-review-task-lifecycle`, `idempotent-task-creation`, and `single-writer-claim-semantics` in [`spec/features/sidekick-consilium/README.md`](../features/sidekick-consilium/README.md).
 
-## What needs to ship in synchestra
+## What needs to ship in the orchestrator
 
 A new task type `consilium-review` registered with Synchestra. The type:
 

@@ -14,7 +14,7 @@ Phase 1 of the [`sidekick-ideas`](../../ideas/sidekick-ideas.md) Idea: a `specst
 
 ## Problem
 
-Phase 0 (`sidekick-capture`, Implementing) ships an idea-capture pipeline that durably records sideline ideas during host-skill work. Seeds queue up in `spec/ideas/seeds/` but Phase 0 stops at write-and-continue — there is no triage. Without Phase 1, the seeds pile up as an unreviewed inbox that defeats the write-and-continue discipline (you derail at *review* time instead of capture time). Phase 1 turns the inbox into a triaged queue whose verdicts a human, the `synchestra:whats-next` prioritizer, and the future Phase 2 auto-promote can all consume.
+Phase 0 (`sidekick-capture`, Implementing) ships an idea-capture pipeline that durably records sideline ideas during host-skill work. Seeds queue up in `spec/ideas/seeds/` but Phase 0 stops at write-and-continue — there is no triage. Without Phase 1, the seeds pile up as an unreviewed inbox that defeats the write-and-continue discipline (you derail at *review* time instead of capture time). Phase 1 turns the inbox into a triaged queue whose verdicts a human, the `specscore:whats-next` prioritizer, and the future Phase 2 auto-promote can all consume.
 
 The non-negotiable requirement: the verdict gate must remain *deterministic*. LLMs synthesize at the ends of the pipeline (researcher fact-gathering, scribe prose) but the gate that decides `should-implement` vs `needs-human-review` is a deterministic rule engine over typed votes. Letting LLM judgment leak into the gate makes verdicts non-reproducible, non-auditable, and unable to support unit tests — none of which are acceptable for a system whose output will gate auto-promotion in Phase 2.
 
@@ -40,7 +40,7 @@ The skill MUST support exactly one operational mode: *drain-all-queued*. On invo
 
 Per claimed task, the skill MUST execute the pipeline in this exact order, where each stage's output is the next stage's input:
 
-1. **CLI gather** (deterministic) — assemble a raw context bundle by running graph queries: `synchestra:feature` for related features, `synchestra:code` for code-to-spec refs, `git log` over relevant paths, and a dedupe-window lookup against prior seeds.
+1. **CLI gather** (deterministic) — assemble a raw context bundle by running graph queries: `specscore feature` for related features, `specscore code` for code-to-spec refs, `git log` over relevant paths, and a dedupe-window lookup against prior seeds.
 2. **Researcher agent** (one LLM call) — read the raw bundle and produce a *fact-only* briefing pack per REQ `researcher-fact-only-briefing`.
 3. **Expert panel** (parallel LLM calls) — fan out one agent per active roster role per REQ `parallel-fan-out`; each returns a structured YAML vote per REQ `vote-schema`.
 4. **CLI arbiter** (deterministic) — invoke `specscore consilium verdict` with the vote bundle and the active roster snapshot; the subcommand applies the gate rules per REQ `arbiter-gate-rules` and returns the verdict.
@@ -196,7 +196,7 @@ The `consilium-review` Synchestra task MUST carry the full structured verdict pa
 - The deterministic `verdict` enum (`should-implement | should-not-implement | needs-human-review`)
 - The `content_hash` of the seed at review time
 - The `tokens_total` actually consumed
-- The scribe summary paragraph (for direct read by `synchestra:whats-next` and future Phase 2)
+- The scribe summary paragraph (for direct read by `specscore:whats-next` and future Phase 2)
 - The structured pipeline transcript per REQ `pipeline-transcript-capture` (so transcript-shape ACs are observable and post-hoc audit of stage ordering is possible)
 
 Machine consumers query the task; humans see the seed's mirror.
@@ -538,7 +538,7 @@ The skill and role files are tightly coupled (the skill reads role files); the a
 ## Interaction with Other Features
 
 - **`sidekick-capture`** ([Feature, Implementing](../sidekick-capture/README.md)) — no change. This Feature consumes the `sidekick-idea.captured` event emitted by `sidekick-capture` and produces `sidekick-idea.reviewed` in turn.
-- **`synchestra:whats-next`** (in `orchestrator` repo) — extends to surface `consilium-review` tasks and to prioritize seeds with `needs-human-review` verdicts. This Feature's REQ `verdict-source-of-truth-in-task` is the data contract whats-next reads.
+- **`specscore:whats-next`** (in `orchestrator` repo) — extends to surface `consilium-review` tasks and to prioritize seeds with `needs-human-review` verdicts. This Feature's REQ `verdict-source-of-truth-in-task` is the data contract whats-next reads.
 - **`skills/shared/events.md`** (in this repo) — extends with the `sidekick-idea.reviewed` event per REQ `event-reviewed-emitted`.
 - **Phase 2 auto-promotion (future Feature)** — consumes the `sidekick-idea.reviewed` event and the task payload. Reads `verdict == should-implement` to decide auto-promote actions. Phase 1's REQ `verdict-source-of-truth-in-task` is what Phase 2 will query.
 
@@ -600,8 +600,8 @@ Rehearse stubs are scaffolded with `**Status:** pending`; authoring the actual s
 - **Briefing-pack size cap.** REQ `researcher-fact-only-briefing` constrains content but not length. Reasonable starting cap: ≤ 1500 tokens of structured facts. Validate after the first 20 calibration runs; tighten the researcher prompt if the median exceeds.
 - **Roster-snapshot diff visibility.** When the active roster changes between two reviews, a human reading both verdicts may want to see the roster diff. Should the seed's `## Consilium Verdict` section also mention the active roster? Tentative: no — keeps the seed-side mirror small; the task carries the full snapshot.
 - **`tokens_total` granularity.** The task payload records the total; should it also break down per-stage (researcher / panel / scribe)? Useful for calibration triage. Tentative: yes, but additively, in Phase 1.5 or Phase 2 once we know what's worth measuring.
-- **Re-enqueue operation.** REQ `seed-mutation-detection` says re-enqueue is "out of scope for Phase 1." How does a user actually re-enqueue a seed they want re-reviewed? Tentative: edit the task directly via `synchestra:task`; resolve at plan time.
-- **`needs-human-review` fan-out.** When a verdict is `needs-human-review`, where does the human see it? Phase 1: it sits in the seed and the task; `synchestra:whats-next` is expected to surface it. Phase 3 could add notifications. Confirm during plan.
+- **Re-enqueue operation.** REQ `seed-mutation-detection` says re-enqueue is "out of scope for Phase 1." How does a user actually re-enqueue a seed they want re-reviewed? Tentative: edit the task directly via `specscore:task`; resolve at plan time.
+- **`needs-human-review` fan-out.** When a verdict is `needs-human-review`, where does the human see it? Phase 1: it sits in the seed and the task; `specscore:whats-next` is expected to surface it. Phase 3 could add notifications. Confirm during plan.
 - **Concurrent `/consilium` semantics.** REQ `single-writer-claim-semantics` handles per-task races. Open: is the skill itself safe under two concurrent `/consilium` invocations against the same project (e.g., two terminals)? Tentative answer: yes, by atomic task claim. Validate during implementation.
 
 ---
