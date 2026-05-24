@@ -58,9 +58,9 @@ The status cell links to the most-precise artifact that exists for each skill (`
 Bootstraps a SpecScore-managed project in one wizard-driven step. Detects current state by direct repo inspection, then idempotently creates `specscore.yaml`, scaffolds the `spec/` tree, pastes the canonical Producer-shape instruction snippet into the right platform agent-instructions file, and runs orchestration setup.
 
 - **Output:** `specscore.yaml` + lint-clean `spec/{,ideas,features}/README.md` + the canonical snippet pasted into one of `CLAUDE.md` / `AGENTS.md` / `GEMINI.md` / `.cursor/rules/specstudio.md` per the explicit platform-detection rule.
-- **Triggers:** `specstudio:init`, `/specstudio:init`, "set up specstudio", "init synchestra project", "bootstrap a spec repo".
+- **Triggers:** `specstudio:init`, `/specstudio:init`, "set up specstudio", "bootstrap a spec repo".
 - **Two modes:** default (full wizard) and `--update` (drift-only reconciliation).
-- **CLI delegation:** prefers `specscore init` and `synchestra init`; AI-agent fallback when CLIs absent. CLI installation is delegated to `specscore:install` and `synchestra:install` with explicit user consent.
+- **CLI delegation:** prefers `specscore init`; AI-agent fallback when the CLI is absent. CLI installation is delegated to `specscore:install` with explicit user consent.
 - **Source:** [`init/SKILL.md`](./init/SKILL.md)
 
 ### `ideate` — Shipped

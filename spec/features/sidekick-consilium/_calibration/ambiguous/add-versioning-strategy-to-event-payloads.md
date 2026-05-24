@@ -9,4 +9,4 @@ status: queued
 synchestra_task: null
 ---
 
-# Add a versioning strategy to synchestra event payloads — version field is already there but no migration policy exists yet
+# Add a versioning strategy to event payloads — version field is already there but no migration policy exists yet

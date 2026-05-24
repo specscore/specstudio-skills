@@ -219,7 +219,7 @@ The transcript MUST be stored on the task as a structured field (not as free-for
 After the arbiter sets the verdict and the scribe produces its paragraph, the skill MUST append a `## Consilium Verdict` section to the seed file at `spec/ideas/seeds/<slug>.md`. The section contains:
 
 - A first line with the verdict and date: `**Verdict:** should-implement | should-not-implement | needs-human-review (YYYY-MM-DD)`
-- A second line linking to the synchestra task for the structured payload
+- A second line linking to the orchestrator task for the structured payload
 - The scribe's prose paragraph
 
 Placement of the new section follows the same rules as Phase 0's `## Sidekick Seeds Generated` back-link (REQ `back-link-section-format` in `sidekick-capture`): immediately before the SpecScore footer line if present, else end-of-file. If a `## Consilium Verdict` section already exists from a prior run (rare — would only happen if a seed was re-enqueued), it MUST be replaced in place, NOT duplicated.
@@ -342,7 +342,7 @@ A `consilium-review` task is created lazily by the consilium skill at drain time
 
 #### REQ: single-writer-claim-semantics
 
-When the skill claims a task, the transition `queued → claimed` MUST be atomic at the Synchestra task layer. If two `/consilium` invocations race on the same task, the loser observes `claimed` and skips that task without re-claiming. This is the cross-repo contract for the `consilium-review` task type implementation in `specscore/synchestra`.
+When the skill claims a task, the transition `queued → claimed` MUST be atomic at the orchestrator task layer. If two `/consilium` invocations race on the same task, the loser observes `claimed` and skips that task without re-claiming. This is the cross-repo contract for the `consilium-review` task type implementation in `specscore/synchestra`.
 
 ### Calibration and quality gate
 
@@ -482,7 +482,7 @@ The calibration set is constructed by the implementer: 5 known-strong seeds, 5 k
 
 **Given** a seed at `spec/ideas/seeds/<slug>.md` and a successful pipeline completion against it
 **When** the seed file is read after the pipeline
-**Then** the seed contains a `## Consilium Verdict` section positioned immediately before the SpecScore footer line; the section's first line is `**Verdict:** <verdict-enum> (<YYYY-MM-DD>)`; the second line links to the synchestra task; the rest is the scribe's prose paragraph.
+**Then** the seed contains a `## Consilium Verdict` section positioned immediately before the SpecScore footer line; the section's first line is `**Verdict:** <verdict-enum> (<YYYY-MM-DD>)`; the second line links to the orchestrator task; the rest is the scribe's prose paragraph.
 
 ### AC: reviewed-event-emitted-on-success (verifies REQ:event-reviewed-emitted)
 
@@ -533,12 +533,12 @@ In **`specscore/synchestra`** (cross-repo):
 Conceptually shared (no code artifact):
 7. **The 5-stage pipeline contract** — REQ `pipeline-five-stages` is the spine; all other REQs in this Feature compose around it.
 
-The skill and role files are tightly coupled (the skill reads role files); the arbiter and the skill couple only through the YAML I/O contract (REQ `specscore-consilium-verdict-subcommand`); the task type and the skill couple through the Synchestra task lifecycle.
+The skill and role files are tightly coupled (the skill reads role files); the arbiter and the skill couple only through the YAML I/O contract (REQ `specscore-consilium-verdict-subcommand`); the task type and the skill couple through the orchestrator task lifecycle.
 
 ## Interaction with Other Features
 
 - **`sidekick-capture`** ([Feature, Implementing](../sidekick-capture/README.md)) — no change. This Feature consumes the `sidekick-idea.captured` event emitted by `sidekick-capture` and produces `sidekick-idea.reviewed` in turn.
-- **`synchestra:whats-next`** (in `synchestra` repo) — extends to surface `consilium-review` tasks and to prioritize seeds with `needs-human-review` verdicts. This Feature's REQ `verdict-source-of-truth-in-task` is the data contract whats-next reads.
+- **`synchestra:whats-next`** (in `orchestrator` repo) — extends to surface `consilium-review` tasks and to prioritize seeds with `needs-human-review` verdicts. This Feature's REQ `verdict-source-of-truth-in-task` is the data contract whats-next reads.
 - **`skills/shared/events.md`** (in this repo) — extends with the `sidekick-idea.reviewed` event per REQ `event-reviewed-emitted`.
 - **Phase 2 auto-promotion (future Feature)** — consumes the `sidekick-idea.reviewed` event and the task payload. Reads `verdict == should-implement` to decide auto-promote actions. Phase 1's REQ `verdict-source-of-truth-in-task` is what Phase 2 will query.
 

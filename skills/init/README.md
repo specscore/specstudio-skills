@@ -34,10 +34,10 @@ State detection is via filesystem inspection only — no hidden state file.
 
 ## CLI delegation
 
-When `specscore` or `synchestra` is missing from PATH, the skill delegates installation to the dedicated install skills:
+When `specscore` or `orchestrator` is missing from PATH, the skill delegates installation to the dedicated install skills:
 
 - `specscore` missing → invoke [`specscore:install`](https://github.com/specscore/ai-plugin-specscore/blob/main/skills/install/SKILL.md) (with explicit user consent).
-- `synchestra` missing → invoke [`synchestra:install`](https://github.com/specscore/ai-plugin-synchestra/blob/main/skills/install/SKILL.md) (same handoff pattern).
+- `orchestrator` missing → invoke [`synchestra:install`](https://github.com/specscore/ai-plugin-synchestra/blob/main/skills/install/SKILL.md) (same handoff pattern).
 
 The skill does NOT run install commands itself. Install URLs, supported methods (curl-pipe-sh, brew, npm, manual), and signature verification all live in the install skills.
 

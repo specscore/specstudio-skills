@@ -582,7 +582,7 @@ In other words: **the user must have Node.js installed on their machine**. The s
    - **Claude Code / Cursor inline image rendering** — platform-native visual return.
    - **Optional companion (keep upstream as-is, opt-in)** — accept the Node dependency only when the user enables it.
    - **Reuse upstream `obra/superpowers` visual companion directly** — if the user has `superpowers` installed alongside our skills, `specstudio:specify` can simply invoke the upstream `brainstorming` skill's visual-companion workflow (or delegate to it) rather than forking/vendoring. Requires: (a) confirming the upstream companion can be triggered standalone without the full `brainstorming` flow, (b) agreeing a contract for where session files land (their `.superpowers/brainstorm/` vs our preferred location), (c) deciding how `specstudio:specify` detects upstream availability (file existence check, skill-registry query). Biggest win: zero maintenance burden on our side. Biggest risk: coupling our skills to an external skill pack's lifecycle.
-2. If we do adopt something server-based, does it need to integrate with Synchestra (so remote agents can render visuals for a watching user)?
+2. If we do adopt something server-based, does it need to integrate with an orchestrator (so remote agents can render visuals for a watching user)?
 3. How do visual mockups relate to SpecScore lintable artifacts? (Probably not lintable, live alongside as `spec/features/<slug>/assets/*`.)
 4. Licensing — can we vendor `server.cjs` / `frame-template.html` from `obra/superpowers` under their license, or do we need a clean-room rewrite?
 

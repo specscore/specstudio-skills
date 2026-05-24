@@ -199,7 +199,7 @@ Promotion to a Feature is the responsibility of `specstudio:specify` and Synches
 
 #### REQ: no-manual-promotes-to
 
-The skill MUST NOT manually edit the `**Promotes To:**` body-metadata line. That line is managed by Synchestra in response to a Feature declaring this Idea in its `**Source Ideas:**` line.
+The skill MUST NOT manually edit the `**Promotes To:**` body-metadata line. That line is managed by lifecycle tooling in response to a Feature declaring this Idea in its `**Source Ideas:**` line.
 
 #### REQ: promotion-out-of-scope
 

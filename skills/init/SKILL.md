@@ -23,7 +23,7 @@ Bootstrap a SpecScore-managed project — `specscore.yaml`, `spec/` tree, snippe
 ## Hard Gate
 
 <HARD-GATE>
-This skill writes files outside `spec/` (the canonical instruction-file paste targets `CLAUDE.md` / `AGENTS.md` / `GEMINI.md`, the Synchestra runtime cache, optionally `.gitignore`). Every such write MUST go through an explicit per-write user-consent prompt. The skill MUST NOT silently overwrite user content. The skill MUST NOT install CLIs itself — install delegation goes to `specscore:install` and `synchestra:install`, and only after the user consents.
+This skill writes files outside `spec/` (the canonical instruction-file paste targets `CLAUDE.md` / `AGENTS.md` / `GEMINI.md`, the orchestrator runtime cache, optionally `.gitignore`). Every such write MUST go through an explicit per-write user-consent prompt. The skill MUST NOT silently overwrite user content. The skill MUST NOT install CLIs itself — install delegation goes to `specscore:install` and `synchestra:install`, and only after the user consents.
 
 Non-default mode: `--update`. In update mode the skill MUST NOT scaffold anything — only diff and reconcile drift on already-managed artifacts. If the project is not yet initialized, update mode reports "not initialized" and refuses, redirecting to default mode.
 </HARD-GATE>
@@ -82,7 +82,7 @@ For each missing CLI, ask explicit consent before delegating to its install skil
 3. After return → re-run `command -v specscore`. If present, continue. If still missing, abort with "specscore install completed but binary still not on PATH; check `PATH` or open a new shell, then re-run init."
 4. On `no` → continue with AI-agent fallback for the specscore-side bootstrap (Step 4). Surface to user: "Continuing without specscore CLI; using AI-agent fallback. Some operations will be slower and produce schema-equivalent (not byte-identical) artifacts."
 
-**`synchestra` missing**: same handoff pattern with `synchestra:install`. Symmetric. Each install delegation is independent — declining one does not skip the consent gate for the other.
+**`orchestrator` missing**: same handoff pattern with `synchestra:install`. Symmetric. Each install delegation is independent — declining one does not skip the consent gate for the other.
 
 ## Step 3 — Wizard (default mode only)
 
@@ -161,19 +161,19 @@ The skill MUST NOT distinguish between "version drift" and "user-edit drift" —
 
 ## Step 6 — Orchestration via `synchestra init`
 
-When `synchestra` is on PATH (after Step 2), invoke `synchestra init` as a subprocess from the project root. Pass through wizard answers relevant to Synchestra orchestration features (Step 3 question 4) as flags: `--state-mode embedded` (default), `--branch <name>`, `--no-push` if appropriate.
+When `orchestrator` is on PATH (after Step 2), invoke `synchestra init` as a subprocess from the project root. Pass through wizard answers relevant to the orchestrator orchestration features (Step 3 question 4) as flags: `--state-mode embedded` (default), `--branch <name>`, `--no-push` if appropriate.
 
 `synchestra init` writes a dedicated `synchestra.yaml` at the repo root (per the [synchestra repo-config Feature](https://github.com/specscore/synchestra/blob/main/spec/features/repo-config/README.md)). It does **not** write extension keys inside `specscore.yaml` — Synchestra-only orchestration metadata lives in its own file, parallel to specscore.yaml. Project identity (title, host, org, repo, repositories) stays in specscore.yaml; synchestra reads it from there. The two files compose without duplication.
 
 In v1, `synchestra init` implements only `--state-mode embedded` (orphan branch + worktree at `.specscore/`). The `separate-repo` and `hub-managed` modes are recognized but exit 2 with a "not yet implemented" message; treat that exit as a soft failure and continue with embedded mode if the user chose otherwise.
 
-When `synchestra` is missing AND the user declined to install: report "synchestra orchestration setup deferred — `synchestra` CLI is not installed" and continue. The skill does NOT attempt to replicate the orphan-branch / worktree provisioning via AI-agent fallback — orchestration-side semantics are owned upstream and require git operations that belong inside the CLI.
+When `orchestrator` is missing AND the user declined to install: report "synchestra orchestration setup deferred —  is not installed" and continue. The skill does NOT attempt to replicate the orphan-branch / worktree provisioning via AI-agent fallback — orchestration-side semantics are owned upstream and require git operations that belong inside the CLI.
 
 ## Step 7 — Event emission
 
 After all bootstrap steps complete:
 
-- **First successful greenfield init** (state detection found nothing initialized; bootstrap created `specscore.yaml` AND at least one index AND optionally the snippet): emit `project.initialized` exactly once. Payload includes `project_id` (slug derived from `project.repo`), `revision` (current git SHA after staging), `cli_versions` (object with `specscore` and `synchestra` versions or `null` for fallback), `snippet_target_file` (path or `null` if skipped), `artifacts_created` (list of paths written this invocation).
+- **First successful greenfield init** (state detection found nothing initialized; bootstrap created `specscore.yaml` AND at least one index AND optionally the snippet): emit `project.initialized` exactly once. Payload includes `project_id` (slug derived from `project.repo`), `revision` (current git SHA after staging), `cli_versions` (object with `specscore` and `orchestrator` versions or `null` for fallback), `snippet_target_file` (path or `null` if skipped), `artifacts_created` (list of paths written this invocation).
 - **Subsequent state-changing run** (`--update` resolving drift, default-mode rerun resuming partial bootstrap, snippet replacement): emit `project.updated`. Payload mirrors `project.initialized` plus `change_summary` (≤2 factual sentences).
 - **No-op rerun** (skip condition triggered, nothing changed): emit no event.
 
@@ -237,5 +237,5 @@ Direct, helpful, honest about partial states and degraded paths. The skill is a 
 - [SpecScore Repo Config Feature](https://github.com/specscore/specscore/blob/main/spec/features/repo-config/README.md) — the schema `specscore.yaml` conforms to
 - [SpecScore CLI init Feature](https://github.com/specscore/specscore-cli/blob/main/spec/features/cli/init/README.md) — the `specscore init` subcommand contract this skill delegates to
 - [`specscore:install`](https://github.com/specscore/ai-plugin-specscore/blob/main/skills/install/SKILL.md) — install delegate for the `specscore` CLI
-- [`synchestra:install`](https://github.com/specscore/ai-plugin-synchestra/blob/main/skills/install/SKILL.md) — install delegate for the `synchestra` CLI
+- [`synchestra:install`](https://github.com/specscore/ai-plugin-synchestra/blob/main/skills/install/SKILL.md) — install delegate for the 
 - [`shared/events.md`](../shared/events.md) — event vocabulary `project.initialized` / `project.updated` participate in

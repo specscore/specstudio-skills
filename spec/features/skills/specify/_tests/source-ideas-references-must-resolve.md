@@ -24,7 +24,7 @@ AND the skill MUST NOT proceed
 GIVEN the user asks `specstudio:specify` to manually edit the source Idea's `**Promotes To:**` or `**Status:**` body-metadata line directly
 WHEN the skill processes the request
 THEN the skill refuses
-AND the skill explains that those lines are managed by Synchestra in response to the Feature's `**Source Ideas:**` declaration
+AND the skill explains that those lines are managed by lifecycle tooling in response to the Feature's `**Source Ideas:**` declaration
 
 ---
 *This document follows the https://specscore.md/scenario-specification*

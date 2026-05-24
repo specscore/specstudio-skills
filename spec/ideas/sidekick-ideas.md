@@ -25,7 +25,7 @@ A three-layer system where **capture is woven into existing skills**, **Synchest
 
 **Layer 1 — Capture (woven into host skills).** A shared directive in `skills/shared/` instructs `ideate`, `specify`, and `build` to watch for out-of-scope improvements. The host agent supports both *heuristic capture* (it spots cues like "would be nice if…", "another approach is…") and *explicit capture* (`/sidekick <one-liner>`). Either path writes a lightweight seed at `spec/ideas/seeds/<slug>.md` and emits a `sidekick-idea.captured` event. The host agent then keeps going on its original task — the discipline of *write-and-continue* is the whole point.
 
-**Layer 2 — Synchestra orchestration (queue + audit trail).** The captured event creates a `consilium-review` task in the Synchestra task board, idempotent on the content-hash of the seed's one-liner. The seed artifact and the verdict-bearing task together are the durable record. `synchestra:whats-next` can already see and prioritize these. Verdicts persist across sessions, machines, and teammates.
+**Layer 2 — Synchestra orchestration (queue + audit trail).** The captured event creates a `consilium-review` task in the orchestrator task board, idempotent on the content-hash of the seed's one-liner. The seed artifact and the verdict-bearing task together are the durable record. `synchestra:whats-next` can already see and prioritize these. Verdicts persist across sessions, machines, and teammates.
 
 **Layer 3 — Consilium worker (deliberation + strict gate).** A new `synchestra:consilium` skill drains pending tasks through a five-stage pipeline:
 
@@ -62,7 +62,7 @@ The MVP nails one job: **a user mid-flow in `specstudio:specify` (or any host sk
 Concretely, the MVP is Phases 0 + 1 of the design:
 
 - **Phase 0 — Capture.** Shared capture directive woven into `ideate`, `specify`, and `build`. Seed artifact format defined and lint-validated. Both heuristic and explicit (`/sidekick`) capture paths working. Seeds pile up usefully in `spec/ideas/seeds/` even with no panel running — the system is a notebook before it is a court.
-- **Phase 1 — Manual consilium.** `consilium-review` task type added to Synchestra with idempotent dedupe. `synchestra:consilium` skill that, when invoked, claims one or more pending tasks and runs the full five-stage pipeline: CLI gather → researcher (briefing pack) → 9-role panel in parallel → CLI arbiter → scribe. Writes the briefing, verdict, and Panel summary back to the seed and task. No auto-promote yet — the verdict is the deliverable.
+- **Phase 1 — Manual consilium.** `consilium-review` task type added to the orchestrator with idempotent dedupe. `synchestra:consilium` skill that, when invoked, claims one or more pending tasks and runs the full five-stage pipeline: CLI gather → researcher (briefing pack) → 9-role panel in parallel → CLI arbiter → scribe. Writes the briefing, verdict, and Panel summary back to the seed and task. No auto-promote yet — the verdict is the deliverable.
 
 MVP success is measured by running the consilium on 5–10 real seeds captured during normal work and confirming: (a) the host agents did not derail during capture, (b) the panel produced verdicts that the user would have made themselves with the same information, (c) the Panel summary is the part of the seed the user actually reads.
 

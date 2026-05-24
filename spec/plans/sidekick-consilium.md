@@ -35,7 +35,7 @@ A fresh project gets the default 9-role roster and default gate knobs *without* 
 Three cross-repo dependencies exist:
 - `specscore-cli#6` — the `sidekick-seed` lint rule from Phase 0 (blocks the dogfood seed currently in working tree)
 - `specscore-cli` new issue — the `specscore consilium verdict` subcommand (the arbiter, Task 1)
-- `synchestra` new issue — the `consilium-review` task type (the queue, Task 1)
+- `orchestrator` new issue — the `consilium-review` task type (the queue, Task 1)
 
 The in-repo plan ships the contracts and the orchestrator skill. The cross-repo subcommands and task type must ship before `/consilium` actually works end-to-end. Task 11 documents this as the ship gate; calibration (Task 10) cannot run until the cross-repo arbiter exists.
 
@@ -224,7 +224,7 @@ A new task type `consilium-review` registered with Synchestra. The type:
 
 1. Supports the state machine: `queued → claimed → in_review → complete | failed | aborted`.
 2. Atomically transitions `queued → claimed` (REQ `single-writer-claim-semantics`).
-3. Keys tasks by `content_hash` for idempotent creation — a second `synchestra task create consilium-review` with the same `content_hash` returns the existing task ID (REQ `idempotent-task-creation`).
+3. Keys tasks by `content_hash` for idempotent creation — a second `orchestrator task create consilium-review` with the same `content_hash` returns the existing task ID (REQ `idempotent-task-creation`).
 4. Stores the structured verdict payload from REQ `verdict-source-of-truth-in-task` and the transcript from REQ `pipeline-transcript-capture` as task fields.
 
 ## How to verify the type is live
@@ -232,12 +232,12 @@ A new task type `consilium-review` registered with Synchestra. The type:
 After the task type ships and a Synchestra project upgrades:
 
 ```bash
-synchestra task create consilium-review \
+orchestrator task create consilium-review \
   --content-hash abc123 \
   --seed-path spec/ideas/seeds/test.md
 # Expected: returns the task ID. Second invocation with same content_hash returns the same ID.
 
-synchestra task claim <task-id>
+orchestrator task claim <task-id>
 # Expected: transitions queued → claimed. Second claim from another process returns "already claimed".
 ```
 
@@ -298,7 +298,7 @@ A new task type `consilium-review` with the state machine `queued → claimed �
 
 ## Acceptance
 
-The task type registered with Synchestra, accessible via `synchestra task create consilium-review` and `synchestra task claim <id>`. Concurrent-claim test passes (two clients race; exactly one wins).
+The task type registered with Synchestra, accessible via `orchestrator task create consilium-review` and `orchestrator task claim <id>`. Concurrent-claim test passes (two clients race; exactly one wins).
 
 ## Cross-reference
 
@@ -1214,9 +1214,9 @@ Append:
 Before claiming any task, verify the cross-repo dependencies are present:
 
 1. `command -v specscore` — the arbiter subcommand lives here (`specscore consilium verdict`).
-2. `command -v synchestra` — the task lifecycle lives here (`synchestra task claim`, `synchestra task update`).
+2. `command -v synchestra` — the task lifecycle lives here (`orchestrator task claim`, `orchestrator task update`).
 3. `specscore --version` — must include the `consilium verdict` subcommand. If absent, exit cleanly with a message: "Phase 1 requires `specscore` with the `consilium verdict` subcommand (cross-repo dependency, tracked in `spec/plans/sidekick-consilium-arbiter-companion.md`). Install or upgrade and re-run."
-4. `synchestra task types` — must include `consilium-review`. If absent, exit cleanly with the analogous message referencing the task-type companion plan.
+4. `orchestrator task types` — must include `consilium-review`. If absent, exit cleanly with the analogous message referencing the task-type companion plan.
 
 If either cross-repo dependency is missing, do NOT claim any task and do NOT modify any file. Exit with the actionable error.
 ```
@@ -1290,7 +1290,7 @@ pipeline_transcript:
     output: { summary_paragraph: <≤500 chars> }
 ```
 
-**The transcript is written to the synchestra task as `pipeline_transcript` before the task transitions to `complete`.** This is what makes the transcript-shape ACs (`pipeline-runs-five-stages-in-order`, `every-expert-receives-briefing-and-may-research-deeper`, `panel-fans-out-in-parallel`, `pipeline-transcript-payload-shape`) observable. If the transcript is missing or malformed, the task MUST transition to `failed` with reason `malformed-transcript` — even if the verdict itself is otherwise valid.
+**The transcript is written to the orchestrator task as `pipeline_transcript` before the task transitions to `complete`.** This is what makes the transcript-shape ACs (`pipeline-runs-five-stages-in-order`, `every-expert-receives-briefing-and-may-research-deeper`, `panel-fans-out-in-parallel`, `pipeline-transcript-payload-shape`) observable. If the transcript is missing or malformed, the task MUST transition to `failed` with reason `malformed-transcript` — even if the verdict itself is otherwise valid.
 ````
 
 - [ ] **Step 5: Stage 1 — CLI gather**
@@ -1479,7 +1479,7 @@ Append:
 Per REQ `verdict-source-of-truth-in-task`, the task carries the full structured payload:
 
 ```bash
-synchestra task update <task-id> \
+orchestrator task update <task-id> \
   --field roster_snapshot=@.specscore/consilium/<task-id>/roster.yaml \
   --field votes=@.specscore/consilium/<task-id>/votes.yaml \
   --field briefing_pack=@.specscore/consilium/<task-id>/briefing.md \
@@ -1500,7 +1500,7 @@ Section format:
 
 **Verdict:** <verdict-enum> (<YYYY-MM-DD>)
 
-Full payload: synchestra task <task-id>.
+Full payload: orchestrator task <task-id>.
 
 <scribe prose paragraph>
 ```
@@ -1508,7 +1508,7 @@ Full payload: synchestra task <task-id>.
 ### Transition the task to complete
 
 ```bash
-synchestra task update <task-id> --status complete
+orchestrator task update <task-id> --status complete
 ```
 
 ### Emit `sidekick-idea.reviewed`
@@ -1539,7 +1539,7 @@ The full envelope+payload structure is in `skills/shared/events.md` under the `s
 Print one line per completed task:
 
 ```
-Reviewed: <seed-slug> → <verdict> (synchestra task <task-id>)
+Reviewed: <seed-slug> → <verdict> (orchestrator task <task-id>)
 ```
 
 After all queued tasks are processed, print a summary:
@@ -1792,7 +1792,7 @@ done
 /consilium
 
 # Inspect the 20 verdicts
-synchestra task list --type consilium-review --status complete
+orchestrator task list --type consilium-review --status complete
 ```
 
 For each verdict, the human reviewer notes whether they would have made the same call. Calibration passes if ≥ 95% match.
@@ -1925,11 +1925,11 @@ If this fails, Phase 1 is not yet ready to ship. The arbiter must land in `specs
 - [ ] **Step 3: Verify cross-repo task type has shipped**
 
 ```bash
-synchestra task types | grep consilium-review
+orchestrator task types | grep consilium-review
 # Expected: consilium-review listed as a registered task type.
 ```
 
-If this fails, Phase 1 is not yet ready. Task type must land in `synchestra` first (see `spec/plans/sidekick-consilium-task-companion.md`).
+If this fails, Phase 1 is not yet ready. Task type must land in `orchestrator` first (see `spec/plans/sidekick-consilium-task-companion.md`).
 
 - [ ] **Step 4: Commit the dogfood seed (now unblocked)**
 

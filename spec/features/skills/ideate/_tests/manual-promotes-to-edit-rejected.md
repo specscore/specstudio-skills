@@ -8,7 +8,7 @@ GIVEN an approved Idea exists at `spec/ideas/my-idea.md`
 AND the user asks `specstudio:ideate` to set `**Promotes To:** feature-x` in the body metadata
 WHEN the skill processes the request
 THEN the skill refuses to edit `**Promotes To:**`
-AND the skill explains that `**Promotes To:**` is managed state, populated by Synchestra in response to a Feature declaring `**Source Ideas:**`
+AND the skill explains that `**Promotes To:**` is managed state, populated by lifecycle tooling in response to a Feature declaring `**Source Ideas:**`
 
 GIVEN the user asks `specstudio:ideate` to scaffold or modify a SpecScore Feature
 WHEN the skill processes the request

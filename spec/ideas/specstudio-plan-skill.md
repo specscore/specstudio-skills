@@ -32,7 +32,7 @@ The MVP does not need a CLI scaffold — it can follow the same fallback direct-
 - **Fold planning into `specify`.** Rejected. Collapsing two gates into one removes the user-review checkpoint where spec intent is verified *before* it is decomposed into work. The gates earn their keep.
 - **Plan as a pure markdown template with no skill.** Rejected. A template without lint and a gate is a suggestion, not a contract. SpecStudio's value is exactly the contract.
 - **Plan as a Rehearse-test scaffolder first.** Rejected *for the MVP*. Strong idea in a Rehearse-first workflow, but Rehearse's markdown format is still evolving and coupling the plan skill to it now would bind the MVP to a moving target. Worth revisiting as a separate Idea.
-- **Plan as a dispatcher to Synchestra runners.** Rejected *for the MVP*. Dispatch matters eventually, but the planning format needs to stabilize before it's worth hooking into Hub. Premature coupling.
+- **Plan as a dispatcher to the orchestrator runners.** Rejected *for the MVP*. Dispatch matters eventually, but the planning format needs to stabilize before it's worth hooking into Hub. Premature coupling.
 
 ## MVP Scope
 
@@ -42,7 +42,7 @@ A two-week spike: implement `specstudio:plan` as a single skill folder under `sk
 
 - Automatic code generation from plan tasks — belongs in a future `implement` skill, not `plan`.
 - Rehearse test-stub scaffolding — separate Idea; couples to an evolving format.
-- Dispatch of tasks to Synchestra runners or subagents — premature until plan format stabilizes and Hub matures.
+- Dispatch of tasks to the orchestrator runners or subagents — premature until plan format stabilizes and Hub matures.
 - Cross-Feature or roadmap-level planning — different problem, different Idea.
 - A web authoring UI for plans — roadmap concern for Hub, not this skill.
 - Effort estimation, velocity, or scheduling — out of scope; SpecScore is about verifiable contracts, not project management.

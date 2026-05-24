@@ -29,9 +29,9 @@ For *what* a sidekick seed is and how it gets captured, read [Phase 0's `sidekic
 Before claiming any task, verify the cross-repo dependencies are present:
 
 1. `command -v specscore` — the arbiter subcommand lives here (`specscore consilium verdict`).
-2. `command -v synchestra` — the task lifecycle lives here (`synchestra task claim`, `synchestra task update`).
+2. `command -v synchestra` — the task lifecycle lives here (`orchestrator task claim`, `orchestrator task update`).
 3. `specscore --version` — must include the `consilium verdict` subcommand. If absent, exit cleanly with a message: "Phase 1 requires `specscore` with the `consilium verdict` subcommand (cross-repo dependency, tracked in `spec/plans/sidekick-consilium-arbiter-companion.md`). Install or upgrade and re-run."
-4. `synchestra task types` — must include `consilium-review`. If absent, exit cleanly with the analogous message referencing the task-type companion plan.
+4. `orchestrator task types` — must include `consilium-review`. If absent, exit cleanly with the analogous message referencing the task-type companion plan.
 
 If either cross-repo dependency is missing, do NOT claim any task and do NOT modify any file. Exit with the actionable error.
 
@@ -93,7 +93,7 @@ pipeline_transcript:
     output: { summary_paragraph: <≤500 chars> }
 ```
 
-**The transcript is written to the synchestra task as `pipeline_transcript` before the task transitions to `complete`.** This is what makes the transcript-shape ACs (`pipeline-runs-five-stages-in-order`, `every-expert-receives-briefing-and-may-research-deeper`, `panel-fans-out-in-parallel`, `pipeline-transcript-payload-shape`) observable. If the transcript is missing or malformed, the task MUST transition to `failed` with reason `malformed-transcript` — even if the verdict itself is otherwise valid.
+**The transcript is written to the orchestrator task as `pipeline_transcript` before the task transitions to `complete`.** This is what makes the transcript-shape ACs (`pipeline-runs-five-stages-in-order`, `every-expert-receives-briefing-and-may-research-deeper`, `panel-fans-out-in-parallel`, `pipeline-transcript-payload-shape`) observable. If the transcript is missing or malformed, the task MUST transition to `failed` with reason `malformed-transcript` — even if the verdict itself is otherwise valid.
 
 ## Stage 1: CLI gather (deterministic)
 
@@ -246,7 +246,7 @@ If validation fails, retry ONCE. If it fails again, transition to `failed` with 
 Per REQ `verdict-source-of-truth-in-task`, the task carries the full structured payload:
 
 ```bash
-synchestra task update <task-id> \
+orchestrator task update <task-id> \
   --field roster_snapshot=@.specscore/consilium/<task-id>/roster.yaml \
   --field votes=@.specscore/consilium/<task-id>/votes.yaml \
   --field briefing_pack=@.specscore/consilium/<task-id>/briefing.md \
@@ -267,7 +267,7 @@ Section format:
 
 **Verdict:** <verdict-enum> (<YYYY-MM-DD>)
 
-Full payload: synchestra task <task-id>.
+Full payload: orchestrator task <task-id>.
 
 <scribe prose paragraph>
 ```
@@ -275,7 +275,7 @@ Full payload: synchestra task <task-id>.
 ### Transition the task to complete
 
 ```bash
-synchestra task update <task-id> --status complete
+orchestrator task update <task-id> --status complete
 ```
 
 ### Emit `sidekick-idea.reviewed`
@@ -306,7 +306,7 @@ The full envelope+payload structure is in `skills/shared/events.md` under the `s
 Print one line per completed task:
 
 ```
-Reviewed: <seed-slug> → <verdict> (synchestra task <task-id>)
+Reviewed: <seed-slug> → <verdict> (orchestrator task <task-id>)
 ```
 
 After all queued tasks are processed, print a summary:

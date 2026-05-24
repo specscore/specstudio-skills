@@ -45,7 +45,7 @@ The skill MUST NOT introduce additional modes (e.g., `--repair`, `--migrate`, `-
 
 #### REQ: project-state-detection
 
-Before any user-facing prompt, the skill MUST inspect the repo to determine: (a) whether `git` is initialized, (b) whether `spec/`, `spec/ideas/`, `spec/features/` exist with lint-clean indexes, (c) whether `specscore.yaml` exists at repo root and is schema-conforming, (d) which agent-instructions files exist (`CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, files under `.cursor/rules/`), (e) for each existing agent-instructions file, whether the canonical snippet is already pasted and at what version, and (f) whether `specscore` and `synchestra` are on PATH. Detection MUST NOT use any state file or hidden cache; the repo's filesystem and `command -v` results are the only source of truth.
+Before any user-facing prompt, the skill MUST inspect the repo to determine: (a) whether `git` is initialized, (b) whether `spec/`, `spec/ideas/`, `spec/features/` exist with lint-clean indexes, (c) whether `specscore.yaml` exists at repo root and is schema-conforming, (d) which agent-instructions files exist (`CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, files under `.cursor/rules/`), (e) for each existing agent-instructions file, whether the canonical snippet is already pasted and at what version, and (f) whether `specscore` and `orchestrator` are on PATH. Detection MUST NOT use any state file or hidden cache; the repo's filesystem and `command -v` results are the only source of truth.
 
 #### REQ: skip-condition-fully-initialized
 
@@ -77,7 +77,7 @@ Future questions added by this skill require an additive Feature revision and a 
 
 ### CLI prerequisites and install delegation
 
-The skill checks for `specscore` and `synchestra` on PATH and delegates installation when missing. It does NOT run install commands itself.
+The skill checks for `specscore` and `orchestrator` on PATH and delegates installation when missing. It does NOT run install commands itself.
 
 #### REQ: cli-detection
 
@@ -89,7 +89,7 @@ When `specscore` is missing, the skill MUST invoke the [`specscore:install`](htt
 
 #### REQ: synchestra-install-delegation
 
-When `synchestra` is missing, the skill MUST invoke the [`synchestra:install`](https://github.com/specscore/ai-plugin-synchestra/blob/main/skills/install/SKILL.md) skill via the same mechanism, with the same consent gate. Decline aborts with the same shape of message ("synchestra is required for orchestration-side bootstrap; please install manually and re-run init"). The skill MUST handle each install delegation independently — declining one does not skip the consent gate for the other.
+When `orchestrator` is missing, the skill MUST invoke the [`synchestra:install`](https://github.com/specscore/ai-plugin-synchestra/blob/main/skills/install/SKILL.md) skill via the same mechanism, with the same consent gate. Decline aborts with the same shape of message ("synchestra is required for orchestration-side bootstrap; please install manually and re-run init"). The skill MUST handle each install delegation independently — declining one does not skip the consent gate for the other.
 
 #### REQ: post-install-resume
 
@@ -158,17 +158,17 @@ The skill delegates orchestration-side artifacts to `synchestra init`, mirroring
 
 #### REQ: prefer-synchestra-init-cli
 
-When `synchestra` is on PATH, the skill MUST invoke `synchestra init` (as a subprocess) for orchestration-side artifacts: state-repo pointer setup, runtime cache directory creation, any `.gitignore` rules Synchestra requires for its caches. The skill MUST pass through wizard answers relevant to Synchestra orchestration features (per `wizard-questions-fixed-set` question 4).
+When `orchestrator` is on PATH, the skill MUST invoke `synchestra init` (as a subprocess) for orchestration-side artifacts: state-repo pointer setup, runtime cache directory creation, any `.gitignore` rules Synchestra requires for its caches. The skill MUST pass through wizard answers relevant to the orchestrator orchestration features (per `wizard-questions-fixed-set` question 4).
 
 #### REQ: ai-agent-fallback-synchestra
 
-When `synchestra` is missing AND the user declined to install it (per `synchestra-install-delegation`), the skill MUST fall back to a limited AI-agent path: it MAY write a placeholder `.specscore/` directory with a README explaining "synchestra runtime not yet installed; run `specstudio:init --update` after installing synchestra". The fallback MUST NOT attempt to replicate `synchestra init`'s full behavior — orchestration-side semantics are owned upstream. Fallback's only goal is to leave the repo in a state where re-running init after installing synchestra completes the orchestration setup cleanly.
+When `orchestrator` is missing AND the user declined to install it (per `synchestra-install-delegation`), the skill MUST fall back to a limited AI-agent path: it MAY write a placeholder `.specscore/` directory with a README explaining "synchestra runtime not yet installed; run `specstudio:init --update` after installing synchestra". The fallback MUST NOT attempt to replicate `synchestra init`'s full behavior — orchestration-side semantics are owned upstream. Fallback's only goal is to leave the repo in a state where re-running init after installing synchestra completes the orchestration setup cleanly.
 
 #### REQ: synchestra-cli-contract-dependency
 
 The init Feature depends on the upstream `synchestra init` CLI subcommand contract (flag set, exit codes, idempotence guarantees) defined by [`synchestra@spec/features/cli/init/`](https://github.com/specscore/synchestra/blob/main/spec/features/cli/init/README.md). When the upstream contract changes, this Feature revises in place to match. The contract guarantees: `synchestra init` writes a dedicated `synchestra.yaml` at the repo root (per the [synchestra repo-config Feature](https://github.com/specscore/synchestra/blob/main/spec/features/repo-config/README.md)) — synchestra-only orchestration metadata lives in its own file, NOT as extension keys inside `specscore.yaml`. The two files compose without duplication; the skill never writes synchestra fields into specscore.yaml.
 
-The upstream `synchestra init` v1 implements only `--state-mode embedded`; `--state-mode separate-repo` and `--state-mode hub-managed` are recognized but exit 2 with a "not yet implemented" message. When the user requests an unimplemented mode, the skill MUST treat that exit as a soft failure and either fall back to embedded mode (with the user's explicit consent) or report degradation and continue. When `synchestra` is absent (declined install), the synchestra-side bootstrap degrades per `ai-agent-fallback-synchestra`.
+The upstream `synchestra init` v1 implements only `--state-mode embedded`; `--state-mode separate-repo` and `--state-mode hub-managed` are recognized but exit 2 with a "not yet implemented" message. When the user requests an unimplemented mode, the skill MUST treat that exit as a soft failure and either fall back to embedded mode (with the user's explicit consent) or report degradation and continue. When `orchestrator` is absent (declined install), the synchestra-side bootstrap degrades per `ai-agent-fallback-synchestra`.
 
 ### Idempotence and event emission
 
@@ -188,7 +188,7 @@ When the skill encounters a managed artifact (e.g., `specscore.yaml`, the snippe
 
 #### REQ: event-project-initialized
 
-On first successful greenfield init (state detection found no `spec/` tree, no `specscore.yaml`, no snippet pasted; bootstrap created all of them), the skill MUST emit `project.initialized` exactly once. The event payload MUST include: `project_id` (slug derived from `project.repo` in `specscore.yaml`), `revision` (current git SHA after staging), `cli_versions` (object with `specscore` and `synchestra` versions or `null` for AI-agent-fallback paths), `snippet_target_file` (path to the agent-instructions file written, or `null` if snippet-install was skipped), `artifacts_created` (list of paths written by this invocation).
+On first successful greenfield init (state detection found no `spec/` tree, no `specscore.yaml`, no snippet pasted; bootstrap created all of them), the skill MUST emit `project.initialized` exactly once. The event payload MUST include: `project_id` (slug derived from `project.repo` in `specscore.yaml`), `revision` (current git SHA after staging), `cli_versions` (object with `specscore` and `orchestrator` versions or `null` for AI-agent-fallback paths), `snippet_target_file` (path to the agent-instructions file written, or `null` if snippet-install was skipped), `artifacts_created` (list of paths written by this invocation).
 
 #### REQ: event-project-updated
 
@@ -228,7 +228,7 @@ The init skill orchestrates six functional components. Each is small enough to r
 
 - **What:** Wrappers around `specscore init` and `synchestra init` subprocess invocations. Pass through wizard answers, capture stdout/stderr/exit-code, surface failures cleanly.
 - **How used:** Invoked after the wizard, conditionally based on CLI presence.
-- **Depends on:** `specscore` CLI binary (preferred path); `synchestra` CLI binary (preferred path); the AI-agent fallback paths (when CLI is absent and install was declined).
+- **Depends on:** `specscore` CLI binary (preferred path);  binary (preferred path); the AI-agent fallback paths (when CLI is absent and install was declined).
 
 ### 4. Install delegators
 
@@ -244,7 +244,7 @@ The init skill orchestrates six functional components. Each is small enough to r
 
 ### 6. Event emitter
 
-- **What:** Publishes `project.initialized` or `project.updated` to Synchestra Hub per the canonical event vocabulary in `shared/events.md`. Payload assembled from state detector output plus the artifacts-created log.
+- **What:** Publishes `project.initialized` or `project.updated` to the orchestrator Hub per the canonical event vocabulary in `shared/events.md`. Payload assembled from state detector output plus the artifacts-created log.
 - **How used:** Invoked exactly once at the end of a state-changing init run. Skipped on no-op runs.
 - **Depends on:** The event bus (when running under Synchestra orchestration); local-only emission as a JSON line to stderr when not running under Synchestra (mirrors how `idea.drafted` etc. surface in this repo today).
 
@@ -328,7 +328,7 @@ Invocation
 
 **Requirements:** skills/init#req:prefer-specscore-init-cli, skills/init#req:prefer-synchestra-init-cli
 
-**Given** a fresh repo with both `specscore` and `synchestra` on PATH and both `init` subcommands shipped, and a default-mode init wizard with non-default answers (e.g., `spec/research/` opted in via question 2; Synchestra orchestration features enabled via question 4)
+**Given** a fresh repo with both `specscore` and `orchestrator` on PATH and both `init` subcommands shipped, and a default-mode init wizard with non-default answers (e.g., `spec/research/` opted in via question 2; Synchestra orchestration features enabled via question 4)
 **When** the bootstrap step runs after the wizard completes
 **Then** the skill invokes `specscore init` and `synchestra init` as subprocesses (observable in the trace as exec calls); the wizard's resolved answers appear either as documented CLI flags passed to the corresponding subprocess invocation OR as `Edit` operations applied immediately after the subprocess returns; the resulting `spec/research/` directory exists with a lint-clean index when question 2 was opted in; orchestration artifacts written by `synchestra init` exist when question 4 enabled them. Wizard answers that match a CLI's documented flag MUST go through the flag (not post-CLI `Edit`); inventing flags that the CLI does not document is forbidden per `prefer-specscore-init-cli`'s flag discipline.
 
@@ -368,7 +368,7 @@ Invocation
 
 **Requirements:** skills/init#req:prefer-synchestra-init-cli, skills/init#req:ai-agent-fallback-synchestra, skills/init#req:synchestra-cli-contract-dependency
 
-**Given** a repo where `synchestra` CLI is on PATH but `synchestra init` (the subcommand) does not yet exist (upstream has not shipped it)
+**Given** a repo where  is on PATH but `synchestra init` (the subcommand) does not yet exist (upstream has not shipped it)
 **When** the orchestration-side bootstrap step runs
 **Then** the skill reports "synchestra orchestration setup deferred — upstream `synchestra init` not yet shipped"; continues with the specscore-side bootstrap and the snippet-install step without aborting; emits `project.initialized` (or `project.updated`) with `cli_versions.synchestra` populated but the orchestration artifacts absent from `artifacts_created`. The user is informed; no error.
 
