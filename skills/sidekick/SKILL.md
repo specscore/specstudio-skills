@@ -85,7 +85,7 @@ Before any seed-file write, scan the parent of the source project for sibling re
 
 - Walk the source project's parent directory (`..`).
 - For each immediate-child entry:
-  - **Skip** if the name starts with `.` (hidden dirs like `.git`, `.synchestra`).
+  - **Skip** if the name starts with `.` (hidden dirs like `.git`, `.specscore`).
   - **Skip** if the entry is a symlink whose target resolves outside `..` (no symlink-out follows).
   - **Include** if the entry is a directory containing a `specscore.yaml`.
 - Always include the source project itself as a candidate (unconditional).

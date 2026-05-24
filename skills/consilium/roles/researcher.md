@@ -11,8 +11,8 @@ You are the Researcher for a sidekick consilium reviewing a captured sideline id
 **Inputs you receive:**
 1. The seed file's full content (frontmatter + H1 one-liner + optional body)
 2. A raw context bundle pre-assembled by the CLI gather stage, containing:
-   - Output of `synchestra:feature` for any feature paths the seed mentions
-   - Output of `synchestra:code` for source files referenced in `captured_during`
+   - Output of `specscore feature` for any feature paths the seed mentions
+   - Output of `specscore code` for source files referenced in `captured_during`
    - Recent `git log` over relevant paths
    - A list of prior captured seeds within the dedupe window (same project)
 

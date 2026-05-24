@@ -2,28 +2,27 @@
 name: init
 description: |
   Bootstraps a SpecScore-managed project in one wizard-driven step. Detects
-  current project state by direct repo inspection, asks 3-5 batched wizard
+  current project state by direct repo inspection, asks 3-4 batched wizard
   questions with defaults pre-filled from detection, then idempotently
   scaffolds: specscore.yaml + spec/{,ideas,features}/README.md (via
-  `specscore init`, with AI-agent fallback when the CLI is absent), pastes
+  `specscore init`, with AI-agent fallback when the CLI is absent), and pastes
   the canonical Producer-shape instruction snippet into the right platform
-  agent-instructions file, and runs `synchestra init` for orchestration-side
-  setup. Two modes: default (full wizard) and `--update` (drift-only
-  reconciliation, no wizard). Delegates CLI installation symmetrically to
-  `specscore:install` and `synchestra:install`.
-  Trigger: "specstudio:init", "/specstudio:init", "set up specstudio", "init
-  synchestra project", "bootstrap a spec repo".
+  agent-instructions file. Two modes: default (full wizard) and `--update`
+  (drift-only reconciliation, no wizard). Delegates CLI installation to
+  `specscore:install`.
+  Trigger: "specstudio:init", "/specstudio:init", "set up specstudio",
+  "bootstrap a spec repo".
 aliases: [init]
 ---
 
 # Init
 
-Bootstrap a SpecScore-managed project — `specscore.yaml`, `spec/` tree, snippet pasted, orchestration set up — in one wizard.
+Bootstrap a SpecScore-managed project — `specscore.yaml`, `spec/` tree, snippet pasted — in one wizard.
 
 ## Hard Gate
 
 <HARD-GATE>
-This skill writes files outside `spec/` (the canonical instruction-file paste targets `CLAUDE.md` / `AGENTS.md` / `GEMINI.md`, the orchestrator runtime cache, optionally `.gitignore`). Every such write MUST go through an explicit per-write user-consent prompt. The skill MUST NOT silently overwrite user content. The skill MUST NOT install CLIs itself — install delegation goes to `specscore:install` and `synchestra:install`, and only after the user consents.
+This skill writes files outside `spec/` (the canonical instruction-file paste targets `CLAUDE.md` / `AGENTS.md` / `GEMINI.md`, optionally `.gitignore`). Every such write MUST go through an explicit per-write user-consent prompt. The skill MUST NOT silently overwrite user content. The skill MUST NOT install CLIs itself — install delegation goes to `specscore:install`, and only after the user consents.
 
 Non-default mode: `--update`. In update mode the skill MUST NOT scaffold anything — only diff and reconcile drift on already-managed artifacts. If the project is not yet initialized, update mode reports "not initialized" and refuses, redirecting to default mode.
 </HARD-GATE>
@@ -42,7 +41,7 @@ The mode is determined by invocation argument, not by detected state.
 
 ### Default mode — `specstudio:init`
 
-Full wizard flow: state detection → CLI prerequisite check + install delegation → 3–5-question wizard → bootstrap actions (`specscore init` or AI-agent fallback) → snippet install with consent → `synchestra init` (or graceful-degradation) → event emission.
+Full wizard flow: state detection → CLI prerequisite check + install delegation → 3–4-question wizard → bootstrap actions (`specscore init` or AI-agent fallback) → snippet install with consent → event emission.
 
 Greenfield AND brownfield repos both flow through this mode; brownfield reuses defaults derived from detected state.
 
@@ -61,7 +60,7 @@ Before any user-facing prompt, inspect the repo to record:
 - `specscore_yaml_status` — does `<root>/specscore.yaml` exist? If yes, is line 1 the canonical schema-pointer comment?
 - `agent_instruction_files` — for each of `CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, files under `.cursor/rules/`, record whether the file exists at repo root (or under `.cursor/rules/`).
 - `snippet_versions_per_file` — for each existing agent-instructions file, scan for the snippet block (delimited by the version comment). If found, record the version. If absent, record `none`.
-- `cli_versions` — `command -v specscore` and `command -v synchestra`. For each, record `present` (with version from `<cli> --version`) or `missing`.
+- `cli_versions` — `command -v specscore`. Record `present` (with version from `specscore --version`) or `missing`.
 
 **No state file.** Detection is via filesystem inspection only — never via a hidden `.specstudio/init-state.yaml` or similar. The repo's actual state IS the state.
 
@@ -74,7 +73,7 @@ Use the result to drive the rest of the flow:
 
 ## Step 2 — CLI prerequisite check & install delegation
 
-For each missing CLI, ask explicit consent before delegating to its install skill. Each install delegation runs at most once per invocation.
+If `specscore` is missing, ask explicit consent before delegating to its install skill. The install delegation runs at most once per invocation.
 
 **`specscore` missing**:
 1. Surface to user: "specscore is not on PATH. Invoke `specscore:install` to install it now? (yes / no)"
@@ -82,21 +81,18 @@ For each missing CLI, ask explicit consent before delegating to its install skil
 3. After return → re-run `command -v specscore`. If present, continue. If still missing, abort with "specscore install completed but binary still not on PATH; check `PATH` or open a new shell, then re-run init."
 4. On `no` → continue with AI-agent fallback for the specscore-side bootstrap (Step 4). Surface to user: "Continuing without specscore CLI; using AI-agent fallback. Some operations will be slower and produce schema-equivalent (not byte-identical) artifacts."
 
-**`orchestrator` missing**: same handoff pattern with `synchestra:install`. Symmetric. Each install delegation is independent — declining one does not skip the consent gate for the other.
-
 ## Step 3 — Wizard (default mode only)
 
 Skip in `--update` mode and in the all-clean skip condition.
 
-Use a single batched `AskUserQuestion` call. **Maximum five questions.** Each question carries a default derived from state detection; the default is visible to the user before they answer. Questions whose answer is unambiguous from detected state (e.g., only one platform agent-instructions file exists → no need to ask which to target) are skipped, not asked with a forced default.
+Use a single batched `AskUserQuestion` call. **Maximum four questions.** Each question carries a default derived from state detection; the default is visible to the user before they answer. Questions whose answer is unambiguous from detected state (e.g., only one platform agent-instructions file exists → no need to ask which to target) are skipped, not asked with a forced default.
 
-The fixed five:
+The fixed four:
 
 1. **Platform agent-instructions target.** Which file to install the canonical snippet into. Skipped when only one platform file exists. Apply the platform-detection rule below.
 2. **Optional spec subdirectories.** Single batched question presenting both `spec/research/` and `spec/decisions/` with their visible defaults (decisions=yes, research=no). Implementation note: today the `specscore init` CLI does NOT scaffold these (out of MVP scope upstream); the skill MAY create empty placeholders if requested, OR defer until upstream Indexes ship. Default behavior: defer.
 3. **Custom viewer.** Whether to register a non-default `viewer:` block in `specscore.yaml`. Default: no (Repo Config defaults apply).
-4. **Synchestra orchestration features.** Whether to enable optional `synchestra init` features (state-repo pointer, runtime caches). Default: ask.
-5. **Greenfield confirmation.** When state detection finds non-trivial pre-existing structure (e.g., a `docs/` tree with what look like spec artifacts), confirm before scaffolding. Skipped when greenfield is unambiguous.
+4. **Greenfield confirmation.** When state detection finds non-trivial pre-existing structure (e.g., a `docs/` tree with what look like spec artifacts), confirm before scaffolding. Skipped when greenfield is unambiguous.
 
 ### Platform-detection rule for the snippet install step
 
@@ -159,21 +155,11 @@ When state detection finds an existing snippet at a version different from canon
 
 The skill MUST NOT distinguish between "version drift" and "user-edit drift" — both prompt the same diff-and-confirm flow.
 
-## Step 6 — Orchestration via `synchestra init`
-
-When `orchestrator` is on PATH (after Step 2), invoke `synchestra init` as a subprocess from the project root. Pass through wizard answers relevant to the orchestrator orchestration features (Step 3 question 4) as flags: `--state-mode embedded` (default), `--branch <name>`, `--no-push` if appropriate.
-
-`synchestra init` writes a dedicated `synchestra.yaml` at the repo root (per the [synchestra repo-config Feature](https://github.com/specscore/synchestra/blob/main/spec/features/repo-config/README.md)). It does **not** write extension keys inside `specscore.yaml` — Synchestra-only orchestration metadata lives in its own file, parallel to specscore.yaml. Project identity (title, host, org, repo, repositories) stays in specscore.yaml; synchestra reads it from there. The two files compose without duplication.
-
-In v1, `synchestra init` implements only `--state-mode embedded` (orphan branch + worktree at `.specscore/`). The `separate-repo` and `hub-managed` modes are recognized but exit 2 with a "not yet implemented" message; treat that exit as a soft failure and continue with embedded mode if the user chose otherwise.
-
-When `orchestrator` is missing AND the user declined to install: report "synchestra orchestration setup deferred —  is not installed" and continue. The skill does NOT attempt to replicate the orphan-branch / worktree provisioning via AI-agent fallback — orchestration-side semantics are owned upstream and require git operations that belong inside the CLI.
-
-## Step 7 — Event emission
+## Step 6 — Event emission
 
 After all bootstrap steps complete:
 
-- **First successful greenfield init** (state detection found nothing initialized; bootstrap created `specscore.yaml` AND at least one index AND optionally the snippet): emit `project.initialized` exactly once. Payload includes `project_id` (slug derived from `project.repo`), `revision` (current git SHA after staging), `cli_versions` (object with `specscore` and `orchestrator` versions or `null` for fallback), `snippet_target_file` (path or `null` if skipped), `artifacts_created` (list of paths written this invocation).
+- **First successful greenfield init** (state detection found nothing initialized; bootstrap created `specscore.yaml` AND at least one index AND optionally the snippet): emit `project.initialized` exactly once. Payload includes `project_id` (slug derived from `project.repo`), `revision` (current git SHA after staging), `cli_versions` (object with `specscore` version or `null` for fallback), `snippet_target_file` (path or `null` if skipped), `artifacts_created` (list of paths written this invocation).
 - **Subsequent state-changing run** (`--update` resolving drift, default-mode rerun resuming partial bootstrap, snippet replacement): emit `project.updated`. Payload mirrors `project.initialized` plus `change_summary` (≤2 factual sentences).
 - **No-op rerun** (skip condition triggered, nothing changed): emit no event.
 
@@ -201,14 +187,13 @@ Direct, helpful, honest about partial states and degraded paths. The skill is a 
 
 ## Red Flags
 
-- Running install commands directly (`brew install`, `curl | sh`) instead of delegating to `specscore:install` / `synchestra:install`.
+- Running install commands directly (`brew install`, `curl | sh`) instead of delegating to `specscore:install`.
 - Writing to agent-instructions files (`CLAUDE.md`, etc.) without explicit per-write consent.
 - Silent overwrite of user content on rerun.
 - Emitting `project.initialized` more than once for the same project.
 - Inventing `specscore init` flags that don't exist.
 - Bundling multiple unrelated writes behind a single consent prompt.
 - Distinguishing "user-edit drift" from "version drift" in any user-facing way (both are the same prompt).
-- Falling back to AI-agent path for `synchestra init` (orchestration-side semantics live upstream — degrade gracefully, don't replicate).
 - Creating a state file (`.specstudio/init-state.yaml`, `.specscore/init.lock`) for idempotence; the filesystem IS the state.
 - Treating "not a git repository" as an error instead of a graceful skip-auto-stage condition.
 
@@ -216,7 +201,7 @@ Direct, helpful, honest about partial states and degraded paths. The skill is a 
 
 - [ ] State detection ran before any user-facing prompt
 - [ ] Skip condition (fully initialized + no drift) exits no-op without event
-- [ ] CLI install delegations went to `specscore:install` / `synchestra:install`, not direct install commands
+- [ ] CLI install delegation went to `specscore:install`, not direct install commands
 - [ ] Wizard asked at most 5 batched questions with defaults visible
 - [ ] `specscore init` invoked when CLI present; AI-agent fallback otherwise
 - [ ] CLI and fallback paths produce schema-equivalent artifacts
@@ -237,5 +222,4 @@ Direct, helpful, honest about partial states and degraded paths. The skill is a 
 - [SpecScore Repo Config Feature](https://github.com/specscore/specscore/blob/main/spec/features/repo-config/README.md) — the schema `specscore.yaml` conforms to
 - [SpecScore CLI init Feature](https://github.com/specscore/specscore-cli/blob/main/spec/features/cli/init/README.md) — the `specscore init` subcommand contract this skill delegates to
 - [`specscore:install`](https://github.com/specscore/ai-plugin-specscore/blob/main/skills/install/SKILL.md) — install delegate for the `specscore` CLI
-- [`synchestra:install`](https://github.com/specscore/ai-plugin-synchestra/blob/main/skills/install/SKILL.md) — install delegate for the 
 - [`shared/events.md`](../shared/events.md) — event vocabulary `project.initialized` / `project.updated` participate in

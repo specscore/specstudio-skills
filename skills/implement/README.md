@@ -36,5 +36,5 @@ The central guarantee: **every commit references the AC IDs it satisfies** via t
 - **Run downstream skills directly.** Promotion boundary is `specstudio:verify` only.
 - **Run a code-quality reviewer subagent inside the loop.** Code review is `specstudio:review`'s job downstream.
 - **Switch posture mid-flight.** Posture is the planner's call, declared at plan time; one-way.
-- **Cross-machine dispatch.** MVP uses local subagent dispatch via the Claude Code Agent tool only; Synchestra runner dispatch is a follow-on Idea.
+- **Cross-machine dispatch.** MVP uses local subagent dispatch via the Claude Code Agent tool only; remote runner dispatch is a follow-on Idea.
 - **Auto-resolve conflicts.** Line-overlap conflicts roll back the batch and prompt the user.

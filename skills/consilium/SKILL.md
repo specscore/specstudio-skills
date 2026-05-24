@@ -3,7 +3,7 @@ name: consilium
 description: |
   Drains captured sidekick (sideline-idea) seeds and produces deterministic
   verdicts via a 5-stage pipeline: CLI gather → researcher agent → 9-role
-  parallel expert panel → CLI arbiter → scribe agent. The Synchestra task
+  parallel expert panel → CLI arbiter → scribe agent. The orchestrator task
   is the structured source of truth; the seed gets only the scribe's prose
   summary mirrored into a ## Consilium Verdict section. Per-project roster
   and gate configurable via specscore.yaml → consilium: block. No auto-
@@ -15,7 +15,7 @@ aliases: [consilium]
 
 # Consilium
 
-The consilium drains queued `consilium-review` Synchestra tasks one at a time, running the full 5-stage pipeline per task. On every successful task, the verdict + scribe summary mirror onto the seed and the `sidekick-idea.reviewed` event fires. On any stage failure, the task transitions to `failed` and the next queued task continues.
+The consilium drains queued `consilium-review` orchestrator tasks one at a time, running the full 5-stage pipeline per task. On every successful task, the verdict + scribe summary mirror onto the seed and the `sidekick-idea.reviewed` event fires. On any stage failure, the task transitions to `failed` and the next queued task continues.
 
 For *what* a sidekick seed is and how it gets captured, read [Phase 0's `sidekick-capture` Feature](../../spec/features/sidekick-capture/README.md). For the verdict gate's full algorithm, read [REQ `arbiter-gate-rules`](../../spec/features/sidekick-consilium/README.md#req-arbiter-gate-rules) in this skill's source Feature.
 
@@ -29,7 +29,7 @@ For *what* a sidekick seed is and how it gets captured, read [Phase 0's `sidekic
 Before claiming any task, verify the cross-repo dependencies are present:
 
 1. `command -v specscore` — the arbiter subcommand lives here (`specscore consilium verdict`).
-2. `command -v synchestra` — the task lifecycle lives here (`orchestrator task claim`, `orchestrator task update`).
+2. The orchestrator CLI is on PATH — the task lifecycle lives there (`orchestrator task claim`, `orchestrator task update`).
 3. `specscore --version` — must include the `consilium verdict` subcommand. If absent, exit cleanly with a message: "Phase 1 requires `specscore` with the `consilium verdict` subcommand (cross-repo dependency, tracked in `spec/plans/sidekick-consilium-arbiter-companion.md`). Install or upgrade and re-run."
 4. `orchestrator task types` — must include `consilium-review`. If absent, exit cleanly with the analogous message referencing the task-type companion plan.
 
@@ -103,10 +103,10 @@ Run these commands in order (capture stdout + stderr; truncate the summary to 4K
 
 ```bash
 # 1. Related features
-synchestra feature list --related "$SEED_SLUG" 2>&1 | head -50
+specscore feature list --related "$SEED_SLUG" 2>&1 | head -50
 
 # 2. Code-to-spec refs for captured_during
-synchestra code refs "$CAPTURED_DURING" 2>&1 | head -50
+specscore code refs "$CAPTURED_DURING" 2>&1 | head -50
 
 # 3. Recent git activity in relevant paths
 git log --oneline --since="30 days ago" -- "$CAPTURED_DURING" 2>&1 | head -20

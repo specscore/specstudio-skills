@@ -6,8 +6,8 @@ description: |
   criteria at spec/features/<slug>/. Gates implementation — no code,
   plans, or scaffolding until the Feature is lint-clean and
   user-approved. Optionally scaffolds Rehearse test stubs.
-  Trigger: "specify this", "/specify", "spec this out", or Synchestra
-  event `idea.approved`.
+  Trigger: "specify this", "/specify", "spec this out", or the
+  `idea.approved` event.
 aliases: [specify]
 ---
 
@@ -262,7 +262,7 @@ If the user has `obra/superpowers` installed, we may reuse its browser-based vis
 - [ ] Reviewer gate released — every entry in `gates.specify.reviewers` (including the `type: human` entry) returned `Approved`
 - [ ] `**Status:** Approved` in body metadata
 - [ ] Rehearse decision recorded (stubs scaffolded OR skip-reason noted)
-- [ ] Source Idea (if any) linked via the `**Source Ideas:**` body-metadata line — Synchestra handles the reverse link
+- [ ] Source Idea (if any) linked via the `**Source Ideas:**` body-metadata line — lifecycle tooling handles the reverse link
 - [ ] `feature.specified` + `feature.approved` events emitted
 
 ## Red Flags

@@ -300,7 +300,7 @@ Once `**Status:** Approved`, the Idea is alive but not frozen. The user MAY edit
 - Do NOT re-emit `idea.approved`.
 - Re-stage the changed file with `git add`.
 
-`idea.updated` is the signal Synchestra uses to notify Features that declare this Idea as a `Source Ideas` entry, so downstream specs can reconcile.
+`idea.updated` is the signal downstream consumers use to notify Features that declare this Idea as a `Source Ideas` entry, so downstream specs can reconcile.
 
 ### Computing the change-context payload
 
@@ -328,7 +328,7 @@ Both `idea.drafted` (re-emissions) and `idea.updated` events carry three change-
 
 1. When `specstudio:specify` (or the user) creates a Feature with a `**Source Ideas:**` line that references this Idea's slug, Lifecycle tooling detects the link.
 2. Lifecycle tooling transitions the Idea `**Status:** Approved → Specified`.
-3. Synchestra auto-populates the Idea's `**Promotes To:**` line with the list of Feature slugs.
+3. Lifecycle tooling auto-populates the Idea's `**Promotes To:**` line with the list of Feature slugs.
 4. Lifecycle tooling emits `idea.specified`.
 
 **Do not manually edit `**Promotes To:**`.** It's managed state.
