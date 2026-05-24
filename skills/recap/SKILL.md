@@ -305,7 +305,7 @@ A pre-flight refusal (Draft Feature, uncommitted Feature, no verify report) exit
 
 ## Event Emission
 
-After the report is written and staged (and only on a successful run — pre-flight refusals do NOT emit), the skill MUST emit exactly one `recap.completed` event via the convention in [synchestra-events.md](../shared/synchestra-events.md). Use `specscore event emit <event.yaml>` when the CLI is available; fall back to appending the event JSONL line to `.specscore/events.jsonl`.
+After the report is written and staged (and only on a successful run — pre-flight refusals do NOT emit), the skill MUST emit exactly one `recap.completed` event via the convention in [events.md](../shared/events.md). Use `specscore event emit <event.yaml>` when the CLI is available; fall back to appending the event JSONL line to `.specscore/events.jsonl`.
 
 Payload shape (flat counts — NOT a nested `drift_counts` object):
 
@@ -415,6 +415,6 @@ When the subagent returns malformed responses twice in a row, the skill records 
 - [Plan: Recap Skill MVP](../../spec/plans/recap.md) — the seven-task plan this skill realizes.
 - [Verify Skill](../verify/SKILL.md) — the architectural twin; recap mirrors verify's structure exactly with the documented deltas (verify-report pre-flight, verify-report resolution, 4-bucket drift verdict, 500-char narrative cap, 6-count tally, recap-only event name, transition to review).
 - [philosophy.md](../shared/philosophy.md) — shared tenets.
-- [synchestra-events.md](../shared/synchestra-events.md) — event-envelope contract and emission transport for `recap.completed`.
+- [events.md](../shared/events.md) — event-envelope contract and emission transport for `recap.completed`.
 - [sidekick-capture.md](../shared/sidekick-capture.md) — sidekick-idea handling during the skill's flow.
 - [PRINCIPLES.md](../../PRINCIPLES.md) — repo-level principles (user-attention economy, batched questions, parallel work while user is idle).

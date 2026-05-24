@@ -299,7 +299,7 @@ else
 fi
 ```
 
-The full envelope+payload structure is in `skills/shared/synchestra-events.md` under the `sidekick-idea.reviewed` section.
+The full envelope+payload structure is in `skills/shared/events.md` under the `sidekick-idea.reviewed` section.
 
 ### Output to the operator
 
@@ -329,7 +329,7 @@ These patterns indicate misuse and should be refused or refactored:
 ## References
 
 - [`shared/sidekick-capture.md`](../shared/sidekick-capture.md) — the directive Phase 0 ships; explains *what* sidekick seeds are.
-- [`shared/synchestra-events.md`](../shared/synchestra-events.md) — event envelope, including `sidekick-idea.reviewed`.
+- [`shared/events.md`](../shared/events.md) — event envelope, including `sidekick-idea.reviewed`.
 - [`roles/`](roles/) — the 11 default role files (researcher + scribe + 9 panel roles).
 - [`references/role-file-contract.md`](references/role-file-contract.md) — the markdown contract every role file follows.
 - [`references/consilium-config-example.md`](references/consilium-config-example.md) — the `specscore.yaml` `consilium:` block schema.

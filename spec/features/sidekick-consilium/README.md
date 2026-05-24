@@ -243,7 +243,7 @@ queued → claimed → in_review → complete
 
 #### REQ: event-reviewed-emitted
 
-On successful task transition to `complete`, the skill MUST emit a `sidekick-idea.reviewed` event per the convention in [`shared/synchestra-events.md`](../../../skills/shared/synchestra-events.md). Envelope and payload:
+On successful task transition to `complete`, the skill MUST emit a `sidekick-idea.reviewed` event per the convention in [`shared/events.md`](../../../skills/shared/events.md). Envelope and payload:
 
 ```yaml
 event: sidekick-idea.reviewed
@@ -522,7 +522,7 @@ In **this repo** (`specstudio-skills`):
 1. **`specstudio:consilium` skill** — orchestrator. Lives at `skills/consilium/SKILL.md` plus the role-file references. Stateless. Single responsibility: claim tasks → run pipeline → write verdicts → emit events.
 2. **Default role files** — 9 markdown files at `skills/consilium/roles/<role>.md` (plus `researcher.md` and `scribe.md` for the pipeline ends). Each follows the custom-role contract (REQ `custom-role-markdown-contract`).
 3. **`specscore.yaml` schema extension** — adds the `consilium:` top-level block with `roster` and `gate` sub-keys, contracted in REQs `roster-exclude-and-custom` and `gate-knob-set`. Phase 2 will additively add `consilium.auto_promote` to the same block.
-4. **`sidekick-idea.reviewed` event addendum** — extends `skills/shared/synchestra-events.md` (per the Phase 0 precedent) with the new event's envelope and payload.
+4. **`sidekick-idea.reviewed` event addendum** — extends `skills/shared/events.md` (per the Phase 0 precedent) with the new event's envelope and payload.
 
 In **`specscore/specscore-cli`** (cross-repo):
 5. **`specscore consilium verdict` subcommand** — the deterministic arbiter. Contracted in REQs `specscore-consilium-verdict-subcommand`, `arbiter-gate-rules`, `arbiter-reproducibility`, and `roster-validation`. Implementation tracked via companion plan stub at plan time.
@@ -539,7 +539,7 @@ The skill and role files are tightly coupled (the skill reads role files); the a
 
 - **`sidekick-capture`** ([Feature, Implementing](../sidekick-capture/README.md)) — no change. This Feature consumes the `sidekick-idea.captured` event emitted by `sidekick-capture` and produces `sidekick-idea.reviewed` in turn.
 - **`synchestra:whats-next`** (in `synchestra` repo) — extends to surface `consilium-review` tasks and to prioritize seeds with `needs-human-review` verdicts. This Feature's REQ `verdict-source-of-truth-in-task` is the data contract whats-next reads.
-- **`skills/shared/synchestra-events.md`** (in this repo) — extends with the `sidekick-idea.reviewed` event per REQ `event-reviewed-emitted`.
+- **`skills/shared/events.md`** (in this repo) — extends with the `sidekick-idea.reviewed` event per REQ `event-reviewed-emitted`.
 - **Phase 2 auto-promotion (future Feature)** — consumes the `sidekick-idea.reviewed` event and the task payload. Reads `verdict == should-implement` to decide auto-promote actions. Phase 1's REQ `verdict-source-of-truth-in-task` is what Phase 2 will query.
 
 ## Not Doing / Out of Scope

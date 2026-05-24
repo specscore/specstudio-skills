@@ -260,7 +260,7 @@ The skill MUST NOT yes-machine weak Plans or silently retry blocked subagents. W
 - [Feature: Plan Skill](../../spec/features/skills/plan/README.md) — the upstream Feature whose `**Depends-On:**`, `**Status:**`, `**Mode:**` schema this skill consumes.
 - [philosophy.md](../shared/philosophy.md) — shared tenets.
 - [path-conventions.md](../shared/path-conventions.md) — `spec/` vs `docs/` rules.
-- [synchestra-events.md](../shared/synchestra-events.md) — event payloads emitted by this skill.
+- [events.md](../shared/events.md) — event payloads emitted by this skill.
 - [sidekick-capture.md](../shared/sidekick-capture.md) — sidekick-idea handling during the skill's flow.
 - [PRINCIPLES.md](../../PRINCIPLES.md) — repo-level principles (user-attention economy, batched questions, parallel work while user is idle).
 - `superpowers:subagent-driven-development` — adopted four-status protocol; two deliberate departures documented above (staging-only; no code-quality reviewer subagent).

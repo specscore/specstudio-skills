@@ -50,7 +50,7 @@ Implement the verdict-tally rollup: count `passed_count`, `failed_count`, `unmap
 
 **Verifies:** skills/verify#ac:verify-completed-event-emitted
 
-After the report is written and staged, emit exactly one `verify.completed` event via the convention in `skills/shared/synchestra-events.md`. Payload MUST include `feature_slug`, `revision`, `report_path`, and the four flat count fields (`passed_count`, `failed_count`, `unmapped_count`, `errored_count`) summing to the Feature's total AC count, with no per-AC verdict details.
+After the report is written and staged, emit exactly one `verify.completed` event via the convention in `skills/shared/events.md`. Payload MUST include `feature_slug`, `revision`, `report_path`, and the four flat count fields (`passed_count`, `failed_count`, `unmapped_count`, `errored_count`) summing to the Feature's total AC count, with no per-AC verdict details.
 
 ### Task 7: Hard gate and transition to recap
 

@@ -1,8 +1,8 @@
-# Synchestra Events Emitted by SDD Skills
+# Events Emitted by SDD Skills
 
 **Status:** Contract
 
-Events are how SDD skills hand work off to Synchestra and vice-versa. Both `specstudio:ideate` and `specstudio:specify` emit events after successful artifact writes. Synchestra can also trigger skills in response to events.
+Events are how SDD skills hand work off to downstream consumers and vice-versa. Both `specstudio:ideate` and `specstudio:specify` emit events after successful artifact writes. Downstream automations may also trigger skills in response to events.
 
 ## Event Envelope (common fields)
 
@@ -13,7 +13,7 @@ event: <event-name>
 version: 1
 timestamp: <ISO-8601>
 actor:
-  kind: skill | user | synchestra | external
+  kind: skill | user | external
   id: <e.g., "skill:specstudio:ideate", "user:<username>", "agent:<agent-id>">
 artifact:
   type: idea | feature | plan
@@ -28,7 +28,7 @@ payload:
 
 - **Default:** Append-only JSONL to `.specscore/events.jsonl` at repo root (git-ignored).
 - **Hook:** Skills invoke `specscore event emit <event.yaml>` (CLI) when available; fall back to direct file append otherwise.
-- **Idempotency:** Each event includes a `uuid` (assigned by emitter). Synchestra dedupes by uuid.
+- **Idempotency:** Each event includes a `uuid` (assigned by emitter). Consumers dedupe by uuid.
 
 ## Unaggregated by Design
 
@@ -41,7 +41,7 @@ This is a single-source-of-truth choice: the skill is a faithful **event source*
 ## Events Emitted by `specstudio:ideate`
 
 ### `idea.drafted`
-Fired after every successful `specscore spec lint` pass following a write or edit, while the Idea's `**Status:**` is `Draft`. The first emission carries the same event name as subsequent ones — Synchestra dedupes by event uuid.
+Fired after every successful `specscore spec lint` pass following a write or edit, while the Idea's `**Status:**` is `Draft`. The first emission carries the same event name as subsequent ones — consumers dedupe by event uuid.
 
 ```yaml
 payload:
@@ -67,7 +67,7 @@ payload:
   recommended_direction_summary: <first paragraph>
 ```
 
-**Consumer:** Synchestra may react by scheduling `specstudio:specify` (after user confirmation) or by notifying watchers.
+**Consumer:** A downstream orchestrator may react by scheduling `specstudio:specify` (after user confirmation) or by notifying watchers.
 
 ### `idea.updated`
 Fired after every successful `specscore spec lint` pass following a write or edit, while the Idea's `**Status:**` is `Approved`. Distinguishes post-approval iteration from pre-approval drafting; consumers that watch only for material changes to approved Ideas subscribe here rather than to `idea.drafted`.
@@ -85,7 +85,7 @@ payload:
 
 The change-context fields follow the same semantics and discipline as on `idea.drafted` (see above), but are never `null` here — by definition, an `idea.updated` emission has a prior revision to diff against (the revision at which `idea.approved` last fired, or the previous `idea.updated`).
 
-**Consumer:** Synchestra may notify Features that declare this Idea as a `Source Ideas` entry, so downstream specs can be re-reconciled. Consumers can filter on `changed_sections` to react only when load-bearing sections (e.g., `Recommended Direction`) change.
+**Consumer:** A downstream orchestrator may notify Features that declare this Idea as a `Source Ideas` entry, so downstream specs can be re-reconciled. Consumers can filter on `changed_sections` to react only when load-bearing sections (e.g., `Recommended Direction`) change.
 
 ## Events Emitted by `specstudio:specify`
 
@@ -131,7 +131,7 @@ payload:
   change_summary: <string ≤2 sentences>         # always non-null
 ```
 
-**Consumer:** Synchestra typically triggers `writing-plans` after `feature.approved`, and notifies downstream consumers (Plans, dependent Features, Hub) on `feature.updated`.
+**Consumer:** A downstream orchestrator typically triggers `writing-plans` after `feature.approved`, and notifies downstream consumers (Plans, dependent Features, Hub) on `feature.updated`.
 
 ## Events Emitted by `specstudio:sidekick`
 
@@ -188,12 +188,12 @@ payload:
   tokens_total: <int>
 ```
 
-**Consumer:** `synchestra:whats-next` reads this event to surface `consilium-review` tasks with `needs-human-review` verdicts at the top of the prioritization report. Phase 2 auto-promote (future Feature) will subscribe to `verdict: should-implement` events.
+**Consumer:** A downstream orchestrator's task-prioritization reader surfaces `consilium-review` tasks with `needs-human-review` verdicts at the top of its prioritization report. Phase 2 auto-promote (future Feature) will subscribe to `verdict: should-implement` events.
 
-## Events Emitted by Synchestra (consumed by skills)
+## Events Emitted by External Lifecycle Tooling (consumed by skills)
 
 ### `idea.implementing`
-Fired by Synchestra (not by a skill) when the **first** Feature is created (or transitioned out of `Stable`) whose `**Source Ideas:**` field references an Idea's slug. Synchestra:
+Fired by automated lifecycle tooling (not by a skill) when the **first** Feature is created (or transitioned out of `Stable`) whose `**Source Ideas:**` field references an Idea's slug. The tooling:
 
 1. Transitions the Idea's `**Status:** Approved → Implementing`.
 2. Populates (or updates) the Idea's `**Promotes To:**` with the list of Feature slugs.
@@ -207,7 +207,7 @@ payload:
 ```
 
 ### `idea.specified`
-Fired by Synchestra (not by a skill) when **every** Feature listed in an Idea's `**Promotes To:**` reaches `Status: Stable`. Synchestra:
+Fired by automated lifecycle tooling (not by a skill) when **every** Feature listed in an Idea's `**Promotes To:**` reaches `Status: Stable`. The tooling:
 
 1. Transitions the Idea's `**Status:** Implementing → Specified`.
 2. Commits the updated Idea artifact.
@@ -236,8 +236,8 @@ This is a stricter event than the previous `idea.specified` (which fired on firs
 | `idea.drafted` | `specstudio:ideate` | Every successful lint pass while `**Status:** Draft` |
 | `idea.approved` | `specstudio:ideate` | User approves Recommended Direction (exactly once) |
 | `idea.updated` | `specstudio:ideate` | Every successful lint pass while `**Status:** Approved` |
-| `idea.implementing` | synchestra | First Feature created with this Idea in `**Source Ideas:**` (Approved → Implementing) |
-| `idea.specified` | synchestra | Every Feature referencing this Idea reaches `Status: Stable` (Implementing → Specified) |
+| `idea.implementing` | lifecycle tooling | First Feature created with this Idea in `**Source Ideas:**` (Approved → Implementing) |
+| `idea.specified` | lifecycle tooling | Every Feature referencing this Idea reaches `Status: Stable` (Implementing → Specified) |
 | `feature.specified` | `specstudio:specify` | Reviewer-approved, lint-clean Feature write |
 | `feature.approved` | `specstudio:specify` | User approves the written Feature (exactly once) |
 | `feature.updated` | `specstudio:specify` | Every successful lint pass while `status` ∈ {Approved, Implementing, Stable} after approval |

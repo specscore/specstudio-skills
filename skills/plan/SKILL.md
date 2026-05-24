@@ -319,7 +319,7 @@ The skill MUST NOT yes-machine weak Plans. When a task is vague, an AC is uncove
 - [philosophy.md](../shared/philosophy.md) — shared tenets.
 - [path-conventions.md](../shared/path-conventions.md) — `spec/` vs `docs/` rules.
 - [specscore-lint-rules.md](../shared/specscore-lint-rules.md) — lint contract this skill assumes.
-- [synchestra-events.md](../shared/synchestra-events.md) — event payloads emitted by this skill.
+- [events.md](../shared/events.md) — event payloads emitted by this skill.
 - [question-cadence.md](../shared/question-cadence.md) — when to batch vs single-question.
 - [sidekick-capture.md](../shared/sidekick-capture.md) — sidekick-idea handling during the skill's flow.
 - [Plan Skill Feature](../../spec/features/skills/plan/README.md) — the SpecScore Feature this skill implements.

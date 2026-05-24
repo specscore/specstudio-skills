@@ -379,7 +379,7 @@ re-review.
                                    Constraint-Based, Pre-mortem, Analogous)
 - references/refinement-criteria.md
 - references/examples.md
-- references/synchestra-events.md  (which events this skill emits)
+- references/events.md  (which events this skill emits)
 ```
 
 ### 8.2 `skills/specify/SKILL.md` (Draft Outline — skill name `specstudio:specify`)
@@ -493,7 +493,7 @@ as its own message. See references/visual-companion.md.
 ## References
 - references/reviewer-prompt.md    (subagent template)
 - references/visual-companion.md   (optional mockup server)
-- references/synchestra-events.md
+- references/events.md
 - references/specscore-feature-schema.md
 ```
 
@@ -509,13 +509,13 @@ skills/
 │       ├── frameworks.md              ← from idea-refine
 │       ├── refinement-criteria.md     ← from idea-refine
 │       ├── examples.md                ← adapted from idea-refine
-│       └── synchestra-events.md       ← NEW
+│       └── events.md       ← NEW
 ├── specify/          ← dir name uses `-`; skill name is `specstudio:specify`
 │   ├── SKILL.md
 │   └── references/
 │       ├── reviewer-prompt.md         ← from brainstorming
 │       ├── visual-companion.md        ← from brainstorming (optional)
-│       ├── synchestra-events.md       ← NEW
+│       ├── events.md       ← NEW
 │       └── specscore-feature-schema.md← NEW (canonical schema)
 └── shared/
     ├── philosophy.md                  ← Jobs-flavored + simplicity tenets
@@ -549,7 +549,7 @@ skills/
 
 3. **Lint granularity — RESOLVED.** `specscore lint` supports **single-file linting** (e.g., `specscore lint spec/ideas/<slug>.md`) in addition to whole-tree. The skills invoke single-file lint on the artifact they just wrote. No separate Idea-only lint subset is needed — the lint rule engine dispatches by artifact `type:` in the front-matter.
 
-4. **Event schema — RESOLVED.** Central file: `shared/synchestra-events.md`. Emitted by the skills: `idea.drafted`, `idea.approved`, `idea.specified`, `feature.specified`, `feature.approved`. Payload shapes defined in that file.
+4. **Event schema — RESOLVED.** Central file: `shared/events.md`. Emitted by the skills: `idea.drafted`, `idea.approved`, `idea.specified`, `feature.specified`, `feature.approved`. Payload shapes defined in that file.
 
 5. **Parallel / competing Ideas — OUT OF SCOPE.** For now, users manage competing-hypothesis scenarios manually (archive the loser, keep the winner). Revisit if/when it becomes a pattern.
 
@@ -599,7 +599,7 @@ In other words: **the user must have Node.js installed on their machine**. The s
 |---|---|---|
 | P0 | Write `shared/specscore-lint-rules.md` with rules both skills assume | ☐ |
 | P0 | Write `shared/path-conventions.md` codifying `spec/` vs `docs/` split | ☐ |
-| P0 | Write `shared/synchestra-events.md` payload specs | ☐ |
+| P0 | Write `shared/events.md` payload specs | ☐ |
 | P0 | Write `shared/philosophy.md` and `shared/question-cadence.md` | ☐ |
 | P1 | Draft `skills/ideate/SKILL.md` per outline in §8.1 | ☐ |
 | P1 | Draft `skills/specify/SKILL.md` per outline in §8.2 | ☐ |

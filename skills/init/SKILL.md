@@ -238,4 +238,4 @@ Direct, helpful, honest about partial states and degraded paths. The skill is a 
 - [SpecScore CLI init Feature](https://github.com/specscore/specscore-cli/blob/main/spec/features/cli/init/README.md) — the `specscore init` subcommand contract this skill delegates to
 - [`specscore:install`](https://github.com/specscore/ai-plugin-specscore/blob/main/skills/install/SKILL.md) — install delegate for the `specscore` CLI
 - [`synchestra:install`](https://github.com/specscore/ai-plugin-synchestra/blob/main/skills/install/SKILL.md) — install delegate for the `synchestra` CLI
-- [`shared/synchestra-events.md`](../shared/synchestra-events.md) — event vocabulary `project.initialized` / `project.updated` participate in
+- [`shared/events.md`](../shared/events.md) — event vocabulary `project.initialized` / `project.updated` participate in

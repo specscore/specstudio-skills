@@ -9,4 +9,4 @@ status: queued
 synchestra_task: null
 ---
 
-# Document the previously-undocumented optional 'correlation_id' field that downstream consumers rely on in synchestra-events.md
+# Document the previously-undocumented optional 'correlation_id' field that downstream consumers rely on in events.md

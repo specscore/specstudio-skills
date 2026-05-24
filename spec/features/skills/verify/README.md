@@ -118,7 +118,7 @@ When a Feature has zero commits matching ANY of its ACs' trailers (e.g., a Featu
 
 #### REQ: verify-completed-event
 
-On a successful run (report written, regardless of verdict outcomes), the skill MUST emit a `verify.completed` event via the convention in `skills/shared/synchestra-events.md`. Payload MUST include the following integer count fields, each ≥ 0, summing to the Feature's total AC count: `passed_count`, `failed_count`, `unmapped_count`, `errored_count`. Payload MUST also include: `feature_slug`, `revision` (the HEAD SHA), and `report_path` (relative to repo root). Additional payload fields MAY be added in the future without breaking this contract; the four count fields and the three identity fields are the minimum. The event MUST be emitted exactly once per successful run. Per-AC verdict details are NOT in the event payload — consumers read them from the report file at `report_path`.
+On a successful run (report written, regardless of verdict outcomes), the skill MUST emit a `verify.completed` event via the convention in `skills/shared/events.md`. Payload MUST include the following integer count fields, each ≥ 0, summing to the Feature's total AC count: `passed_count`, `failed_count`, `unmapped_count`, `errored_count`. Payload MUST also include: `feature_slug`, `revision` (the HEAD SHA), and `report_path` (relative to repo root). Additional payload fields MAY be added in the future without breaking this contract; the four count fields and the three identity fields are the minimum. The event MUST be emitted exactly once per successful run. Per-AC verdict details are NOT in the event payload — consumers read them from the report file at `report_path`.
 
 ### Transition
 

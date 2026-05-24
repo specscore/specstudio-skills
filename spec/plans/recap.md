@@ -50,7 +50,7 @@ Implement the verdict-tally rollup: count `no_drift_count`, `spec_tighter_count`
 
 **Verifies:** skills/recap#ac:recap-completed-event-emitted
 
-After the report is written and staged, emit exactly one `recap.completed` event via the convention in `skills/shared/synchestra-events.md`. Payload MUST include `feature_slug`, `revision` (HEAD SHA), `report_path` (relative to repo root), `verify_report_path` (the resolved `_verify/<sha>.md` path), and the six flat count fields (`no_drift_count`, `spec_tighter_count`, `code_tighter_count`, `contradiction_count`, `unmapped_count`, `errored_count`) each ≥ 0 and summing to the Feature's total AC count. Payload MUST NOT include per-AC drift details — consumers read those from `report_path`.
+After the report is written and staged, emit exactly one `recap.completed` event via the convention in `skills/shared/events.md`. Payload MUST include `feature_slug`, `revision` (HEAD SHA), `report_path` (relative to repo root), `verify_report_path` (the resolved `_verify/<sha>.md` path), and the six flat count fields (`no_drift_count`, `spec_tighter_count`, `code_tighter_count`, `contradiction_count`, `unmapped_count`, `errored_count`) each ≥ 0 and summing to the Feature's total AC count. Payload MUST NOT include per-AC drift details — consumers read those from `report_path`.
 
 ### Task 7: Hard gate and transition to review
 

@@ -271,7 +271,7 @@ A pre-flight refusal (Draft Feature, uncommitted Feature) exits non-zero without
 
 ## Event Emission
 
-After the report is written and staged (and only on a successful run — pre-flight refusals do NOT emit), the skill MUST emit exactly one `verify.completed` event via the convention in [synchestra-events.md](../shared/synchestra-events.md). Use `specscore event emit <event.yaml>` when the CLI is available; fall back to appending the event JSONL line to `.specscore/events.jsonl`.
+After the report is written and staged (and only on a successful run — pre-flight refusals do NOT emit), the skill MUST emit exactly one `verify.completed` event via the convention in [events.md](../shared/events.md). Use `specscore event emit <event.yaml>` when the CLI is available; fall back to appending the event JSONL line to `.specscore/events.jsonl`.
 
 Payload shape (flat counts — NOT a nested `verdict_counts` object):
 
@@ -372,6 +372,6 @@ When the subagent returns malformed responses twice in a row, the skill records 
 - [Feature: Implement Skill](../../spec/features/skills/implement/README.md) — the upstream Feature whose `Verifies:` commit-message trailer this skill consumes.
 - [Plan: Verify Skill MVP](../../spec/plans/verify.md) — the seven-task plan this skill realizes.
 - [philosophy.md](../shared/philosophy.md) — shared tenets.
-- [synchestra-events.md](../shared/synchestra-events.md) — event-envelope contract and emission transport for `verify.completed`.
+- [events.md](../shared/events.md) — event-envelope contract and emission transport for `verify.completed`.
 - [sidekick-capture.md](../shared/sidekick-capture.md) — sidekick-idea handling during the skill's flow.
 - [PRINCIPLES.md](../../PRINCIPLES.md) — repo-level principles (user-attention economy, batched questions, parallel work while user is idle).

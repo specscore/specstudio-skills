@@ -87,7 +87,7 @@ A user with N queued seeds in `spec/ideas/seeds/` runs `/consilium` once, sees N
 - **Existing Features affected:**
   - `sidekick-capture` ([Implementing](../features/sidekick-capture/README.md)) — no change. The consilium consumes `sidekick-idea.captured` events emitted by that Feature.
   - `synchestra:whats-next` (in `synchestra` repo) — extends to surface `consilium-review` tasks and seeds with `needs-human-review` verdicts at the top of the prioritization report.
-  - `skills/shared/synchestra-events.md` (in this repo) — extends with the `sidekick-idea.reviewed` event emitted by the consilium when a verdict is finalized.
+  - `skills/shared/events.md` (in this repo) — extends with the `sidekick-idea.reviewed` event emitted by the consilium when a verdict is finalized.
 - **Dependencies:**
   - Cross-repo dependency on `specscore/specscore-cli` for the `consilium verdict` subcommand. Companion plan stub at `spec/plans/sidekick-consilium-arbiter-companion.md` (to be authored at Feature-promotion time, modeled on the `sidekick-capture-lint-rule-companion.md` pattern).
   - Cross-repo dependency on `specscore/synchestra` for the `consilium-review` task type. Same companion-plan pattern.

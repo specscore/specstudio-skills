@@ -4,7 +4,7 @@
 
 **Goal:** Ship Phase 0 of the `sidekick-ideas` Idea: capture infrastructure that lets host skills durably record sideline ideas as lint-clean seed files without derailing primary work.
 
-**Architecture:** A new `specstudio:sidekick` skill writes seed files at `spec/ideas/seeds/<slug>.md` per a documented schema (8-key YAML frontmatter + H1 heading + optional ≤2000-char markdown body); a shared directive at `skills/shared/sidekick-capture.md` instructs host skills (`specstudio:ideate`, `specstudio:specify`) on heuristic and explicit capture paths; the `sidekick-idea.captured` event is emitted on successful write via the existing envelope+payload convention in `skills/shared/synchestra-events.md`. The seed lint rule's CLI implementation is cross-repo (`specscore/specscore-cli`) and tracked by a companion plan stub.
+**Architecture:** A new `specstudio:sidekick` skill writes seed files at `spec/ideas/seeds/<slug>.md` per a documented schema (8-key YAML frontmatter + H1 heading + optional ≤2000-char markdown body); a shared directive at `skills/shared/sidekick-capture.md` instructs host skills (`specstudio:ideate`, `specstudio:specify`) on heuristic and explicit capture paths; the `sidekick-idea.captured` event is emitted on successful write via the existing envelope+payload convention in `skills/shared/events.md`. The seed lint rule's CLI implementation is cross-repo (`specscore/specscore-cli`) and tracked by a companion plan stub.
 
 **Tech Stack:** Markdown skill authoring (Claude Code skill format); YAML frontmatter; bash for slug derivation and file writes; SHA-256 for content hashing (e.g., `shasum -a 256`); `.specscore/events.jsonl` for event transport per existing convention; `specscore spec lint` for verification.
 
@@ -19,7 +19,7 @@ This plan implements the Approved Feature at [`spec/features/sidekick-capture/RE
 - New skill at `skills/sidekick/SKILL.md` plus references
 - New shared directive at `skills/shared/sidekick-capture.md`
 - Seed template at `skills/sidekick/references/seed-template.md`
-- Event-shape addendum to `skills/shared/synchestra-events.md` (extend with `sidekick-idea.captured`)
+- Event-shape addendum to `skills/shared/events.md` (extend with `sidekick-idea.captured`)
 - Wiring of `specstudio:ideate` and `specstudio:specify` checklists to reference the directive (REQ `host-skill-references`)
 - 17 Rehearse stubs at `spec/features/sidekick-capture/_tests/<slug>.md` (12 original + 5 new for back-link ACs)
 - Companion plan stub for the cross-repo lint rule
@@ -38,7 +38,7 @@ These decisions surface in multiple tasks; resolving them once up front avoids d
 
 ### 1. Event-shape reconciliation with existing convention
 
-REQ `event-payload-schema` lists 8 flat fields. The existing `synchestra-events.md` convention is envelope+payload. The 8 fields map as:
+REQ `event-payload-schema` lists 8 flat fields. The existing `events.md` convention is envelope+payload. The 8 fields map as:
 
 | Spec field (REQ-14) | Envelope or payload | Maps to |
 |---|---|---|
@@ -108,7 +108,7 @@ spec/
 skills/
 ├── ideate/SKILL.md                  # add checklist item linking to directive
 ├── specify/SKILL.md                 # add checklist item linking to directive
-└── shared/synchestra-events.md      # add sidekick-idea.captured section
+└── shared/events.md      # add sidekick-idea.captured section
 ```
 
 18 Rehearse stub files = 17 testable ACs + 1 skipped (`heuristic-capture-does-not-derail-host`). The skipped AC gets a separate `_skipped.md` file documenting the reason. Total = 18 files (17 stubs + 1 skip-reason). Updated post-spec-revision per Task 7.
@@ -518,7 +518,7 @@ Append:
 ````markdown
 ## Event emission (REQ `emits-captured-event`, REQ `event-payload-schema`)
 
-On successful write — and only on successful write — emit `sidekick-idea.captured` via the convention in [`shared/synchestra-events.md`](../shared/synchestra-events.md).
+On successful write — and only on successful write — emit `sidekick-idea.captured` via the convention in [`shared/events.md`](../shared/events.md).
 
 The event uses the standard envelope+payload structure. REQ `event-payload-schema` lists 8 conceptual fields; they map to the envelope and payload as follows:
 
@@ -555,7 +555,7 @@ content_hash=$(printf '%s' "$ONE_LINER" \
 
 ### Transport
 
-Per `synchestra-events.md`:
+Per `events.md`:
 
 - **Default:** append the event as a single line of JSON to `.specscore/events.jsonl` at repo root.
 - **Hook:** if `command -v specscore` resolves, prefer `specscore event emit <event.yaml>` (CLI). Otherwise fall back to the file append.
@@ -597,7 +597,7 @@ These patterns indicate misuse of this skill; refuse or refactor:
 ## References
 
 - [`shared/sidekick-capture.md`](../shared/sidekick-capture.md) — when and why hosts invoke this skill.
-- [`shared/synchestra-events.md`](../shared/synchestra-events.md) — event envelope and emission transport.
+- [`shared/events.md`](../shared/events.md) — event envelope and emission transport.
 - [`references/seed-template.md`](references/seed-template.md) — example seed files.
 - [Feature: `sidekick-capture`](../../spec/features/sidekick-capture/README.md) — the spec this skill implements.
 ````
@@ -610,7 +610,7 @@ Expected: `0 violations found`
 Open the file in your editor and verify:
 - YAML frontmatter is well-formed
 - All 8 sections are present (When to Use, Anti-Pattern, Input, Validation rules, Slug derivation, Collision disambiguation, Frontmatter assembly, Body assembly, Writing the seed file, Event emission, Output, Red Flags, References)
-- Links to `../shared/sidekick-capture.md`, `../shared/synchestra-events.md`, `references/seed-template.md`, and the Feature spec all resolve relative to the SKILL.md path
+- Links to `../shared/sidekick-capture.md`, `../shared/events.md`, `references/seed-template.md`, and the Feature spec all resolve relative to the SKILL.md path
 
 - [ ] **Step 10: Commit**
 
@@ -622,7 +622,7 @@ Single-mode capture-and-exit skill. Validates a one-liner (1–500 chars),
 optionally accepts a --body argument (total body ≤ 2000 chars), derives
 a slug, disambiguates collisions with -2/-3/... suffix, writes the seed
 to spec/ideas/seeds/<slug>.md with the 8-key frontmatter and an H1 line,
-then emits sidekick-idea.captured per synchestra-events.md envelope.
+then emits sidekick-idea.captured per events.md envelope.
 
 Implements 5 REQs from Feature sidekick-capture:
 - invocation-triggers
@@ -763,16 +763,16 @@ EOF
 
 ---
 
-## Task 4: Extend `synchestra-events.md` with `sidekick-idea.captured`
+## Task 4: Extend `events.md` with `sidekick-idea.captured`
 
 **Files:**
-- Modify: `skills/shared/synchestra-events.md`
+- Modify: `skills/shared/events.md`
 
 **Why now:** The skill (Task 3) references this section. Adding it after the skill keeps task scope focused but means the link from Task 3 is broken until Task 4 lands. That is acceptable because the link is documentary, not enforced. (Alternative would be to swap Tasks 3 and 4; either order works.)
 
 - [ ] **Step 1: Locate the insertion point**
 
-Open `skills/shared/synchestra-events.md`. The file has sections per emitting skill (`Events Emitted by specstudio:ideate`, `Events Emitted by specstudio:specify`). Add a new sibling section `Events Emitted by specstudio:sidekick` after the last existing skill section.
+Open `skills/shared/events.md`. The file has sections per emitting skill (`Events Emitted by specstudio:ideate`, `Events Emitted by specstudio:specify`). Add a new sibling section `Events Emitted by specstudio:sidekick` after the last existing skill section.
 
 - [ ] **Step 2: Append the section**
 
@@ -817,10 +817,10 @@ Expected: `0 violations found`
 - [ ] **Step 4: Commit**
 
 ```bash
-git add skills/shared/synchestra-events.md
+git add skills/shared/events.md
 git commit -m "feat(skills/shared): add sidekick-idea.captured event
 
-Extend synchestra-events.md with the event emitted by specstudio:sidekick
+Extend events.md with the event emitted by specstudio:sidekick
 on successful seed write. Maps the 8 conceptual fields from Feature
 sidekick-capture REQ event-payload-schema onto the existing envelope+
 payload structure (event, version, uuid, timestamp, actor, artifact,
@@ -845,7 +845,7 @@ Per REQ emits-captured-event (Feature sidekick-capture).
 sed -n '45,60p' skills/ideate/SKILL.md
 ```
 
-Verify item 10 ends `... See [synchestra-events.md](../shared/synchestra-events.md).` and the next section is `## Phase 1 — Understand & Expand (Divergent)`.
+Verify item 10 ends `... See [events.md](../shared/events.md).` and the next section is `## Phase 1 — Understand & Expand (Divergent)`.
 
 - [ ] **Step 2: Append item 11 to the checklist**
 
@@ -1211,7 +1211,7 @@ Expected: both files list.
 - [ ] **Step 4: Verify event-shape addendum**
 
 ```bash
-grep -A 2 '^### `sidekick-idea.captured`' skills/shared/synchestra-events.md
+grep -A 2 '^### `sidekick-idea.captured`' skills/shared/events.md
 ```
 
 Expected: the heading shows with the descriptive line below.

@@ -165,7 +165,7 @@ On confirmed user approval (per `approval-explicit-phrase` or `approval-vague-co
 
 ### Event emission
 
-The skill participates in the Synchestra event vocabulary defined in [`shared/synchestra-events.md`](../../../../skills/shared/synchestra-events.md).
+The skill participates in the Synchestra event vocabulary defined in [`shared/events.md`](../../../../skills/shared/events.md).
 
 #### REQ: event-drafted
 

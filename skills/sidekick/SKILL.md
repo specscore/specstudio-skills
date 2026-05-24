@@ -306,7 +306,7 @@ If the back-link write fails (filesystem error, parse error, concurrent modifica
 
 ## Event emission (REQ `emits-captured-event`, REQ `event-payload-schema`)
 
-On successful write — and only on successful write — emit `sidekick-idea.captured` via the convention in [`shared/synchestra-events.md`](../shared/synchestra-events.md).
+On successful write — and only on successful write — emit `sidekick-idea.captured` via the convention in [`shared/events.md`](../shared/events.md).
 
 The event uses the standard envelope+payload structure. REQ `event-payload-schema` lists 8 conceptual fields; they map to the envelope and payload as follows:
 
@@ -343,7 +343,7 @@ content_hash=$(printf '%s' "$ONE_LINER" \
 
 ### Transport
 
-Per `synchestra-events.md`:
+Per `events.md`:
 
 - **Default:** append the event as a single line of JSON to `.specscore/events.jsonl` at repo root.
 - **Hook:** if `command -v specscore` resolves, prefer `specscore event emit <event.yaml>` (CLI). Otherwise fall back to the file append.
@@ -382,7 +382,7 @@ These patterns indicate misuse of this skill; refuse or refactor:
 
 - [`shared/sidekick-capture.md`](../shared/sidekick-capture.md) — when and why hosts invoke this skill.
 - [`shared/destination-resolution.md`](../shared/destination-resolution.md) — the deliberation-prompt template invoked from "Destination resolution" step 2.
-- [`shared/synchestra-events.md`](../shared/synchestra-events.md) — event envelope and emission transport.
+- [`shared/events.md`](../shared/events.md) — event envelope and emission transport.
 - [`references/seed-template.md`](references/seed-template.md) — example seed files.
 - [Feature: `sidekick-capture`](../../spec/features/sidekick-capture/README.md) — the parent spec this skill implements.
 - [Feature: `sidekick-capture/destination-resolution`](../../spec/features/sidekick-capture/destination-resolution/README.md) — the sub-Feature for the multi-repo destination-resolution flow.

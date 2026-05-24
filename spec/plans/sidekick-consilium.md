@@ -67,7 +67,7 @@ skills/
         ├── role-file-contract.md                  # Task 1 (also used by Tasks 4–7)
         └── consilium-config-example.md            # Task 3
 
-skills/shared/synchestra-events.md                  # Task 2 — extend with sidekick-idea.reviewed
+skills/shared/events.md                  # Task 2 — extend with sidekick-idea.reviewed
 
 spec/features/sidekick-consilium/
 ├── _tests/                                        # Task 9 — Rehearse scaffolds
@@ -356,17 +356,17 @@ EOF
 
 ---
 
-## Task 2: Extend `synchestra-events.md` with `sidekick-idea.reviewed`
+## Task 2: Extend `events.md` with `sidekick-idea.reviewed`
 
 **Files:**
-- Modify: `skills/shared/synchestra-events.md`
+- Modify: `skills/shared/events.md`
 
 **Why now:** the consilium skill (Task 8) emits this event on every successful verdict. Authoring the contract before the skill means the skill has a stable reference target.
 
 - [ ] **Step 1: Locate the insertion point**
 
 ```bash
-grep -n '^## Events Emitted by' skills/shared/synchestra-events.md
+grep -n '^## Events Emitted by' skills/shared/events.md
 ```
 
 Append the new section after the last `## Events Emitted by …` section.
@@ -411,11 +411,11 @@ payload:
 specscore spec lint --severity warning
 # Expected: same 3 pre-existing violations
 
-git add skills/shared/synchestra-events.md
+git add skills/shared/events.md
 git commit -m "$(cat <<'EOF'
 feat(skills/shared): add sidekick-idea.reviewed event
 
-Extend synchestra-events.md with the event emitted by
+Extend events.md with the event emitted by
 specstudio:consilium on successful task completion. Payload includes
 verdict, roster snapshot, and tokens_total for downstream consumers
 (synchestra:whats-next today; Phase 2 auto-promote future).
@@ -604,7 +604,7 @@ If you find yourself writing judgment-laden language, stop and rewrite. A resear
 
 ## Code references
 - `skills/init/SKILL.md:42-78` — current init flow writes ephemeral status to stdout only.
-- `skills/shared/synchestra-events.md:30-45` — event-bus convention uses `.specscore/events.jsonl` (gitignored, ephemeral by convention).
+- `skills/shared/events.md:30-45` — event-bus convention uses `.specscore/events.jsonl` (gitignored, ephemeral by convention).
 
 ## Recent git activity
 - `1640824`: feat(skills/init): implement specstudio:init skill (2026-05-08)
@@ -1532,7 +1532,7 @@ else
 fi
 ```
 
-The full envelope+payload structure is in `skills/shared/synchestra-events.md` under the `sidekick-idea.reviewed` section.
+The full envelope+payload structure is in `skills/shared/events.md` under the `sidekick-idea.reviewed` section.
 
 ### Output to the operator
 
@@ -1568,7 +1568,7 @@ These patterns indicate misuse and should be refused or refactored:
 ## References
 
 - [`shared/sidekick-capture.md`](../shared/sidekick-capture.md) — the directive Phase 0 ships; explains *what* sidekick seeds are.
-- [`shared/synchestra-events.md`](../shared/synchestra-events.md) — event envelope, including `sidekick-idea.reviewed`.
+- [`shared/events.md`](../shared/events.md) — event envelope, including `sidekick-idea.reviewed`.
 - [`roles/`](roles/) — the 11 default role files (researcher + scribe + 9 panel roles).
 - [`references/role-file-contract.md`](references/role-file-contract.md) — the markdown contract every role file follows.
 - [`references/consilium-config-example.md`](references/consilium-config-example.md) — the `specscore.yaml` `consilium:` block schema.

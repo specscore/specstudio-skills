@@ -58,7 +58,7 @@ Create a task for each and complete in order:
 9. **Lint** — `specscore spec lint`.
 10. **Inline self-review** — placeholders, consistency, scope, ambiguity.
 11. **Run the reviewer gate** — load and dispatch `gates.specify.reviewers` from `specscore.yaml` per the [Reviewer Gates](../../spec/features/reviewer-gates/README.md) Feature. See the `## Reviewer Gate` section below.
-12. **Emit events** — `feature.specified` after lint passes and before reviewer-gate dispatch; `feature.approved` after the reviewer gate releases (every entry returned `Approved`, including the `type: human` entry that captured the user's approval). See [synchestra-events.md](../shared/synchestra-events.md).
+12. **Emit events** — `feature.specified` after lint passes and before reviewer-gate dispatch; `feature.approved` after the reviewer gate releases (every entry returned `Approved`, including the `type: human` entry that captured the user's approval). See [events.md](../shared/events.md).
 13. **Transition to `writing-plans`.**
 14. **Throughout** — watch for sidekick ideas per [sidekick-capture.md](../shared/sidekick-capture.md). When an out-of-scope improvement surfaces, invoke `specstudio:sidekick` with a one-liner, acknowledge in one line, and return to the current checklist step immediately. Do not derail to discuss the sideline idea.
 
@@ -289,6 +289,6 @@ If the user has `obra/superpowers` installed, we may reuse its browser-based vis
 - [philosophy.md](../shared/philosophy.md) — shared tenets.
 - [path-conventions.md](../shared/path-conventions.md) — `spec/` vs `docs/` rules.
 - [specscore-lint-rules.md](../shared/specscore-lint-rules.md) — lint contract this skill assumes.
-- [synchestra-events.md](../shared/synchestra-events.md) — event payloads emitted by this skill.
+- [events.md](../shared/events.md) — event payloads emitted by this skill.
 - [question-cadence.md](../shared/question-cadence.md) — when to batch vs single-question.
 - [rehearse-heuristic.md](../shared/rehearse-heuristic.md) — per-AC testability decision.

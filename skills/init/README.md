@@ -47,4 +47,4 @@ The skill does NOT run install commands itself. Install URLs, supported methods 
 - `project.updated` — emitted on subsequent state-changing reruns.
 - No event on no-op rerun.
 
-Both events follow the canonical change-context shape (`changed_sections`, `previous_revision`, factual `change_summary` ≤2 sentences) used by `idea.updated` and `feature.updated`. See [`../shared/synchestra-events.md`](../shared/synchestra-events.md).
+Both events follow the canonical change-context shape (`changed_sections`, `previous_revision`, factual `change_summary` ≤2 sentences) used by `idea.updated` and `feature.updated`. See [`../shared/events.md`](../shared/events.md).
