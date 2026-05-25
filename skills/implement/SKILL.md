@@ -7,6 +7,8 @@ description: |
   Hard-gates on per-batch user approval of the consolidated staged
   diff. Stages-only (mirrors ideate/specify/plan); provides a
   Verifies: commit-message trailer template the user pastes.
+  Also accepts a Feature directly (no Plan) or an Idea directly
+  (no Feature or Plan) for single-pass conversational implementation.
   Trigger: "implement", "/implement", "implement this plan",
   "specstudio:implement", or event `plan.approved`.
 aliases: [implement]
@@ -14,7 +16,7 @@ aliases: [implement]
 
 # Implement
 
-Turn an approved SpecScore Plan into staged, AC-traceable source-code changes via parallel subagent dispatch with per-batch user approval.
+Turn an approved SpecScore Plan, Feature, or Idea into staged, AC-traceable source-code changes. Plan-sourced mode uses parallel subagent dispatch with per-batch user approval. Feature-sourced and Idea-sourced modes operate as a single-pass conversation.
 
 ## Hard Gate
 
@@ -31,24 +33,58 @@ The only skill invoked after `specstudio:implement` is `specstudio:verify` (or �
 
 ## When to Use
 
-- An approved Plan at `spec/plans/<slug>.md` is ready for implementation (`**Status:**` is `Approved` or `Implementing`).
-- The event `plan.approved` has fired and the user has confirmed they want to implement.
-- The user wants to resume an in-flight Plan after a prior `implement` session (Plan Status: `Implementing`).
+- **Plan-sourced:** An approved Plan at `spec/plans/<slug>.md` is ready for implementation (`**Status:**` is `Approved` or `Implementing`).
+- **Plan-sourced:** The event `plan.approved` has fired and the user has confirmed they want to implement.
+- **Plan-sourced:** The user wants to resume an in-flight Plan after a prior `implement` session (Plan Status: `Implementing`).
+- **Feature-sourced:** A Feature at `spec/features/<slug>/README.md` has `**Status:** ∈ {Approved, Implementing, Stable}` and no Plan exists for it. The user wants to implement directly against the Feature's ACs without writing a Plan first.
+- **Idea-sourced:** An Idea at `spec/ideas/<slug>.md` has `**Status:** Approved` and no Feature or Plan exists for it. The user wants to implement directly against the Idea's Recommended Direction without writing a Feature or Plan first.
 
 **Refuse and redirect when:**
 
 - The Plan's `**Status:**` is `Draft`, `Under Review`, or `Completed` → tell the user to run `specstudio:plan` (or that there's nothing to implement).
 - The Plan's `**Source Feature:**` has regressed to `Draft` or `Under Review` → stop, surface the spec drift, recommend re-approving the Feature via `specstudio:specify` or reverting.
+- The Feature's `**Status:**` is `Draft` or `Under Review` → tell the user to run `specstudio:specify` first.
+- The Idea's `**Status:**` is `Draft` or `Under Review` → tell the user to run `specstudio:ideate` first.
 - The user asks the skill to commit on their behalf → refuse; the skill stages, the user commits.
 
 ## Pre-Flight
 
-1. **Plan validity.** Resolve the input to `spec/plans/<slug>.md`. Confirm `**Status:** ∈ {Approved, Implementing}`. Refuse otherwise.
+1. **Input resolution.** Resolve the input to one of three entry modes, checked in priority order:
+   - **(a) Plan-sourced.** `spec/plans/<slug>.md` with `**Status:** ∈ {Approved, Implementing}`. Proceed with full batch-dispatch workflow.
+   - **(b) Feature-sourced.** `spec/features/<slug>/README.md` with `**Status:** ∈ {Approved, Implementing, Stable}` and no Plan exists for this Feature. Proceed in single-pass mode (see Entry Modes below).
+   - **(c) Idea-sourced.** `spec/ideas/<slug>.md` with `**Status:** Approved` and no Feature or Plan exists for this Idea. Proceed in single-pass mode (see Entry Modes below).
+   Refuse if no artifact matches or Status is outside the accepted set for its type.
 2. **Source-Feature validity.** Read the Plan's `**Source Feature:**`. Confirm the referenced Feature is at `spec/features/<feature-slug>/README.md` with `**Status:** ∈ {Approved, Implementing, Stable}`. On regression to Draft/Under Review, stop and surface the drift. Additionally confirm the Feature exists at git HEAD via `git cat-file -e HEAD:spec/features/<feature-slug>/README.md`. If the Feature exists only in the working tree (uncommitted), refuse to dispatch and instruct the user to commit it first — the `Verifies:` trailer must reference a Feature that exists in git history.
 3. **Parse the Plan.** Use `specscore` CLI's Plan parser (do not re-implement). Surface: per-task `**Verifies:**`, `**Status:**`, `**Depends-On:**`, body (prose for `full`, placeholder `<!-- implement: pending -->` for `stub`). Parse failures stop the skill with the CLI's lint-rule citation.
 4. **Git-log cross-check.** Run `git log --grep='^Verifies:'` on the current branch. For each task: if Plan says `**Status:** done` but no commit references the task's ACs, surface the divergence as a warning. If Plan says `**Status:** pending` but a commit DOES reference its ACs, offer to update the Status (with user confirmation) before dispatching. **Git log is authoritative; Plan Status is the at-a-glance signal.**
 5. **Compute next batch.** Topological reduction of the dependency graph: batch = tasks where all `**Depends-On:**` predecessors are `**Status:** done` AND own `**Status:** pending`. Exclude tasks in `in-progress`, `done`, or `blocked` status.
 6. **Pre-existing-Plan catch-up.** If the Plan pre-dates the plan-Feature revision (no `**Status:**` fields), initialize: scan git log for `Verifies:` trailers; mark matched-AC tasks `done`, rest `pending`. Save these initializations as a Plan-file edit that will land in the first batch's staging.
+
+## Entry Modes
+
+### Plan-sourced (default)
+
+Existing behavior, unchanged. The skill resolves a Plan, parses its tasks and dependency graph, dispatches subagents in batches, and gates each batch on user approval. `Verifies:` trailers reference Feature AC IDs (e.g., `Verifies: <feature-slug>#ac:<ac-slug>`). Per-task Status writes track progress on the Plan file. The full Checklist below applies.
+
+### Feature-sourced (single-pass)
+
+No Plan exists. The skill resolves a Feature directly. Instead of batch dispatch, the skill operates as a **single-pass conversation**: the user describes the change, the skill implements and stages it. There are no subagents, no batch dispatch, no task-status writes, no stub/full posture distinction.
+
+- **Pre-flight:** Step 1(b) resolves the Feature. Step 2 validates the Feature's Status. Steps 3–6 (Plan parsing, git-log cross-check, batch computation, catch-up) are skipped.
+- **Implementation:** The skill implements the user's described change conversationally, staging via `git add`.
+- **Verifies: trailer:** Uses Feature AC IDs: `Verifies: <feature-slug>#ac:<ac-slug>, ...` listing every AC addressed by the staged change.
+- **Lint and self-review:** `specscore spec lint` still runs against staged changes.
+- **User-approval gate:** The consolidated staged diff is presented for user approval before the user commits.
+- **Promotion:** On completion, hand off to `specstudio:verify` (or hand-back if unshipped), same as Plan-sourced.
+
+### Idea-sourced (single-pass)
+
+No Feature or Plan exists. The skill resolves an Idea directly. Same single-pass conversation model as Feature-sourced, with two differences:
+
+- **Source of truth:** The Idea's `## Recommended Direction` section (instead of Feature ACs).
+- **Verifies: trailer:** Uses `Verifies: idea:<slug>` (instead of Feature AC IDs).
+
+All other single-pass behavior (no subagents, no batch dispatch, no task-status writes, lint, user-approval gate, stage-only) is identical to Feature-sourced.
 
 ## Checklist (per invocation)
 
@@ -130,22 +166,35 @@ Cap concurrent subagents at **5 per batch** in MVP. When the next executable bat
 
 The skill stages every change via `git add` and NEVER runs `git commit` on the user's behalf. Mirrors `ideate` / `specify` / `plan`.
 
-### Commit-message template (provided every batch)
+### Commit-message template (provided every batch / single-pass)
+
+**Plan-sourced and Feature-sourced:**
 
 ```
-<short summary describing what the batch implemented>
+<short summary describing what was implemented>
 
 <optional longer body the user may edit>
 
 Verifies: <feature-slug>#ac:<ac-slug>, <feature-slug>#ac:<ac-slug>, ...
 ```
 
+**Idea-sourced:**
+
+```
+<short summary describing what was implemented>
+
+<optional longer body the user may edit>
+
+Verifies: idea:<slug>
+```
+
 **Trailer rules:**
 
 - Keyword is exactly `Verifies:` (case-sensitive, Conventional Commits trailer convention).
 - Follows the body, separated by a blank line.
-- Lists every AC ID covered by **successful** tasks in the batch (DONE / DONE_WITH_CONCERNS only). BLOCKED tasks' ACs are NOT in the trailer.
-- AC IDs deduplicated, ordered by task number then AC slug.
+- **Plan-sourced:** Lists every AC ID covered by **successful** tasks in the batch (DONE / DONE_WITH_CONCERNS only). BLOCKED tasks' ACs are NOT in the trailer. AC IDs deduplicated, ordered by task number then AC slug.
+- **Feature-sourced:** Lists every AC ID addressed by the staged change.
+- **Idea-sourced:** Uses `idea:<slug>` referencing the source Idea.
 - May be a single comma-separated line OR multiple `Verifies:` lines — both valid.
 
 The skill MUST NOT enforce the user's actual commit message format (that's the user's call). But the *suggested* template always includes the trailer.
@@ -224,7 +273,7 @@ The skill MUST NOT yes-machine weak Plans or silently retry blocked subagents. W
 
 ## Verification
 
-- [ ] Pre-flight checks passed: Plan Status ∈ {Approved, Implementing}, Source Feature Status ∈ {Approved, Implementing, Stable}, Plan parses cleanly
+- [ ] Pre-flight checks passed: input resolved to Plan (Status ∈ {Approved, Implementing}), Feature (Status ∈ {Approved, Implementing, Stable}), or Idea (Status: Approved)
 - [ ] Git-log cross-check ran; any Status-vs-git-log divergences were surfaced to the user before dispatch
 - [ ] Every batch dispatched ≤5 parallel subagents; queued tasks were dispatched as slots freed
 - [ ] Every subagent returned a terminal status (DONE / DONE_WITH_CONCERNS / BLOCKED) or was re-dispatched on NEEDS_CONTEXT
@@ -238,6 +287,8 @@ The skill MUST NOT yes-machine weak Plans or silently retry blocked subagents. W
 - [ ] `specscore spec lint` passes after every batch (auto-recovery via `--fix` attempted at most once on initial failure)
 - [ ] All emitted events (`implement.batch-started`, `implement.batch-completed`, `plan.updated`) carry `changed_sections`, `previous_revision`, and a factual `change_summary`
 - [ ] On Plan completion: Status transitioned `Implementing → Completed`; transition to `specstudio:verify` (or hand-back); no other skill invoked
+- [ ] In Feature-sourced mode: no subagent dispatch, no task-status writes, `Verifies:` trailer uses Feature AC IDs
+- [ ] In Idea-sourced mode: no subagent dispatch, no task-status writes, `Verifies:` trailer uses `idea:<slug>`
 
 ## Red Flags
 
@@ -253,6 +304,9 @@ The skill MUST NOT yes-machine weak Plans or silently retry blocked subagents. W
 - Auto-switching the Plan's `**Mode:**` (posture is one-way; user creates a successor Plan)
 - Looping `specscore spec lint --fix` more than once
 - Speculating about user intent in `change_summary` ("User chose...", "Important changes...") instead of factual ("Tasks 3, 5 transitioned to done; task 5 body journaled.")
+- Using batch dispatch or task-status writes in Feature-sourced or Idea-sourced mode (single-pass only)
+- Using `Verifies: idea:<slug>` when a Feature exists (use Feature AC IDs instead)
+- Using Feature AC IDs when only an Idea exists (use `Verifies: idea:<slug>` instead)
 
 ## References
 
