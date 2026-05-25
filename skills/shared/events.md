@@ -190,6 +190,53 @@ payload:
 
 **Consumer:** A downstream orchestrator's task-prioritization reader surfaces `consilium-review` tasks with `needs-human-review` verdicts at the top of its prioritization report. Phase 2 auto-promote (future Feature) will subscribe to `verdict: should-implement` events.
 
+## Events Emitted by Transition Menus
+
+### `lifecycle.phase-skipped`
+Fired when a user chooses a non-default downstream option at a transition menu — that is, when one or more SDD phases are skipped. The event is emitted by the skill that presents the menu (`specstudio:ideate` or `specstudio:specify`), **before** the downstream skill is invoked.
+
+The event is **not** emitted when the user chooses the default option (e.g., "Specify" from ideate, "Plan" from specify). Default-path transitions follow the existing event flow (`idea.approved` → `feature.specified` → etc.) with no additional event.
+
+```yaml
+event: lifecycle.phase-skipped
+version: 1
+payload:
+  from_phase: ideate | specify
+  skipped_phases: [specify] | [plan] | [specify, plan]
+  to_phase: plan | implement
+  reason: user-requested | scope-suggested
+  source_artifact:
+    type: idea | feature
+    path: <path relative to repo root>
+    slug: <slug>
+```
+
+**Field semantics:**
+
+| Field | Type | Description |
+|---|---|---|
+| `from_phase` | `ideate` \| `specify` | The phase whose transition menu presented the choice. |
+| `skipped_phases` | `string[]` | Ordered list of phases that were skipped. E.g., choosing "Implement" from ideate yields `[specify, plan]`; choosing "Plan" from ideate yields `[specify]`; choosing "Implement" from specify yields `[plan]`. |
+| `to_phase` | `plan` \| `implement` | The phase the user chose to jump to. |
+| `reason` | `user-requested` \| `scope-suggested` | `user-requested` when the user chose the option unprompted; `scope-suggested` when the skill's heuristic suggested the lighter path and the user confirmed. |
+| `source_artifact.type` | `idea` \| `feature` | The artifact type that was the input to the menu-presenting skill. |
+| `source_artifact.path` | `string` | Path to the source artifact relative to repo root (e.g., `spec/ideas/fix-typo.md`). |
+| `source_artifact.slug` | `string` | The SpecScore slug of the source artifact. |
+
+**Emission rules:**
+
+1. The event is emitted by the **menu-presenting skill** (ideate or specify), not by the receiving downstream skill.
+2. The event is emitted **before** invoking the downstream skill — if the downstream invocation fails, the skip is still recorded.
+3. The event is emitted **only on non-default choices**. Default-path transitions produce no `lifecycle.phase-skipped` event.
+
+**Valid combinations:**
+
+| `from_phase` | User choice | `skipped_phases` | `to_phase` |
+|---|---|---|---|
+| `ideate` | Plan | `[specify]` | `plan` |
+| `ideate` | Implement | `[specify, plan]` | `implement` |
+| `specify` | Implement | `[plan]` | `implement` |
+
 ## Events Emitted by External Lifecycle Tooling (consumed by skills)
 
 ### `idea.implementing`
@@ -241,5 +288,6 @@ This is a stricter event than the previous `idea.specified` (which fired on firs
 | `feature.specified` | `specstudio:specify` | Reviewer-approved, lint-clean Feature write |
 | `feature.approved` | `specstudio:specify` | User approves the written Feature (exactly once) |
 | `feature.updated` | `specstudio:specify` | Every successful lint pass while `status` ∈ {Approved, Implementing, Stable} after approval |
+| `lifecycle.phase-skipped` | `specstudio:ideate`, `specstudio:specify` | User chose a non-default downstream option at a transition menu (before downstream invocation) |
 | `sidekick-idea.captured` | `specstudio:sidekick` | Successful seed write at `spec/ideas/seeds/<slug>.md` (exactly once per seed) |
 | `sidekick-idea.reviewed` | `specstudio:consilium` | Successful `consilium-review` task completion (exactly once per task) |
