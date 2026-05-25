@@ -11,7 +11,7 @@ flowchart LR
     init([init]):::shipped -.bootstrap.-> ideate
     intent([clear intent]):::input
     intent --> specify
-    ideate([ideate]):::shipped --> specify([specify]):::shipped --> plan([plan]):::shipped --> implement([implement]):::shipped --> verify([verify]):::roadmap --> recap([recap]):::roadmap --> review([review]):::roadmap --> ship([ship]):::roadmap
+    ideate([ideate]):::shipped --> specify([specify]):::shipped --> plan([plan]):::shipped --> implement([implement]):::shipped --> verify([verify]):::shipped --> recap([recap]):::shipped --> review([review]):::roadmap --> ship([ship]):::roadmap
 
     classDef shipped fill:#d4f4dd,stroke:#2d7a3e,color:#1a3d1f
     classDef defined fill:#fff4cc,stroke:#a07a00,color:#3d3000
@@ -30,8 +30,8 @@ Each in-line phase consumes the previous phase's lint-clean artifact and gates t
 | [`specify`](./specify/SKILL.md) | Shipped | Turn an approved Idea into a lint-clean SpecScore Feature with G/W/T acceptance criteria. |
 | [`plan`](./plan/SKILL.md) | Shipped | Turn an approved Feature into an ordered, AC-mapped Plan artifact at `spec/plans/<slug>.md`. |
 | [`implement`](./implement/SKILL.md) | Shipped | Dispatch one subagent per Plan task in parallel batches; stage AC-traceable code changes with a `Verifies:` commit-message trailer; per-batch user-approval gate. |
-| `verify` | Roadmap | Run Rehearse tests against acceptance criteria; report coverage. |
-| `recap` | Roadmap | Summarize what was built against what was specified; surface drift. |
+| [`verify`](./verify/SKILL.md) | Shipped | Produce a per-AC verdict report from `Verifies:` commit trailers; stage at `spec/features/<slug>/_verify/`. |
+| [`recap`](./recap/SKILL.md) | Shipped | Produce a per-AC drift report classifying spec↔code divergence; stage at `spec/features/<slug>/_recap/`. |
 | `review` | Roadmap | Multi-axis review of code against the Feature it claims to satisfy. |
 | `ship` | Roadmap | Pre-launch checklist gated on verify + review passing. |
 
@@ -41,6 +41,8 @@ Skills outside the lifecycle spine — invoked on demand to recover from misrout
 
 | Skill | Status | Purpose |
 |---|---|---|
+| [`sidekick`](./sidekick/SKILL.md) | Shipped | Capture a sideline idea as a lint-clean seed at `spec/ideas/seeds/<slug>.md` without derailing the host task. |
+| [`consilium`](./consilium/SKILL.md) | Shipped | Drain queued sidekick seeds through a 5-stage expert-panel pipeline; produce per-seed verdicts. |
 | [`relocate-idea`](./relocate-idea/SKILL.md) | Shipped | Relocate an Idea or sidekick-seed from the current repo to another SpecScore-managed repo. Thin shell over the `specscore idea relocate` CLI verb; appends a best-effort mismatch-log line on success. |
 
 ### Status definitions
@@ -99,17 +101,23 @@ Consumes an approved Plan; dispatches one subagent per task in parallel batches 
 - **Gate:** Plan Status ∈ {Approved, Implementing}, Source Feature Status ∈ {Approved, Implementing, Stable}, lint after every batch, line-overlap conflict detection post-batch, explicit per-batch user approval, user-commit-before-next-batch. Promotion boundary is `specstudio:verify` only.
 - **Source:** [`implement/SKILL.md`](./implement/SKILL.md)
 
-### `verify` — Roadmap
+### `verify` — Shipped
 
-The skill that runs the Feature's Rehearse tests and reports per-AC pass/fail coverage.
+Consumes an approved Feature and its `Verifies:` commit-message trailers; dispatches one built-in AI subagent per AC (serial) to produce a machine-checkable verdict report at `spec/features/<feature-slug>/_verify/<sha>.md`. Aggregates verdicts into a Markdown report opened by a grep-friendly YAML summary block, emits `verify.completed`, and transitions only to `specstudio:recap`. Stages the report; never commits.
 
-Scope TBD. Next step: `ideate` it.
+- **Output:** per-AC verdict report at `spec/features/<feature-slug>/_verify/<sha>.md` + `_verify/README.md` index, both staged via `git add`.
+- **Triggers:** `verify`, `/verify`, `specstudio:verify`, "verify this feature", or the explicit downstream transition from `specstudio:implement`.
+- **Gate:** Feature Status ∈ {Approved, Implementing, Stable}, Feature exists at git HEAD, `specscore` CLI parses the Feature cleanly. Promotion boundary is `specstudio:recap` only.
+- **Source:** [`verify/SKILL.md`](./verify/SKILL.md)
 
-### `recap` — Roadmap
+### `recap` — Shipped
 
-The skill that summarizes what was actually built against what was specified, surfacing spec↔code drift before review.
+Consumes an approved Feature plus the latest `specstudio:verify` report at HEAD; dispatches one built-in AI subagent per AC (serial) that classifies divergence between spec and code into the 4-bucket verdict set {no-drift, spec-tighter-than-code, code-tighter-than-spec, contradiction}. Aggregates verdicts into a drift report at `spec/features/<feature-slug>/_recap/<sha>.md`, emits `recap.completed`, and transitions only to `specstudio:review`. Stages the report; never commits.
 
-Scope TBD. Next step: `ideate` it.
+- **Output:** per-AC drift report at `spec/features/<feature-slug>/_recap/<sha>.md` + `_recap/README.md` index, both staged via `git add`.
+- **Triggers:** `recap`, `/recap`, `specstudio:recap`, or the explicit downstream transition from `specstudio:verify`.
+- **Gate:** Feature Status ∈ {Approved, Implementing, Stable}, Feature exists at git HEAD, `_verify/` contains at least one report reachable at HEAD. Promotion boundary is `specstudio:review` only.
+- **Source:** [`recap/SKILL.md`](./recap/SKILL.md)
 
 ### `review` — Roadmap
 
@@ -124,6 +132,24 @@ The skill that runs the pre-launch checklist, gated on `verify` and `review` hav
 Scope TBD. Next step: `ideate` it.
 
 ## Recovery & tooling
+
+### `sidekick` — Shipped
+
+Single-mode capture-and-exit skill. Writes one lint-clean seed at `spec/ideas/seeds/<slug>.md` with required frontmatter and an H1 heading, emits `sidekick-idea.captured`, and returns. Invoked by host skills (`specstudio:ideate`, `specstudio:specify`, third-party adopters) or directly by the user to park a sideline idea without breaking flow. No content-deliberation — that is the consilium's job.
+
+- **Output:** lint-clean `spec/ideas/seeds/<slug>.md` + `sidekick-idea.captured` event.
+- **Triggers:** `specstudio:sidekick`, `/sidekick`, "capture a sidekick idea", "side-kick this", "park this idea".
+- **Gate:** Validates the one-liner is non-empty; performs destination-resolution in multi-repo workspaces (confirms *where*, never *whether*). No follow-up clarifying questions about the idea's substance.
+- **Source:** [`sidekick/SKILL.md`](./sidekick/SKILL.md)
+
+### `consilium` — Shipped
+
+Drains queued sidekick seeds through a 5-stage pipeline: CLI gather → researcher agent → 9-role parallel expert panel → CLI arbiter → scribe agent. Produces a deterministic verdict per seed. The orchestrator task is the structured source of truth; the seed gets only the scribe's prose summary mirrored into a `## Consilium Verdict` section. Per-project roster and gate configurable via `specscore.yaml → consilium:` block.
+
+- **Output:** per-seed verdict + scribe summary mirrored onto the seed file; `sidekick-idea.reviewed` event per successful task.
+- **Triggers:** `specstudio:consilium`, `/consilium`, "run the consilium", "drain the sidekick queue", "review sidekick ideas".
+- **Gate:** Cross-repo dependencies (orchestrator tasks, CLI arbiter) must be present. On any stage failure, the task transitions to `failed` and the next queued task continues.
+- **Source:** [`consilium/SKILL.md`](./consilium/SKILL.md)
 
 ### `relocate-idea` — Shipped
 
