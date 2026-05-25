@@ -1,6 +1,6 @@
 # Scenario: duplicated-required-h2-section-rejected
 
-**Status:** pending
+**Status:** passing
 **Date:** 2026-05-22
 **Owner:** alexandertrakhimenok
 **Verifies REQs:** issue-body-required-h2-sections
@@ -11,7 +11,7 @@ Rehearse stub for AC `duplicated-required-h2-section-rejected` from `spec/featur
 
 ## Status
 
-Pending. Implementation lands as the `I-` lint rule family is built per the implementation plan for `issue-artifact-type`.
+Passing. Implemented in `specscore-cli/pkg/lint/issue_rules.go` with corresponding test fixtures in `pkg/lint/rules/issue/testdata/`.
 
 ---
 *This document follows the https://specscore.md/scenario-specification*

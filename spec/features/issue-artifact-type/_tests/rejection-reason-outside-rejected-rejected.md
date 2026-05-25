@@ -1,6 +1,6 @@
 # Scenario: rejection-reason-outside-rejected-rejected
 
-**Status:** pending
+**Status:** passing
 **Date:** 2026-05-22
 **Owner:** alexandertrakhimenok
 **Verifies REQs:** issue-rejection-reason-required
@@ -11,7 +11,7 @@ Rehearse stub for AC `rejection-reason-outside-rejected-rejected` from `spec/fea
 
 ## Status
 
-Pending. Implementation lands as the `I-` lint rule family is built per the implementation plan for `issue-artifact-type`.
+Passing. Implemented in `specscore-cli/pkg/lint/issue_rules.go` with corresponding test fixtures in `pkg/lint/rules/issue/testdata/`.
 
 ---
 *This document follows the https://specscore.md/scenario-specification*

@@ -16,7 +16,7 @@ Pre-spec one-pagers for SpecStudio. Each Idea is the output of `specstudio:ideat
 | [reviewer-gates](reviewer-gates.md) | Implementing | 2026-05-22 | alex | reviewer-gates |
 | [sidekick-consilium](sidekick-consilium.md) | Implementing | 2026-05-18 | alexandertrakhimenok | sidekick-consilium |
 | [sidekick-ideas](sidekick-ideas.md) | Implementing | 2026-05-18 | alexandertrakhimenok | sidekick-capture |
-| [sidekick-issue-tracker-destinations](sidekick-issue-tracker-destinations.md) | Implementing | 2026-05-22 | alexandertrakhimenok | issue-artifact-type |
+| [sidekick-issue-tracker-destinations](sidekick-issue-tracker-destinations.md) | Specified | 2026-05-22 | alexandertrakhimenok | issue-artifact-type |
 | [specstudio-implement-skill](specstudio-implement-skill.md) | Implementing | 2026-05-19 | alexander.trakhimenok | skills/implement, skills/plan |
 | [specstudio-init-skill](specstudio-init-skill.md) | Implementing | 2026-05-08 | alexander.trakhimenok | skills/init |
 | [specstudio-plan-skill](specstudio-plan-skill.md) | Implementing | 2026-04-20 | alexander.trakhimenok | skills/plan |

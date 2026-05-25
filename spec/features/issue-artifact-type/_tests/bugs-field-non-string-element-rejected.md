@@ -1,6 +1,6 @@
 # Scenario: bugs-field-non-string-element-rejected
 
-**Status:** pending
+**Status:** passing
 **Date:** 2026-05-22
 **Owner:** alexandertrakhimenok
 **Verifies REQs:** issue-bugs-field-opaque
@@ -11,7 +11,7 @@ Rehearse stub for AC `bugs-field-non-string-element-rejected` from `spec/feature
 
 ## Status
 
-Pending. Implementation lands as the `I-` lint rule family is built per the implementation plan for `issue-artifact-type`.
+Passing. Implemented in `specscore-cli/pkg/lint/issue_rules.go` with corresponding test fixtures in `pkg/lint/rules/issue/testdata/`.
 
 ---
 *This document follows the https://specscore.md/scenario-specification*
