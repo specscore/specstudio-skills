@@ -17,7 +17,7 @@ Turn raw ideas into sharp, SpecScore-compatible Idea artifacts through structure
 ## Hard Gate
 
 <HARD-GATE>
-Do NOT invoke `specstudio:specify`, `writing-plans`, or any implementation skill until:
+Do NOT invoke `specstudio:specify`, `specstudio:plan`, `specstudio:implement`, `writing-plans`, or any implementation skill until:
   1. An Idea artifact has been written to `spec/ideas/<slug>.md`.
   2. `specscore spec lint` passes.
   3. The user has explicitly approved the Recommended Direction.
@@ -262,7 +262,7 @@ Fix inline. Don't re-review; move on.
 
 After lint + self-review pass:
 
-> "Idea drafted and lint-clean at `spec/ideas/<slug>.md`. Please review the Recommended Direction and MVP Scope. Approve to move to specify, or request changes."
+> "Idea drafted and lint-clean at `spec/ideas/<slug>.md`. Please review the Recommended Direction and MVP Scope. Approve to choose your next step (Specify, Plan, or Implement), or request changes."
 
 Wait. If the user requests changes, make them, re-lint (with the auto-recovery flow above), re-stage, and emit a fresh `idea.drafted` event. Only proceed once the user approves.
 
@@ -322,16 +322,41 @@ Both `idea.drafted` (re-emissions) and `idea.updated` events carry three change-
 - ❌ "This change makes the spec more aligned with industry best practices." *(editorializes)*
 - ❌ "Important changes to the recommended direction." *(vague; not factual)*
 
-## Promotion to Feature(s)
+## Transition
 
-**Out of scope for this skill.** Lifecycle tooling handles promotion:
+After the user approves the Idea, present a transition menu via `AskUserQuestion` with exactly three options. List them in this order:
 
-1. When `specstudio:specify` (or the user) creates a Feature with a `**Source Ideas:**` line that references this Idea's slug, Lifecycle tooling detects the link.
-2. Lifecycle tooling transitions the Idea `**Status:** Approved → Specified`.
-3. Lifecycle tooling auto-populates the Idea's `**Promotes To:**` line with the list of Feature slugs.
-4. Lifecycle tooling emits `idea.specified`.
+1. **Specify** (default) — invoke `specstudio:specify` with the Idea slug.
+2. **Plan** — invoke `specstudio:plan` with the Idea slug as the source artifact.
+3. **Implement** — invoke `specstudio:implement` with the Idea slug as the source artifact.
 
-**Do not manually edit `**Promotes To:**`.** It's managed state.
+### Keyword heuristic
+
+Before presenting the menu, scan the user's description of the change (the Problem Statement and any conversational context). If the language indicates trivial scope — keywords: `trivial`, `quick`, `typo`, `one-liner`, `simple`, `tiny`, `small fix`, `minor` — append "(suggested for small scope)" to the Implement option label.
+
+### Menu prompt
+
+> "The Idea is approved. How would you like to proceed?"
+>
+> 1. **Specify** — break it into a full Feature spec with requirements and acceptance criteria *(default)*
+> 2. **Plan** — skip the Feature spec and go straight to a task plan
+> 3. **Implement** — skip both spec and plan and go straight to code
+
+When the heuristic fires, the third option reads:
+
+> 3. **Implement** — skip both spec and plan and go straight to code *(suggested for small scope)*
+
+### On user choice
+
+- **Specify** (default): invoke `specstudio:specify`. No `lifecycle.phase-skipped` event.
+- **Plan**: emit `lifecycle.phase-skipped` (see [events.md](../shared/events.md)) with `from_phase: ideate`, `skipped_phases: [specify]`, `to_phase: plan`, then invoke `specstudio:plan`.
+- **Implement**: emit `lifecycle.phase-skipped` with `from_phase: ideate`, `skipped_phases: [specify, plan]`, `to_phase: implement`, then invoke `specstudio:implement`.
+
+Set `reason` to `scope-suggested` when the keyword heuristic fired and the user confirmed the suggested option; otherwise `user-requested`.
+
+### Promotion via lifecycle tooling
+
+Promotion bookkeeping (`**Promotes To:**`, `**Status:** Approved → Specified`) remains out of scope for this skill. Lifecycle tooling handles it when a downstream artifact references the Idea's slug. **Do not manually edit `**Promotes To:**`.** It's managed state.
 
 ## Verification
 
@@ -357,7 +382,7 @@ Both `idea.drafted` (re-emissions) and `idea.updated` events carry three change-
 - Empty "Not Doing" list
 - Writing to `docs/ideas/` instead of `spec/ideas/`
 - Manually editing `**Promotes To:**` (managed state)
-- Jumping to `specstudio:specify` before user approval
+- Jumping to `specstudio:specify`, `specstudio:plan`, or `specstudio:implement` before user approval
 - Silently bootstrapping `spec/ideas/` without telling the user
 - Looping `specscore spec lint --fix` more than once
 - Encoding the skill's own list of "rules `--fix` shouldn't touch" — that policy belongs to the `specscore` CLI; if it gets it wrong, fix it there

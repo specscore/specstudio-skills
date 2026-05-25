@@ -24,7 +24,7 @@ Do NOT invoke `writing-plans`, `frontend-design`, `mcp-builder`, or ANY implemen
   3. `specscore spec lint` passes.
   4. The reviewer gate has released — every entry in `gates.specify.reviewers` (including the `type: human` entry that captures the user's approval) returned `Approved` per the [reviewer-gates](../../spec/features/reviewer-gates/README.md) Feature's AND-composition.
 
-This applies to **every** Feature, regardless of perceived simplicity. The only skill invoked after `specstudio:specify` is `writing-plans`.
+This applies to **every** Feature, regardless of perceived simplicity. The only skills invoked after `specstudio:specify` are `writing-plans` (Plan) or `specstudio:implement` (Implement), as chosen by the user at the transition menu.
 </HARD-GATE>
 
 ## When to Use
@@ -59,7 +59,7 @@ Create a task for each and complete in order:
 10. **Inline self-review** — placeholders, consistency, scope, ambiguity.
 11. **Run the reviewer gate** — load and dispatch `gates.specify.reviewers` from `specscore.yaml` per the [Reviewer Gates](../../spec/features/reviewer-gates/README.md) Feature. See the `## Reviewer Gate` section below.
 12. **Emit events** — `feature.specified` after lint passes and before reviewer-gate dispatch; `feature.approved` after the reviewer gate releases (every entry returned `Approved`, including the `type: human` entry that captured the user's approval). See [events.md](../shared/events.md).
-13. **Transition to `writing-plans`.**
+13. **Transition** — present the transition menu (see `## Transition`).
 14. **Throughout** — watch for sidekick ideas per [sidekick-capture.md](../shared/sidekick-capture.md). When an out-of-scope improvement surfaces, invoke `specstudio:sidekick` with a one-liner, acknowledge in one line, and return to the current checklist step immediately. Do not derail to discuss the sideline idea.
 
 ## Spec Sections (scale to complexity)
@@ -218,7 +218,7 @@ When the runner returns `Approved` (every entry returned `Approved`):
 - Update `**Status:** Under Review → Approved` in the body metadata.
 - Re-run lint to confirm the transition is clean.
 - Emit `feature.approved` (see Checklist step 12).
-- Proceed to `## Transition to Implementation`.
+- Proceed to `## Transition`.
 
 ### Step 5 — On `Issues Found`
 
@@ -228,7 +228,7 @@ When the runner returns `Issues Found`, surface the failing reviewer's name and 
 
 When the runner dispatches a `type: human` entry, it presents the Feature to the user with a prompt such as:
 
-> "Feature written and lint-clean at `spec/features/<slug>/`. The reviewer gate is waiting on your approval. Please review and let me know if you approve or want changes before we move to `writing-plans`."
+> "Feature written and lint-clean at `spec/features/<slug>/`. The reviewer gate is waiting on your approval. Please review and let me know if you approve or want changes before we choose the next step."
 
 The recognizer maps the user's response per the same explicit-approval phrase set used by `specstudio:ideate`:
 
@@ -236,9 +236,56 @@ The recognizer maps the user's response per the same explicit-approval phrase se
 - **Explicit change request** — the user names a concrete change they want before approving → verdict `Issues Found` with the user's change-request text captured as a single `Blocker` finding under the human entry's `name:`.
 - **Vague positive signal** (e.g., `looks good`, `yeah`, `nice`, `ship it`, `+1`, `🚀`, `yes`, `ok`, `sí`, `oui`, `да`, `はい`) — not yet a verdict. Ask one explicit confirmation question (e.g., "Treat that as approval?") and wait. Silent transition on a vague signal is a contract violation.
 
-## Transition to Implementation
+## Transition
 
-Invoke `writing-plans`. Do **not** invoke any other skill. `writing-plans` is the next step.
+After the reviewer gate releases and `feature.approved` is emitted, present the user with a structured choice via `AskUserQuestion`:
+
+### Step 1 — Count ACs and check config
+
+1. Count the number of `### AC:` entries in the Feature's `## Acceptance Criteria` section.
+2. Read `specscore.yaml` and check `lifecycle.suggest_skips` (default: `true` when the key is absent).
+
+### Step 2 — Present the menu
+
+Present exactly two options. Plan is always listed first as the default.
+
+**When `lifecycle.suggest_skips` is `true` (or absent) AND the Feature has ≤2 ACs:**
+
+> "Feature approved. Choose your next step:"
+>
+> 1. **Plan** — ordered task list with AC mapping (default)
+> 2. **Implement (skip plan)** — code directly from the Feature (suggested for small scope)
+
+**When `lifecycle.suggest_skips` is `false`, OR the Feature has >2 ACs:**
+
+> "Feature approved. Choose your next step:"
+>
+> 1. **Plan** — ordered task list with AC mapping (default)
+> 2. **Implement (skip plan)** — code directly from the Feature
+
+The "(suggested for small scope)" label appears ONLY when both conditions are met: the Feature has ≤2 ACs AND `lifecycle.suggest_skips` is not `false`. The suggestion MUST NOT auto-select — the user MUST explicitly choose.
+
+### Step 3 — Route
+
+**If the user chooses Plan (default):**
+
+- Do NOT emit `lifecycle.phase-skipped`.
+- Invoke `writing-plans` with the Feature slug.
+
+**If the user chooses Implement:**
+
+- Emit `lifecycle.phase-skipped` with:
+  ```yaml
+  from_phase: specify
+  skipped_phases: [plan]
+  to_phase: implement
+  reason: user-requested   # or scope-suggested if the heuristic label was shown and the user confirmed
+  source_artifact:
+    type: feature
+    path: spec/features/<slug>/README.md
+    slug: <slug>
+  ```
+- Then invoke `specstudio:implement` with the Feature slug as the source artifact.
 
 ## Visual Companion (Optional)
 
@@ -267,7 +314,7 @@ If the user has `obra/superpowers` installed, we may reuse its browser-based vis
 
 ## Red Flags
 
-- Proceeding to `writing-plans` before the reviewer gate releases
+- Proceeding to `writing-plans` or `specstudio:implement` before the reviewer gate releases
 - Dispatching a hardcoded baseline reviewer not present in `gates.specify.reviewers`
 - Running a separate downstream user-approval step outside the `type: human` reviewer entry
 - Silently downgrading a `Blocker` finding to `Advisory`, or skipping a registered reviewer
@@ -277,7 +324,8 @@ If the user has `obra/superpowers` installed, we may reuse its browser-based vis
 - Scope spanning multiple subsystems
 - Assumptions from the source Idea silently dropped
 - Writing to `docs/superpowers/specs/` instead of `spec/features/<slug>/`
-- Invoking any skill other than `writing-plans` on transition
+- Silently routing to `writing-plans` without presenting the transition menu
+- Invoking any skill other than `writing-plans` or `specstudio:implement` on transition
 
 ## References
 
