@@ -15,6 +15,7 @@ Feature specifications for the SpecStudio plugin. This index lists every top-lev
 | [dogfood-test](dogfood-test/README.md) | Deprecated | TODO: Add description. |
 | [reviewer-gates](reviewer-gates/README.md) | Approved | Defines the canonical reviewer-gates contract: per-stage reviewer lists scoped under a `gates:` block in `specscore.yaml`, with a `type:` discriminator and type-specific fields per reviewer entry. Pins the schema, dispatch semantics, and verdict contract for the MVP type set (`ai`, `human`), and wires `specstudio:specify` as the first consumer — replacing its built-in reviewer dispatch and User Review Gate with the new typed-gate model. Carves the reviewer parts of `third-party-integration` out into this Feature. |
 | [issue-artifact-type](issue-artifact-type/README.md) | Approved | TODO: Add description. |
+| [flexible-lifecycle-flows](flexible-lifecycle-flows/README.md) | Approved | TODO: Add description. |
 
 ### skills
 

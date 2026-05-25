@@ -8,7 +8,7 @@ Pre-spec one-pagers for SpecStudio. Each Idea is the output of `specstudio:ideat
 
 | Idea | Status | Date | Owner | Promotes To |
 |------|--------|------|-------|-------------|
-| [flexible-lifecycle-flows](flexible-lifecycle-flows.md) | Approved | 2026-05-25 | alexander.trakhimenok | — |
+| [flexible-lifecycle-flows](flexible-lifecycle-flows.md) | Implementing | 2026-05-25 | alexander.trakhimenok | flexible-lifecycle-flows |
 | [idea-skills-destination-resolution](idea-skills-destination-resolution.md) | Specified | 2026-05-20 | alexandertrakhimenok | sidekick-capture/destination-resolution |
 | [map-skill](map-skill.md) | Draft | 2026-05-22 | alex | — |
 | [retrofit-evaluation-skill](retrofit-evaluation-skill.md) | Draft | 2026-05-22 | alex | — |

@@ -1,9 +1,9 @@
 # Idea: Flexible Lifecycle Flows
 
-**Status:** Approved
+**Status:** Implementing
 **Date:** 2026-05-25
 **Owner:** alexander.trakhimenok
-**Promotes To:** —
+**Promotes To:** flexible-lifecycle-flows
 **Supersedes:** —
 **Related Ideas:** extends:specstudio-implement-skill, extends:specstudio-plan-skill
 
