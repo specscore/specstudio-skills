@@ -25,6 +25,7 @@ Pre-spec one-pagers for SpecStudio. Each Idea is the output of `specstudio:ideat
 | [synchestra-removal](synchestra-removal.md) | Approved | 2026-05-24 | alexander.trakhimenok | — |
 | [synchestra-removal-followup](synchestra-removal-followup.md) | Draft | 2026-05-25 | alexander.trakhimenok | — |
 | [third-party-skill-integration-contracts](third-party-skill-integration-contracts.md) | Implementing | 2026-05-08 | alexander.trakhimenok | third-party-integration |
+| [triage-issue](triage-issue.md) | Draft | 2026-05-25 | alexandertrakhimenok | — |
 
 ## Open Questions
 
