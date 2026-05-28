@@ -1,9 +1,9 @@
 # Idea: Add manual /review and /score commands over reviewer-gates
 
-**Status:** Approved
+**Status:** Implementing
 **Date:** 2026-05-28
 **Owner:** alex
-**Promotes To:** —
+**Promotes To:** manual-review-command
 **Supersedes:** —
 **Related Ideas:** depends_on:reviewer-gates
 

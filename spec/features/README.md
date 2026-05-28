@@ -16,6 +16,7 @@ Feature specifications for the SpecStudio plugin. This index lists every top-lev
 | [reviewer-gates](reviewer-gates/README.md) | Approved | Defines the canonical reviewer-gates contract: per-stage reviewer lists scoped under a `gates:` block in `specscore.yaml`, with a `type:` discriminator and type-specific fields per reviewer entry. Pins the schema, dispatch semantics, and verdict contract for the MVP type set (`ai`, `human`), and wires `specstudio:specify` as the first consumer — replacing its built-in reviewer dispatch and User Review Gate with the new typed-gate model. Carves the reviewer parts of `third-party-integration` out into this Feature. |
 | [issue-artifact-type](issue-artifact-type/README.md) | Stable | TODO: Add description. |
 | [flexible-lifecycle-flows](flexible-lifecycle-flows/README.md) | Approved | TODO: Add description. |
+| [manual-review-command](manual-review-command/README.md) | Implementing | Phase 1 of the [`manual-review-and-score-commands`](../ideas/manual-review-and-score-commands.md) Idea: the `specstudio:review` skill that manually re-invokes the configured [`reviewer-gates`](reviewer-gates/README.md) dispatch pipeline against one or more SpecScore artifacts outside the producer-skill exit context. Skips `type: human` entries; supports single-artifact, multi-artifact, and recursive tree-wide invocation; no persistence or grading (deferred to a future `/score` Feature). |
 
 ### skills
 
