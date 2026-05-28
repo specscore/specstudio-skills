@@ -1,6 +1,6 @@
 # Idea: Add manual /review and /score commands over reviewer-gates
 
-**Status:** Draft
+**Status:** Approved
 **Date:** 2026-05-28
 **Owner:** alex
 **Promotes To:** —
