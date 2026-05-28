@@ -10,6 +10,7 @@ Pre-spec one-pagers for SpecStudio. Each Idea is the output of `specstudio:ideat
 |------|--------|------|-------|-------------|
 | [flexible-lifecycle-flows](flexible-lifecycle-flows.md) | Implementing | 2026-05-25 | alexander.trakhimenok | flexible-lifecycle-flows |
 | [idea-skills-destination-resolution](idea-skills-destination-resolution.md) | Specified | 2026-05-20 | alexandertrakhimenok | sidekick-capture/destination-resolution |
+| [manual-review-and-score-commands](manual-review-and-score-commands.md) | Draft | 2026-05-28 | alex | — |
 | [map-skill](map-skill.md) | Draft | 2026-05-22 | alex | — |
 | [retrofit-evaluation-skill](retrofit-evaluation-skill.md) | Draft | 2026-05-22 | alex | — |
 | [retrofit-skill](retrofit-skill.md) | Draft | 2026-05-22 | alex | — |
