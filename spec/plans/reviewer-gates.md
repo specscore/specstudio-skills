@@ -77,7 +77,7 @@ Edit four files: (1) repo-root `README.md` — add at least one link whose href 
 
 ### Task 8: Grade increment — grade-as-verdict-currency
 
-**Verifies:** reviewer-gates#ac:grade-band-by-blocker-count, reviewer-gates#ac:threshold-default-reproduces-today, reviewer-gates#ac:threshold-resolution-order, reviewer-gates#ac:invalid-threshold-refused, reviewer-gates#ac:lenient-threshold-tolerates-blocker, reviewer-gates#ac:worst-wins-union-across-reviewers, reviewer-gates#ac:within-band-letter-derivation, reviewer-gates#ac:ba-lens-problem-traceability-blocker
+**Verifies:** reviewer-gates#ac:grade-band-by-blocker-count, reviewer-gates#ac:threshold-default-reproduces-today, reviewer-gates#ac:threshold-resolution-order, reviewer-gates#ac:invalid-threshold-refused, reviewer-gates#ac:lenient-threshold-tolerates-blocker, reviewer-gates#ac:worst-wins-union-across-reviewers, reviewer-gates#ac:within-band-letter-derivation, reviewer-gates#ac:ba-lens-problem-traceability-blocker, reviewer-gates#ac:grade-recorded-on-release
 **Status:** done
 **Depends-On:** 2
 
