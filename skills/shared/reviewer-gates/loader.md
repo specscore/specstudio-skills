@@ -27,7 +27,7 @@ There is no auto-repair, no silent fallback to a built-in baseline reviewer, and
 
 ## Output
 
-On success: an ordered list of reviewer entries, each carrying the fields declared in `specscore.yaml` plus the resolved prompt-file path (for `type: ai`) and effective `min_approvers` value (for `type: human`, always `1` in MVP). The list order is exactly the order entries appear under `gates.<skill>.reviewers` — entry order is the dispatch order per [reviewer-gates#req:dispatch-serial](../../../spec/features/reviewer-gates/README.md#req-dispatch-serial).
+On success: an ordered list of reviewer entries, each carrying the fields declared in `specscore.yaml` plus the resolved prompt-file path (for `type: ai`) and effective `min_approvers` value (for `type: human`, always `1` in MVP), **plus the resolved Approve threshold** (a whole letter `A`–`F`, default `B`; see Step 2.5). The list order is exactly the order entries appear under `gates.<skill>.reviewers` — entry order is the dispatch order per [reviewer-gates#req:dispatch-serial](../../../spec/features/reviewer-gates/README.md#req-dispatch-serial).
 
 On failure: no output; the consuming skill halts with the error described above.
 
@@ -68,6 +68,20 @@ In any of these three cases emit:
 Halt. Do not dispatch. Do not fall back to any built-in baseline reviewer; do not fall back to any prior "User Review Gate" path.
 
 If `gates.<skill>.reviewers` resolves to a non-list value (e.g., a string, a mapping), refuse with the same minimal-configuration message and an additional sentence: `the value MUST be a YAML list of reviewer-entry objects`.
+
+### Step 2.5 — Resolve the Approve threshold
+
+Resolve the gate's Approve threshold per [reviewer-gates#req:threshold-config](../../../spec/features/reviewer-gates/README.md#req-threshold-config). Resolution order (first present wins):
+
+1. `gates.<skill>.threshold` (per-stage), if present.
+2. else the top-level `grade.threshold`, if present.
+3. else the built-in default `B`.
+
+The resolved value MUST be one of the whole letters `A`, `B`, `C`, `D`, `F` (case-sensitive; no `E`, no `+`/`-` variants, no numbers). If a `threshold` key is present at either location but its value is outside that set, refuse — citing [reviewer-gates#req:threshold-config](../../../spec/features/reviewer-gates/README.md#req-threshold-config) (verifies [reviewer-gates#ac:invalid-threshold-refused](../../../spec/features/reviewer-gates/README.md#ac-invalid-threshold-refused)):
+
+> Error: `threshold: <value>` in `specscore.yaml` is not one of the allowed grades `{A, B, C, D, F}` (per [reviewer-gates#req:threshold-config](../../../spec/features/reviewer-gates/README.md#req-threshold-config)). The Approve threshold MUST be a whole letter grade; `E`, `+`/`-` variants, and numbers are not allowed. See https://github.com/specscore/specstudio-skills/blob/main/spec/features/reviewer-gates/README.md.
+
+Record the resolved threshold; it is returned alongside the validated reviewer list (Step 4) and consumed by the runner to derive the gate verdict (`Approved` iff `grade ≥ threshold`). Resolving the threshold is a pure read; per Step 1 and Note 6 any later write to `specscore.yaml` MUST preserve the `gates:` block and the top-level `grade:` block verbatim. (Verifies [reviewer-gates#ac:threshold-resolution-order](../../../spec/features/reviewer-gates/README.md#ac-threshold-resolution-order).)
 
 ### Step 3 — Validate each entry (in list order)
 
@@ -145,7 +159,7 @@ If Steps 3a–3d pass for this entry, append a normalized record to the output l
 
 ### Step 4 — Return the validated list
 
-After every entry passes Steps 3a–3e and the uniqueness check, return the validated list to the calling skill in declared order. The calling skill MUST consume this list as-is — it MUST NOT reorder entries, MUST NOT silently inject any additional reviewer (notably: no hidden built-in baseline reviewer), and MUST NOT silently drop any entry.
+After every entry passes Steps 3a–3e and the uniqueness check, return the validated list to the calling skill in declared order, together with the resolved Approve threshold from Step 2.5. The calling skill MUST consume this list as-is — it MUST NOT reorder entries, MUST NOT silently inject any additional reviewer (notably: no hidden built-in baseline reviewer), and MUST NOT silently drop any entry.
 
 ## Notes for skill authors
 
@@ -169,3 +183,5 @@ This loader is the implementation of the following acceptance criteria from the 
 | [`human-entry-min-approvers-cap`](../../../spec/features/reviewer-gates/README.md#ac-human-entry-min-approvers-cap) | Step 3d.ii — `min_approvers > 1` → refuse, cite `human-entry-shape`'s MVP cap, halt. |
 | [`human-entry-rejects-prompt`](../../../spec/features/reviewer-gates/README.md#ac-human-entry-rejects-prompt) | Step 3d.i — `prompt:` present on `type: human` → refuse, cite `human-entry-shape`'s prohibition, halt. |
 | [`missing-gates-block-refuses-with-error`](../../../spec/features/reviewer-gates/README.md#ac-missing-gates-block-refuses-with-error) | Step 2 — all three missing/empty states (no `gates:`, no `gates.<skill>`, empty `reviewers: []`) refuse, recommend minimal `type: human` configuration, halt. |
+| [`threshold-resolution-order`](../../../spec/features/reviewer-gates/README.md#ac-threshold-resolution-order) | Step 2.5 — per-stage `gates.<skill>.threshold` → top-level `grade.threshold` → default `B`; resolved threshold returned in Step 4 output. |
+| [`invalid-threshold-refused`](../../../spec/features/reviewer-gates/README.md#ac-invalid-threshold-refused) | Step 2.5 — a `threshold` value outside `{A, B, C, D, F}` refuses, cites `threshold-config`, halts. |

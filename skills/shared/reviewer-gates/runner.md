@@ -7,18 +7,19 @@
 
 This file tells a consuming skill (currently `specstudio:specify`; future consumers MUST follow the same protocol) how to **execute** a reviewer gate against the validated reviewer list produced by [`loader.md`](./loader.md). The runner is the second half of the reviewer-gates contract: where the loader does load-time validation, the runner does dispatch, verdict aggregation, halt-after-first-failure, and rerun-policy enforcement.
 
-The runner's output is the gate's verdict for the consuming skill:
+The runner's output is the gate's **grade** (a whole letter `A`–`F`) and the derived verdict for the consuming skill:
 
-- `Approved` — every reviewer in the validated list returned `Approved` in the current pass. The consumer MAY release whatever downstream gate it owns (e.g., for `specstudio:specify`, the User Review Gate is now released and the skill MAY emit `feature.approved`).
-- `Issues Found` — at least one reviewer returned `Issues Found` in the current pass. The consumer MUST surface the first surfaced finding to the user, MUST NOT release any downstream gate, and MUST NOT emit any approval event. Re-running the gate after the user's fix is governed by Step 5 (Rerun policy) below.
+- `Approved` — the computed grade satisfies `grade ≥ threshold`. The consumer MAY release whatever downstream gate it owns (e.g., for `specstudio:specify`, the User Review Gate is now released and the skill MAY emit `feature.approved`).
+- `Issues Found` — `grade < threshold`. The consumer MUST surface the failing grade and the `Blocker` findings to the user, MUST NOT release any downstream gate, and MUST NOT emit any approval event. Re-running the gate after the user's fix is governed by Step 5 (Rerun policy) below.
 
-There is no third outcome. The runner does not "skip" reviewers, does not silently downgrade `Blocker` severity to `Advisory`, does not inject any reviewer the loader did not validate, and does not write to `spec/`.
+There is no third verdict. The runner does not "skip" reviewers, does not silently downgrade `Blocker` severity to `Advisory`, does not inject any reviewer the loader did not validate, and does not write to `spec/`.
 
 This runner implements the following REQs from the [reviewer-gates Feature](../../../spec/features/reviewer-gates/README.md):
 
 - [`dispatch-serial`](../../../spec/features/reviewer-gates/README.md#req-dispatch-serial) — one reviewer in flight at a time, in list order.
-- [`verdict-contract`](../../../spec/features/reviewer-gates/README.md#req-verdict-contract) — exactly two verdicts; `Blocker`/`Advisory` severity on findings; no reviewer writes to `spec/`.
-- [`and-composition`](../../../spec/features/reviewer-gates/README.md#req-and-composition) — gate releases only when every reviewer returns `Approved`; halt-after-first-`Issues Found` within a pass.
+- [`verdict-contract`](../../../spec/features/reviewer-gates/README.md#req-verdict-contract) — `Blocker`/`Advisory` severity on findings; no reviewer writes to `spec/`.
+- [`and-composition`](../../../spec/features/reviewer-gates/README.md#req-and-composition) — threshold-aware early-halt (halt on first `Blocker` only at zero-`Blocker` thresholds `A`/`B`; dispatch all at lenient thresholds).
+- [`grade-band-mapping`](../../../spec/features/reviewer-gates/README.md#req-grade-band-mapping), [`grade-aggregation`](../../../spec/features/reviewer-gates/README.md#req-grade-aggregation), [`threshold-derived-verdict`](../../../spec/features/reviewer-gates/README.md#req-threshold-derived-verdict) — compute the grade from the `Blocker` union + within-band letter (Step 2.8) and release iff `grade ≥ threshold`.
 - [`rerun-policy`](../../../spec/features/reviewer-gates/README.md#req-rerun-policy) — re-dispatch previously-`Issues Found` reviewers on rerun; ALSO re-dispatch previously-`Approved` reviewers when the fix touched a structural section.
 
 ## Inputs
@@ -28,17 +29,18 @@ This runner implements the following REQs from the [reviewer-gates Feature](../.
 | Validated reviewer list | The ordered list returned by [`loader.md`](./loader.md) Step 4. The consumer MUST NOT modify this list before passing it here. | Yes |
 | Calling skill's Agent-tool dispatch capability | For `type: ai` entries. The consumer's host (Claude with the skill's runtime context) is the dispatcher. | Yes |
 | Calling skill's approval-phrase recognizer | For `type: human` entries. The same recognizer used by `specstudio:ideate` and `specstudio:specify` for user-approval gates (`approve` / `approved` / `accept` / `accepted` / `lgtm` / direct semantic equivalents → `Approved`; explicit change requests → `Issues Found` with the user's text captured as a single `Blocker` finding). | Yes |
+| Resolved Approve threshold | The whole-letter threshold (`A`–`F`, default `B`) returned by [`loader.md`](./loader.md) Step 2.5. The gate releases iff `grade ≥ threshold`. | Yes |
 | Previous-pass verdict map (rerun only) | A map of `<reviewer-name> → <last-verdict>` from the previous pass, used only when this is a rerun. On the first pass the map is empty. | Yes (may be empty) |
 | Structural-fix flag (rerun only) | Boolean. `true` when the user's fix between passes touched a structural section of the artifact under review (see Step 5 for what counts as structural per artifact type). On the first pass, this flag is unused. | Yes (may be `false`) |
 
 ## Output
 
-Exactly one of:
+The runner returns the **gate grade** (a whole letter `A`–`F`, computed per Step 2.8) and the derived gate verdict, exactly one of:
 
-- `Approved` — accompanied by the per-reviewer verdict map for this pass (every entry mapped to `Approved`). The consumer is now released to proceed.
-- `Issues Found` — accompanied by (a) the name of the first reviewer that returned `Issues Found` in this pass, (b) that reviewer's structured findings list (each finding carrying `Blocker` or `Advisory` severity and a prose description), and (c) the per-reviewer verdict map for this pass (every reviewer the runner reached has a verdict; reviewers the runner halted before reaching are absent from the map). The consumer MUST surface at least the `Blocker` findings to the user and MUST NOT release any downstream gate or emit any approval event.
+- `Approved` — the grade satisfies `grade ≥ threshold`. Accompanied by the grade and the per-reviewer verdict map for this pass. The consumer is now released to proceed.
+- `Issues Found` — `grade < threshold`. Accompanied by (a) the grade, (b) the surfaced reviewer(s) and their structured findings list (each finding carrying `Blocker` or `Advisory` severity and a prose description), and (c) the per-reviewer verdict map for this pass (reviewers the runner halted before reaching are absent from the map). The consumer MUST surface at least the `Blocker` findings to the user and MUST NOT release any downstream gate or emit any approval event.
 
-In both cases the runner returns the per-reviewer verdict map so the consumer can pass it back as the "previous-pass verdict map" input on the next pass (the rerun).
+In both cases the runner returns the grade plus the per-reviewer verdict map so the consumer can pass the map back as the "previous-pass verdict map" input on the next pass (the rerun), and surface the grade (e.g., `specstudio:score` renders it; a producer-exit gate may log it).
 
 ## Protocol
 
@@ -77,23 +79,34 @@ For each entry in the dispatch set, in order:
 3. **Record dispatch end.** Capture the timestamp at the moment the verdict is collected. The recorded `[start, end]` interval for this entry MUST be disjoint from every other entry's interval in this pass — no two dispatches concurrently in flight. (See Step 6 for the instrumentation contract and the test-harness assertion shape.)
 4. **Validate the verdict shape.** The returned verdict MUST be exactly `Approved` or `Issues Found`. If a `type: ai` subagent returns anything else (e.g., omits the verdict, returns prose with no decision), the runner MUST refuse the gate with `Error: reviewer '<name>' returned a non-conforming verdict (expected 'Approved' or 'Issues Found'); reviewer prompts MUST conform to the documented taxonomy per reviewer-gates#req:verdict-contract`. No silent retry, no inference. This is a reviewer-prompt bug surfaced to the user.
 5. **Reject writes to `spec/`.** If a reviewer attempted (or its findings instruct the consumer to perform) a write or modification to any artifact under `spec/`, the runner MUST refuse the gate with `Error: reviewer '<name>' is a misclassified Producer; reviewers MUST NOT write to spec/ per reviewer-gates#req:verdict-contract`. (Reviewers are read-only; producers own artifact writes.)
-6. **Append to verdict map.** Record `<entry.name> → <verdict>` in this pass's verdict map.
-7. **Check for halt condition.** If the verdict is `Issues Found`, **halt the pass immediately** — go to Step 4 (Surface and exit). Do NOT dispatch the next entry in this pass. This halt is mandatory per [`and-composition`](../../../spec/features/reviewer-gates/README.md#req-and-composition); it is not an optimization the consumer may toggle off. The remaining-entries-this-pass set is recorded as "not dispatched in this pass" (their slots in the verdict map remain absent).
+6. **Record the verdict, findings, and within-band letter.** Record `<entry.name> → <verdict>` in this pass's verdict map, and retain the entry's structured findings (each with `Blocker`/`Advisory` severity). For a `type: ai` entry whose prompt declares the multi-role lenses, also retain the single within-band letter it reported (per [`multi-role-reviewer`](../../../spec/features/reviewer-gates/README.md#req-multi-role-reviewer)); a findings-only reviewer reports no within-band letter (treated as the default `B` in Step 2.8).
+7. **Check for the threshold-aware halt condition.** If the verdict is `Issues Found` **and** the resolved threshold is a zero-`Blocker` bar (`A` or `B`): **halt the pass immediately** — record the remaining entries as "not dispatched in this pass" (their verdict-map slots remain absent) and proceed to Step 2.8 (Compute the grade). The first `Blocker` already guarantees `grade < threshold` at these thresholds, so dispatching further reviewers is wasted effort — this is the mandatory halt of [`and-composition`](../../../spec/features/reviewer-gates/README.md#req-and-composition), now scoped to zero-`Blocker` thresholds. If the threshold is **lenient** (`C`, `D`, or `F`): do NOT halt — continue dispatching the remaining entries so the full `Blocker` union can be counted, because a tolerable `Blocker` count may still satisfy `grade ≥ threshold`. When the dispatch set is exhausted (or the halt fired), proceed to Step 2.8.
 
-### Step 3 — All reviewers returned `Approved`
+### Step 2.8 — Compute the grade and derive the gate verdict
 
-If every entry in the dispatch set was dispatched and returned `Approved`, AND every previously-`Approved` entry that was skipped per Step 1's non-structural-fix allowance carried its `Approved` verdict forward, AND no entry is missing a verdict, then the gate verdict for this pass is `Approved`.
+After the dispatch loop completes for this pass — whether it ran the full dispatch set or halted early per the zero-`Blocker` threshold rule — compute the gate grade from the findings collected so far, per [`grade-band-mapping`](../../../spec/features/reviewer-gates/README.md#req-grade-band-mapping) and [`grade-aggregation`](../../../spec/features/reviewer-gates/README.md#req-grade-aggregation):
 
-Return `Approved` with the per-reviewer verdict map.
+1. **Blocker union.** Form the union of all `Blocker` findings across every reviewer **dispatched in this pass** and (for a multi-role reviewer) every lens. Let `n = |union|`.
+2. **Band by Blocker count.** `n == 0` → pass band (`A`/`B`); `n == 1` → `C`; `2 ≤ n ≤ 3` → `D`; `n ≥ 4` → `F`.
+3. **Within-band letter (pass band only).** Across the reviewers that reported a within-band letter, take the **lowest** (since `A > B`, any reported `B` wins over `A`). A reviewer that reported no within-band letter (findings-only) contributes the default `B`. Result: the grade is `A` iff at least one reviewer reported `A` and none reported `B`; otherwise `B`. (A multi-role reviewer reports exactly one within-band letter — lenses feed only the `Blocker` union, not separate letters.)
+4. **Derive the verdict.** With letters ordered `A > B > C > D > F`, the gate verdict is `Approved` iff `grade ≥ threshold`, else `Issues Found` (per [`threshold-derived-verdict`](../../../spec/features/reviewer-gates/README.md#req-threshold-derived-verdict)).
 
-### Step 4 — At least one reviewer returned `Issues Found` (halt path)
+The early-halt at zero-`Blocker` thresholds never changes this verdict: if the halt fired, `n ≥ 1`, so `grade ≤ C < threshold` (threshold is `A` or `B`) → `Issues Found`. The halt only bounds how many `Blocker`s were counted; it cannot turn a fail into a pass.
 
-If Step 2's halt condition fired for any entry, the gate verdict for this pass is `Issues Found`.
+Proceed to Step 3 when the derived verdict is `Approved`, else Step 4.
+
+### Step 3 — Gate verdict is `Approved`
+
+When Step 2.8 derives `Approved` (`grade ≥ threshold`), return `Approved` with the computed grade and the per-reviewer verdict map. (At the default threshold `B` this coincides exactly with "every dispatched reviewer returned `Approved`" — zero `Blocker`s — with every previously-`Approved` entry skipped per Step 1's non-structural-fix allowance carrying its verdict forward.)
+
+### Step 4 — Gate verdict is `Issues Found`
+
+When Step 2.8 derives `Issues Found` (`grade < threshold`), the gate did not release.
 
 Surface to the user:
 
-- The name of the first reviewer that returned `Issues Found` (the entry that triggered the halt).
-- The full structured findings list from that reviewer. **At a minimum every `Blocker` finding MUST be surfaced verbatim.** Advisory findings SHOULD also be surfaced (the consumer MAY format them under a clearly-labeled "Advisory" section), but they do not affect the verdict.
+- The computed grade and the resolved threshold (e.g., "Grade `C`, threshold `B` — not released").
+- The reviewer(s) whose findings drove the failing grade and their structured findings. At a zero-`Blocker` threshold the halt makes this the first reviewer that returned `Issues Found`; at a lenient threshold (no early-halt) surface every dispatched reviewer's `Blocker` findings. **At a minimum every `Blocker` finding contributing to the grade MUST be surfaced verbatim.** Advisory findings SHOULD also be surfaced (the consumer MAY format them under a clearly-labeled "Advisory" section), but they do not affect the verdict.
 - A clear statement that the gate did NOT release and no downstream event (e.g., `feature.approved`) was emitted.
 - A clear statement that any subsequent reviewer in the list was NOT dispatched in this pass, naming them by `name:` if the user benefits from seeing the deferred set (especially for `type: human` reviewers: the user themselves may be the next-in-line reviewer who was halted before; saying so explicitly avoids confusion).
 
@@ -167,6 +180,11 @@ This runner is the implementation of the following acceptance criteria from the 
 | [`serial-dispatch-observed`](../../../spec/features/reviewer-gates/README.md#ac-serial-dispatch-observed) | Step 2 (serial dispatch loop with per-entry start/end timestamping) + Step 6 (mocked-Agent-tool spy harness: no-overlap and start-order-equals-registry-order assertions). |
 | [`and-composition-blocks-on-any-issues-found`](../../../spec/features/reviewer-gates/README.md#ac-and-composition-blocks-on-any-issues-found) | Step 2.7 (halt on first `Issues Found` within the pass — subsequent entries not dispatched), Step 4 (surface the first failing reviewer's `Blocker` findings; do NOT release any downstream gate; do NOT emit `feature.approved`). |
 | [`rerun-policy-applies-on-structural-fix`](../../../spec/features/reviewer-gates/README.md#ac-rerun-policy-applies-on-structural-fix) | Step 1 (rerun-pass dispatch-set computation: re-dispatch previously-`Issues Found` always; re-dispatch previously-`Approved` when structural-fix flag is `true`) + Step 5 (structural-section enumeration for Feature artifacts and per-artifact-type extension note). |
+| [`grade-band-by-blocker-count`](../../../spec/features/reviewer-gates/README.md#ac-grade-band-by-blocker-count) | Step 2.8.1–2.8.2 (Blocker union over dispatched reviewers → band: 0→A/B, 1→C, 2–3→D, 4+→F). |
+| [`within-band-letter-derivation`](../../../spec/features/reviewer-gates/README.md#ac-within-band-letter-derivation) | Step 2.8.3 (lowest within-band letter across reviewers; findings-only reviewer contributes default `B`) + Step 2.8.4 (threshold `A` releases only on grade `A`; default `B` releases on `A`/`B`). |
+| [`worst-wins-union-across-reviewers`](../../../spec/features/reviewer-gates/README.md#ac-worst-wins-union-across-reviewers) | Step 2.8.1 (union of `Blocker`s across reviewers) — one Blocker from any reviewer → grade `C`, fails at default `B`. |
+| [`threshold-default-reproduces-today`](../../../spec/features/reviewer-gates/README.md#ac-threshold-default-reproduces-today) | Step 2.8.4 with default threshold `B`: zero `Blocker`s → grade ≥ `B` → `Approved`; any `Blocker` → grade ≤ `C` → `Issues Found` (identical to pre-grade AND-composition). |
+| [`lenient-threshold-tolerates-blocker`](../../../spec/features/reviewer-gates/README.md#ac-lenient-threshold-tolerates-blocker) | Step 2.7 (no early-halt at lenient threshold) + Step 2.8.4 (`threshold: C`, one `Blocker` → grade `C` → `C ≥ C` → `Approved`). |
 
 ### Walk-through against AC `serial-dispatch-observed`
 

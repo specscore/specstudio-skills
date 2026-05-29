@@ -24,6 +24,14 @@ All scenarios are scaffolded with `**Status:** pending`; their concrete Given/Wh
 | [review-feature-archived.md](review-feature-archived.md) | `reviewer-gates#ac:review-feature-archived` |
 | [root-readme-link-present.md](root-readme-link-present.md) | `reviewer-gates#ac:root-readme-link-present` |
 | [skill-doc-cross-links-present.md](skill-doc-cross-links-present.md) | `reviewer-gates#ac:skill-doc-cross-links-present` |
+| [grade-band-by-blocker-count.md](grade-band-by-blocker-count.md) | `reviewer-gates#ac:grade-band-by-blocker-count` |
+| [threshold-default-reproduces-today.md](threshold-default-reproduces-today.md) | `reviewer-gates#ac:threshold-default-reproduces-today` |
+| [threshold-resolution-order.md](threshold-resolution-order.md) | `reviewer-gates#ac:threshold-resolution-order` |
+| [invalid-threshold-refused.md](invalid-threshold-refused.md) | `reviewer-gates#ac:invalid-threshold-refused` |
+| [lenient-threshold-tolerates-blocker.md](lenient-threshold-tolerates-blocker.md) | `reviewer-gates#ac:lenient-threshold-tolerates-blocker` |
+| [worst-wins-union-across-reviewers.md](worst-wins-union-across-reviewers.md) | `reviewer-gates#ac:worst-wins-union-across-reviewers` |
+| [within-band-letter-derivation.md](within-band-letter-derivation.md) | `reviewer-gates#ac:within-band-letter-derivation` |
+| [ba-lens-problem-traceability-blocker.md](ba-lens-problem-traceability-blocker.md) | `reviewer-gates#ac:ba-lens-problem-traceability-blocker` |
 
 ## Open Questions
 

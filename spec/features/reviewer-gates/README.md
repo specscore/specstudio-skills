@@ -12,6 +12,8 @@
 
 Defines the canonical reviewer-gates contract: per-stage reviewer lists scoped under a `gates:` block in `specscore.yaml`, with a `type:` discriminator and type-specific fields per reviewer entry. Pins the schema, dispatch semantics, and verdict contract for the MVP type set (`ai`, `human`), and wires `specstudio:specify` as the first consumer — replacing its built-in reviewer dispatch and User Review Gate with the new typed-gate model. Carves the Reviewer parts of [`third-party-integration`](../third-party-integration/README.md) out into this Feature.
 
+The gate's verdict currency is an A–F **grade**: per-reviewer `Blocker`/`Advisory` findings are aggregated into a grade, and a gate releases iff `grade ≥ threshold` (configurable, default `B`). Both producer-exit gates and the manual [`score-command`](../score-command/README.md) consume this same grade, so verdict parity is structural. The grade model is designed so the **default threshold reproduces today's binary behavior exactly** (see [the grade design doc](../../research/reviewer-gates-grade-design.md)).
+
 ## Problem
 
 `specstudio-skills` today pins reviewer dispatch in three places: [`third-party-integration`](../third-party-integration/README.md) (the `reviewers:` registry in `specscore.yaml`), [`specstudio:specify`](../skills/specify/README.md) (built-in baseline reviewer + extension hook + a separate "User Review Gate"), and [`specstudio:plan`](../skills/plan/README.md) (mirrored shape). Three Features describe the same mechanism inconsistently, none can be configured per pipeline stage, and the abstraction is invisible from the root `README.md`. Two sidekick seeds ([`future-review-skill-could-discover-available-claude-code`](../../ideas/seeds/future-review-skill-could-discover-available-claude-code.md), [`extend-consilium-to-review-regular-specscore-ideas-not-just`](../../ideas/seeds/extend-consilium-to-review-regular-specscore-ideas-not-just.md)) anticipate multi-reviewer dispatch but have no schema to register entries against. The draft [`review`](../skills/review/README.md) Feature explicitly defers naming ("human vs AI") and placement ("one step or per-artifact") to ideation.
@@ -60,15 +62,52 @@ Within a single gate, reviewers MUST be dispatched serially in `reviewers:` list
 
 #### REQ: verdict-contract
 
-Every reviewer (regardless of type) MUST resolve to exactly one of two verdicts: `Approved` or `Issues Found`. On `Issues Found`, the reviewer MUST attach a structured findings list, where each finding declares its severity as `Blocker` or `Advisory`. For `type: ai`, the verdict is the subagent's response per the prompt's documented taxonomy. For `type: human`, the verdict is `Approved` on an explicit approval phrase and `Issues Found` (with the user's change request captured as a single `Blocker` finding) on a change request. Reviewers MUST NOT write or modify any artifact in `spec/`; a reviewer that attempts a write is a misclassified Producer and the consumer MUST reject the gate.
+Every reviewer (regardless of type) MUST resolve to exactly one of two verdicts: `Approved` or `Issues Found`. On `Issues Found`, the reviewer MUST attach a structured findings list, where each finding declares its severity as `Blocker` or `Advisory`. For `type: ai`, the verdict is the subagent's response per the prompt's documented taxonomy. For `type: human`, the verdict is `Approved` on an explicit approval phrase and `Issues Found` (with the user's change request captured as a single `Blocker` finding) on a change request. For `type: ai` reviewers **whose prompt declares the multi-role lenses** (`multi-role-reviewer`), the response additionally carries the per-lens sub-assessment and a single within-band letter. Reviewers whose prompt emits only findings (e.g., the current baseline prompt) are valid and carry no within-band letter; the gate still computes the band deterministically from the `Blocker` count per `### Grade and threshold`. Reviewers MUST NOT write or modify any artifact in `spec/`; a reviewer that attempts a write is a misclassified Producer and the consumer MUST reject the gate.
 
 #### REQ: and-composition
 
 A gate MUST release only when every reviewer in its `reviewers:` list returns `Approved`. Any single `Issues Found` from any reviewer MUST block the gate. Within a single gate pass, on the first `Issues Found` verdict the consumer MUST halt — subsequent reviewers in the list MUST NOT be dispatched in that pass. Halting after the first failure is mandatory (not an optimization): it prevents wasting the user's time on later reviewers (notably `type: human`) when the gate is already known to fail, and re-dispatch on the next pass is governed by `rerun-policy`. Advisory findings MAY be ignored by the consumer. Consumers MUST NOT silently downgrade a `Blocker` finding to `Advisory` severity and MUST NOT skip a registered reviewer.
 
+This "any `Blocker` blocks the gate" rule is the **default-threshold (`B`) case** of the generalized grade model in `### Grade and threshold`: at threshold `B`, `grade ≥ threshold` holds iff the aggregated `Blocker` count is zero, so AND-composition and the grade model coincide. At a non-default threshold the release condition is `grade ≥ threshold` per `threshold-derived-verdict`, and the halt-after-first-`Issues Found` rule becomes **threshold-aware**: it applies only when the threshold is a zero-`Blocker` bar (`A` or `B`, including the default) — there the first `Blocker` already guarantees `grade < threshold`, so halting is correct and reproduces today's behavior. When the threshold is **lenient** (`C`, `D`, or `F`), the gate MUST NOT early-halt on the first `Blocker`: it MUST dispatch all reviewers, build the full `Blocker` union, and release iff `grade ≥ threshold` — otherwise a tolerable `Blocker` count could never release. The halt, when it applies, still governs dispatch ordering only and never downgrades severities.
+
 #### REQ: rerun-policy
 
 On `Issues Found`, the consumer MUST address every `Blocker` finding before re-running the gate. On re-run, the consumer MUST re-dispatch every reviewer that previously returned `Issues Found`. Reviewers that previously returned `Approved` MUST be re-dispatched when the fix changes the artifact's structural sections — for SpecScore Feature artifacts these are `## Behavior`, `## Architecture`, and `## Acceptance Criteria`; for other artifact types the structurally-load-bearing sections defined by that artifact's specification. On non-structural fixes (typos, link repair, comment-only changes), previously-Approved reviewers MAY be skipped at the consumer's discretion.
+
+### Grade and threshold
+
+The gate's verdict currency is an A–F **grade**. Per-reviewer findings still use the `Blocker` / `Advisory` severities defined in `verdict-contract`; the gate computes the grade from them and derives the release verdict from a configurable threshold. At the default threshold this reduces exactly to the binary AND-composition above, so existing gates are unaffected.
+
+#### REQ: grade-band-mapping
+
+The gate MUST map an artifact's aggregated findings to one of five whole-letter grades — `A`, `B`, `C`, `D`, `F` (no `+`/`-` variants in MVP). The band is fixed **deterministically by the count of `Blocker` findings** in the aggregated set (the union defined by `grade-aggregation`):
+
+| Aggregated `Blocker` count | Band | Within-band letter |
+|---|---|---|
+| 0 | pass | `A` or `B` |
+| 1 | fail | `C` |
+| 2–3 | fail | `D` |
+| 4 or more | fail | `F` |
+
+Within the zero-`Blocker` pass band, the runner sets the letter from the reviewers' explicit within-band judgment: the grade is `A` only when at least one reviewer supplies an explicit within-band `A` and no reviewer supplies `B` (worst-wins per `grade-aggregation`); **absent any within-band letter the pass-band grade defaults to `B`**. This default is load-bearing for migration: a findings-only reviewer (no within-band judgment, e.g. the current baseline prompt) therefore yields `B` on zero `Blocker`s, which passes the default threshold `B` exactly as today. `Advisory` findings MAY inform a reviewer's within-band judgment but MUST NOT move the grade out of the pass band (Advisories never fail a gate). The pass/fail band itself MUST depend only on `Blocker` count — never on reviewer judgment — so the band is reproducible across runs holding findings constant; reviewer judgment can only distinguish `A` from `B` within the already-passing band.
+
+#### REQ: threshold-derived-verdict
+
+A gate's release verdict MUST be derived as `Approved` iff `grade ≥ threshold`, where letters are ordered `A > B > C > D > F` and `threshold` is resolved per `threshold-config`. `Issues Found` is the complementary case (`grade < threshold`). The default threshold `B` means the gate releases iff the grade is `A` or `B` — i.e., iff the aggregated `Blocker` count is zero — which is identical to the binary `and-composition` behavior. A threshold of `A` additionally requires the reviewer's within-band judgment to reach `A`; a threshold of `C` (or lower) tolerates the corresponding number of `Blocker` findings.
+
+#### REQ: threshold-config
+
+The Approve threshold MUST be resolvable from `specscore.yaml` in this order: (1) a per-stage `gates.<stage>.threshold` value; (2) a top-level `grade.threshold` value; (3) the built-in default `B` when neither is present. A `threshold` value MUST be one of the whole letters `A`, `B`, `C`, `D`, `F`; any other value (including `E`, `+`/`-` variants, or non-letters) MUST be rejected at consumer load time with an error pointing at this Feature. The `gates.<stage>.threshold` and top-level `grade.threshold` keys are additive to the existing schema and MUST be preserved across tooling reads/writes per `gates-block-location`'s preservation guarantee.
+
+#### REQ: grade-aggregation
+
+When a gate's `reviewers:` list contains more than one reviewer, AND when a single multi-role reviewer reports findings across multiple lenses, the gate MUST aggregate by **worst-wins**: the `Blocker` set is the **union** of all `Blocker` findings across every reviewer **dispatched in the current pass** and every lens, and the gate grade is computed from that union per `grade-band-mapping`. Because `and-composition`'s early-halt applies at zero-`Blocker` thresholds (`A`/`B`), in a multi-reviewer **panel** gated at such a threshold the failing-band letter (`C`/`D`/`F`) reflects only the `Blocker`s collected up to the halt; this never changes the pass/fail verdict (any `Blocker` yields a grade no higher than `C`, below `B`). At a lenient threshold the gate dispatches all reviewers (no early-halt), so the union — and thus the letter — is exact. The default single multi-role reviewer collects all its lenses' findings in one dispatch, so its grade is always exact regardless of halting or threshold. A reviewer's lenses contribute only to this `Blocker` union — they do NOT each emit a separate letter; a multi-role reviewer emits exactly **one** within-band letter representing its overall pass-band judgment (per `multi-role-reviewer`). In the pass band, the lowest within-band letter across reviewers wins, and a reviewer that supplies no within-band letter contributes the default `B` (per `grade-band-mapping`). This generalizes `and-composition` — any single `Issues Found` (i.e., any `Blocker`) still blocks the gate at the default threshold. The halt-after-first-`Issues Found` dispatch rule in `and-composition` governs dispatch ordering only and is unchanged by this REQ.
+
+#### REQ: multi-role-reviewer
+
+The **recommended default reviewer shape** for a stage is **one `type: ai` reviewer that evaluates the artifact through multiple lenses** — at minimum Business-Analyst (BA), Developer, and QA. A reviewer that takes this multi-role shape MUST, in addition to the `verdict-contract` findings list, emit a per-lens sub-assessment naming what each lens checked AND exactly **one** within-band letter representing its overall pass-band judgment (one letter for the reviewer, not one per lens — lenses contribute to the `Blocker` union per `grade-aggregation`). When a multi-role reviewer is used, its **BA lens MUST treat "the requirements do not demonstrably address the artifact's stated `## Problem`" as a `Blocker` category**, closing the problem→requirements traceability gap. The lens set is fixed in MVP — per-stage lens configuration is out of scope (see `## Not Doing`).
+
+This shape is the recommended default, not a constraint on every `type: ai` entry: a findings-only prompt (such as the current baseline at `skills/specify/references/reviewer-prompt.md`) remains valid per `verdict-contract` and contributes the default `B` in the pass band. Upgrading the baseline prompt to the multi-role shape is part of the grade increment (see the [Plan](../../plans/reviewer-gates.md)'s grade-increment task). A multi-reviewer **panel** (separate `type: ai` entries per role) remains available by adding entries to `gates.<stage>.reviewers`, and the `consilium` skill remains the heavyweight multi-role escape hatch. This REQ governs reviewer-prompt content and output shape; it does not change the entry schema in `ai-entry-shape`.
 
 ### `specstudio:specify` wiring
 
@@ -114,7 +153,7 @@ The skill `skills/specify/SKILL.md`, the Feature `spec/features/skills/specify/R
 - **Consumer (MVP).** `specstudio:specify` — reads `gates.specify.reviewers`, validates each entry's shape per `reviewer-entry-required-fields` / `mvp-type-set` / `ai-entry-shape` / `human-entry-shape` / `no-untyped-entry`, dispatches entries serially per `dispatch-serial`, aggregates verdicts under `and-composition`, and re-runs per `rerun-policy`.
 - **Future consumers (out of MVP scope).** `specstudio:plan`, `specstudio:implement`, `specstudio:verify`, `specstudio:recap`. Each will be a separate follow-on Feature; this contract is designed consumer-agnostic so future wiring needs only schema reads, not contract changes.
 - **Reviewer dispatch surfaces.** `type: ai` dispatches via the consumer skill's Agent tool with the prompt file as the system prompt. `type: human` dispatches via the consumer skill's existing user-prompt + approval-phrase recognizer.
-- **Verdict aggregation.** Stateless per-gate. The gate's verdict is `Approved` iff every reviewer's last verdict in the current run is `Approved`. No persisted state between gate runs; rerun discipline is captured in `rerun-policy`.
+- **Verdict aggregation.** Stateless per-gate. The gate computes an A–F grade from the worst-wins union of `Blocker` findings across reviewers and lenses (`grade-aggregation`, `grade-band-mapping`) and releases iff `grade ≥ threshold` (`threshold-derived-verdict`). At the default threshold `B` this is identical to "`Approved` iff every reviewer's last verdict is `Approved`." No persisted state between gate runs; rerun discipline is captured in `rerun-policy`.
 - **Outputs.** This Feature defines no artifact writes and no new events. Consumer skills emit their own events (e.g., `feature.approved`); this Feature is purely a contract.
 
 ## Interaction with Other Features
@@ -125,7 +164,8 @@ The skill `skills/specify/SKILL.md`, the Feature `spec/features/skills/specify/R
 | [Specify Skill](../skills/specify/README.md) | This Feature's MVP consumer. Per `specify-loads-gate`, `specify-no-separate-user-gate`, and `specify-feature-revision`, the existing Reviewer-subagent and User-Review-Gate REQs in `specify` are replaced by `gates.specify` consumption. |
 | [Plan Skill](../skills/plan/README.md) | Not wired in MVP. The existing reviewer-subagent REQs in `plan` remain until a follow-on Feature wires `plan` to consume `gates.plan`. Out of this Feature's scope. |
 | [Review Skill (archived by this Feature)](../skills/review/README.md) | Per `review-feature-archival`, the standalone `review` pipeline step is archived in favor of stage-internal reviewer gates. |
-| SpecScore Repo Config | Hosts the new `gates:` extension key. Relies on `unknown-fields-preserved`; no change required upstream. |
+| [Score Command](../score-command/README.md) | Consumes this layer's grade + threshold as the manual `/score` surface. The grade is single-sourced here so manual `/score` and the producer-exit gates return identical verdicts (verdict parity). `/score`'s `--save` / `--badge` flags layer on top and are owned there. |
+| SpecScore Repo Config | Hosts the new `gates:` extension key and the top-level `grade.threshold` key. Relies on `unknown-fields-preserved`; no change required upstream. |
 
 ## Acceptance Criteria
 
@@ -227,6 +267,54 @@ ACs are grouped here with explicit REQ back-references, mirroring sibling Featur
 **When** a downstream consumer reads `skills/specify/SKILL.md`, `spec/features/skills/specify/README.md`, and `spec/features/README.md`,
 **Then** each of the three files MUST contain at least one link pointing at this Feature's `README.md`, and the features-index file (`spec/features/README.md`) MUST include a row with a one-line description of this Feature.
 
+### AC: grade-band-by-blocker-count (verifies REQ:grade-band-mapping)
+
+**Given** four gate runs whose aggregated findings contain exactly 0, 1, 3, and 4 `Blocker` findings respectively,
+**When** the gate computes the grade for each,
+**Then** the 0-Blocker run MUST land in the pass band (`A` or `B`), the 1-Blocker run MUST be `C`, the 3-Blocker run MUST be `D`, and the 4-Blocker run MUST be `F`; and the pass/fail band MUST be identical across repeated runs holding the findings constant (no dependence on reviewer judgment).
+
+### AC: threshold-default-reproduces-today (verifies REQ:threshold-config, REQ:threshold-derived-verdict, REQ:grade-aggregation)
+
+**Given** a repo with no `gates.<stage>.threshold` and no top-level `grade.threshold`, using the existing reviewer prompt,
+**When** a gate runs on an artifact whose aggregated findings contain zero `Blocker`s, and separately on an artifact with one or more `Blocker`s,
+**Then** the default threshold `B` MUST be applied, the zero-`Blocker` artifact MUST release (`Approved`), and the `Blocker`-bearing artifact MUST NOT release (`Issues Found`) — identical to the pre-grade `and-composition` behavior.
+
+### AC: threshold-resolution-order (verifies REQ:threshold-config)
+
+**Given** a `specscore.yaml` with top-level `grade.threshold: C` and `gates.specify.threshold: B`,
+**When** a consumer resolves the threshold for the `specify` stage and for a second stage that declares no per-stage `threshold`,
+**Then** the `specify` stage MUST resolve to `B` (per-stage overrides top-level), the second stage MUST resolve to `C` (top-level default), and a repo with neither key MUST resolve to `B` (built-in default).
+
+### AC: invalid-threshold-refused (verifies REQ:threshold-config)
+
+**Given** a `gates.specify.threshold: E` (a value outside the allowed set `{A, B, C, D, F}`),
+**When** `specstudio:specify` attempts to load the gate,
+**Then** the skill MUST refuse to run with an error citing `threshold-config` and pointing at this Feature, MUST NOT dispatch any reviewer, and MUST exit non-zero.
+
+### AC: lenient-threshold-tolerates-blocker (verifies REQ:threshold-derived-verdict)
+
+**Given** `gates.specify.threshold: C` and an artifact whose aggregated findings contain exactly one `Blocker` (grade `C`),
+**When** the gate computes the verdict,
+**Then** the gate MUST release (`Approved`) because `C ≥ C`; and the same artifact under the default threshold `B` MUST NOT release.
+
+### AC: worst-wins-union-across-reviewers (verifies REQ:grade-aggregation)
+
+**Given** a two-`ai`-reviewer panel where reviewer A reports zero `Blocker`s and reviewer B reports one `Blocker`,
+**When** the gate aggregates the verdicts,
+**Then** the aggregated `Blocker` union MUST be 1, the grade MUST be `C`, and the gate MUST NOT release at the default threshold `B`.
+
+### AC: within-band-letter-derivation (verifies REQ:grade-band-mapping, REQ:grade-aggregation)
+
+**Given** three zero-`Blocker` pass-band gate runs — (a) a single reviewer supplies within-band letter `A`; (b) one reviewer supplies `A` and another supplies `B`; (c) a findings-only reviewer supplies no within-band letter,
+**When** the gate computes the grade,
+**Then** the grade MUST be `A` in (a), `B` in (b) (lowest-wins across reviewers), and `B` in (c) (default when no letter is supplied); and a configured threshold of `A` MUST release only in case (a), while the default threshold `B` MUST release in all three.
+
+### AC: ba-lens-problem-traceability-blocker (verifies REQ:multi-role-reviewer)
+
+**Given** a Feature whose requirements are internally consistent but do not demonstrably address its stated `## Problem`, reviewed by the default multi-role reviewer,
+**When** the BA lens evaluates the artifact,
+**Then** the reviewer MUST emit a `Blocker` finding under the BA lens for problem→requirements traceability, the aggregated `Blocker` count MUST be at least 1, and the gate MUST NOT release at the default threshold `B`.
+
 ## Rehearse Integration
 
 Every AC above is testable via filesystem fixtures (mock `specscore.yaml` configurations, mock reviewer prompts, mock subagent verdicts) and either consumer-skill instrumentation (dispatch order, refusal exit codes, verdict-aggregation outcome) or grep-style assertions on the revised/archived/linked files. The non-testable cases (the `ai` reviewer subagent's judgment quality, the human's actual real-world approval-phrase usage) are validated at the assumption-validation layer of the source Idea, not as Rehearse scenarios.
@@ -247,11 +335,17 @@ Inherited from the source Idea and pinned here:
 - **Plugin-namespace prefixes in gate keys** — `gates.specstudio:specify` is not allowed in MVP; only bare skill names (`gates.specify`). Revisit when multiple plugins ship skills with colliding bare names.
 - **`gates:` configuration validation as a `specscore` CLI lint rule** — schema lint of `gates:` entries is deferred. Consumers (MVP: `specstudio:specify`) own load-time validation. A future `specscore config validate` (or a lint rule) MAY subsume.
 - **Promotion of the schema into the `specscore` repo** — the `gates:` schema lives in this Feature in `specstudio-skills` for MVP. Promoting to the canonical SpecScore Repo Config Feature happens once a second consumer ships.
+- **`+`/`-` letter grades** — whole letters `A`–`F` only in MVP; half-step precision (`B+`, `B-`) and the comparison rules it needs are deferred.
+- **Per-stage lens-set configuration** — the BA/dev/QA lens set in `multi-role-reviewer` is fixed in MVP. Making the lens set configurable per stage is deferred; a panel of separate reviewer entries already provides per-role flexibility.
+- **Severity-weighted fail band** — the C/D/F mapping is by `Blocker` count (`grade-band-mapping`); weighting `Blocker`s by a sub-severity rank is deferred to avoid introducing a new severity taxonomy.
+- **Numeric or per-axis published sub-scores** — the per-lens sub-assessment informs the within-band letter only; emitting a numeric score or a persisted per-axis breakdown is deferred (the A–F letter is the currency).
+- **Wiring the grade into `plan`/`implement`/`verify`/`recap` gates** — the grade contract is consumer-agnostic, but only `specstudio:specify` (and the manual `/score`) consume it in MVP; other stages wire in their own follow-on Features.
 
 ## Open Questions
 
 - Canonical wording of the migration error message emitted when a consumer encounters a legacy untyped `reviewers:` entry (per `no-untyped-entry`) — deferred to implementation; the REQ pins the requirement, not the copy.
 - Whether a `description:` field on `type: human` entries adds enough value at MVP to mandate. Currently the schema permits but does not require it; implementation may add usage examples without revising this Feature.
+- **Grade as verdict currency** — now specified in `### Grade and threshold` (`grade-band-mapping`, `threshold-derived-verdict`, `threshold-config`, `grade-aggregation`, `multi-role-reviewer`), per [the grade design doc](../../research/reviewer-gates-grade-design.md). Resolved sub-decisions: fail-band by `Blocker` count (C=1, D=2–3, F=4+); fixed BA/dev/QA lens set; whole-letter grades only. Remaining: only `specstudio:specify` and the manual `/score` consume the grade in MVP — wiring other stages is deferred (see `## Not Doing`).
 
 ---
 *This document follows the https://specscore.md/feature-specification*
