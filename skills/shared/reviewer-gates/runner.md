@@ -5,7 +5,7 @@
 
 ## Purpose
 
-This file tells a consuming skill (currently `specstudio:specify`; future consumers MUST follow the same protocol) how to **execute** a reviewer gate against the validated reviewer list produced by [`loader.md`](./loader.md). The runner is the second half of the reviewer-gates contract: where the loader does load-time validation, the runner does dispatch, verdict aggregation, halt-after-first-failure, and rerun-policy enforcement.
+This file tells a consuming skill (currently `specstudio:specify`; future consumers MUST follow the same protocol) how to **execute** a reviewer gate against the validated reviewer list produced by [`loader.md`](./loader.md). The runner is the second half of the reviewer-gates contract: where the loader does load-time validation, the runner does dispatch, grade aggregation, the two-phase (automated then human) verdict computation, and rerun-policy enforcement.
 
 The runner's output is the gate's **grade** (a whole letter `A`–`F`) and the derived verdict for the consuming skill:
 
@@ -18,7 +18,7 @@ This runner implements the following REQs from the [reviewer-gates Feature](../.
 
 - [`dispatch-serial`](../../../spec/features/reviewer-gates/README.md#req-dispatch-serial) — one reviewer in flight at a time, in list order.
 - [`verdict-contract`](../../../spec/features/reviewer-gates/README.md#req-verdict-contract) — `Blocker`/`Advisory` severity on findings; no reviewer writes to `spec/`.
-- [`and-composition`](../../../spec/features/reviewer-gates/README.md#req-and-composition) — threshold-aware early-halt (halt on first `Blocker` only at zero-`Blocker` thresholds `A`/`B`; dispatch all at lenient thresholds).
+- [`and-composition`](../../../spec/features/reviewer-gates/README.md#req-and-composition) — no early-halt; two-phase dispatch (all `type: ai` reviewers, then `type: human` only if the automated grade ≥ threshold).
 - [`grade-band-mapping`](../../../spec/features/reviewer-gates/README.md#req-grade-band-mapping), [`grade-aggregation`](../../../spec/features/reviewer-gates/README.md#req-grade-aggregation), [`threshold-derived-verdict`](../../../spec/features/reviewer-gates/README.md#req-threshold-derived-verdict) — compute the grade from the `Blocker` union + within-band letter (Step 2.8) and release iff `grade ≥ threshold`.
 - [`rerun-policy`](../../../spec/features/reviewer-gates/README.md#req-rerun-policy) — re-dispatch previously-`Issues Found` reviewers on rerun; ALSO re-dispatch previously-`Approved` reviewers when the fix touched a structural section.
 
@@ -38,13 +38,13 @@ This runner implements the following REQs from the [reviewer-gates Feature](../.
 The runner returns the **gate grade** (a whole letter `A`–`F`, computed per Step 2.8) and the derived gate verdict, exactly one of:
 
 - `Approved` — the grade satisfies `grade ≥ threshold`. Accompanied by the grade and the per-reviewer verdict map for this pass. The consumer is now released to proceed.
-- `Issues Found` — `grade < threshold`. Accompanied by (a) the grade, (b) the surfaced reviewer(s) and their structured findings list (each finding carrying `Blocker` or `Advisory` severity and a prose description), and (c) the per-reviewer verdict map for this pass (reviewers the runner halted before reaching are absent from the map). The consumer MUST surface at least the `Blocker` findings to the user and MUST NOT release any downstream gate or emit any approval event.
+- `Issues Found` — `grade < threshold`. Accompanied by (a) the grade, (b) the surfaced reviewer(s) and their structured findings list (each finding carrying `Blocker` or `Advisory` severity and a prose description), and (c) the per-reviewer verdict map for this pass (a `type: human` reviewer not dispatched because the automated grade was below threshold is absent from the map). The consumer MUST surface at least the `Blocker` findings to the user and MUST NOT release any downstream gate or emit any approval event.
 
 In both cases the runner returns the grade plus the per-reviewer verdict map so the consumer can pass the map back as the "previous-pass verdict map" input on the next pass (the rerun), and surface the grade (e.g., `specstudio:score` renders it; a producer-exit gate may log it).
 
 ## Protocol
 
-Follow the steps in order. Do not skip ahead. The first halt-condition is terminal for the current pass.
+Follow the steps in order. Do not skip ahead.
 
 ### Step 0 — Confirm inputs
 
@@ -61,43 +61,49 @@ Walk the validated reviewer list in declared order. For each entry, decide wheth
   - If the entry's previous verdict was `Issues Found`: dispatch it. (Per [`rerun-policy`](../../../spec/features/reviewer-gates/README.md#req-rerun-policy).)
   - If the entry's previous verdict was `Approved` **and** the structural-fix flag is `true`: dispatch it. (Per [`rerun-policy`](../../../spec/features/reviewer-gates/README.md#req-rerun-policy).)
   - If the entry's previous verdict was `Approved` **and** the structural-fix flag is `false`: the entry MAY be skipped — carry its previous `Approved` verdict forward into this pass's verdict map. (Per [`rerun-policy`](../../../spec/features/reviewer-gates/README.md#req-rerun-policy)'s "non-structural fixes" allowance.)
-  - If the entry is absent from the previous-pass verdict map (i.e., the previous pass halted before reaching it): dispatch it. The previous pass never collected its verdict; the rerun MUST collect one.
+  - If the entry is absent from the previous-pass verdict map (e.g., a `type: human` entry deferred because the previous pass's automated grade was below threshold): dispatch it in its phase. The previous pass never collected its verdict; the rerun MUST collect one (a `type: human` entry still runs only if this pass's automated grade ≥ threshold, per Step 2.8).
 
 The order within the dispatch set is exactly the declared order of the original reviewer list — entries skipped above do not shift the order of the remaining entries.
 
-### Step 2 — Dispatch serially, in declared order
+### Step 2 — Automated phase: dispatch every `type: ai` reviewer (serial, no early-halt)
 
-For each entry in the dispatch set, in order:
+For each **`type: ai`** entry in the dispatch set, in declared order (`type: human` entries are deferred to the human phase, Step 2.9):
 
 1. **Record dispatch start.** Capture the timestamp at the moment dispatch begins (for AC `serial-dispatch-observed`'s instrumentation contract — see Step 6 below).
-2. **Dispatch by type:**
-   - `type: ai` — invoke the consumer skill's Agent tool with the entry's resolved `prompt_path` file contents as the system prompt. Pass the artifact under review (e.g., the Feature `README.md` text for `specstudio:specify`) as the user-facing message. Wait for the subagent to return. The subagent MUST respond with exactly one of `Approved` or `Issues Found`; on `Issues Found`, the response carries a structured findings list per the prompt's documented blocker/advisory taxonomy.
-   - `type: human` — invoke the consumer skill's existing approval-phrase recognizer (the same one used by `specstudio:ideate` and `specstudio:specify` for user-approval gates). Present the artifact under review to the user; wait for the user's response. Map the response:
-     - Explicit approval phrase (`approve` / `approved` / `accept` / `accepted` / `lgtm` or direct semantic equivalents in the user's language) → `Approved`.
-     - Explicit change request → `Issues Found` with the user's change-request text captured as a single `Blocker` finding. The reviewer-name in surfaced findings is the entry's `name:`.
-     - Ambiguous response → ask the user to clarify (this is not a verdict yet — the recognizer's standard ambiguity-handling applies). Continue waiting.
+2. **Dispatch the AI reviewer.** Invoke the consumer skill's Agent tool with the entry's resolved `prompt_path` file contents as the system prompt. Pass the artifact under review (e.g., the Feature `README.md` text for `specstudio:specify`) as the user-facing message. Wait for the subagent to return. The subagent MUST respond with exactly one of `Approved` or `Issues Found`; on `Issues Found`, the response carries a structured findings list per the prompt's documented blocker/advisory taxonomy (and, if the prompt declares the multi-role lenses, a single within-band letter).
 3. **Record dispatch end.** Capture the timestamp at the moment the verdict is collected. The recorded `[start, end]` interval for this entry MUST be disjoint from every other entry's interval in this pass — no two dispatches concurrently in flight. (See Step 6 for the instrumentation contract and the test-harness assertion shape.)
 4. **Validate the verdict shape.** The returned verdict MUST be exactly `Approved` or `Issues Found`. If a `type: ai` subagent returns anything else (e.g., omits the verdict, returns prose with no decision), the runner MUST refuse the gate with `Error: reviewer '<name>' returned a non-conforming verdict (expected 'Approved' or 'Issues Found'); reviewer prompts MUST conform to the documented taxonomy per reviewer-gates#req:verdict-contract`. No silent retry, no inference. This is a reviewer-prompt bug surfaced to the user.
 5. **Reject writes to `spec/`.** If a reviewer attempted (or its findings instruct the consumer to perform) a write or modification to any artifact under `spec/`, the runner MUST refuse the gate with `Error: reviewer '<name>' is a misclassified Producer; reviewers MUST NOT write to spec/ per reviewer-gates#req:verdict-contract`. (Reviewers are read-only; producers own artifact writes.)
 6. **Record the verdict, findings, and within-band letter.** Record `<entry.name> → <verdict>` in this pass's verdict map, and retain the entry's structured findings (each with `Blocker`/`Advisory` severity). For a `type: ai` entry whose prompt declares the multi-role lenses, also retain the single within-band letter it reported (per [`multi-role-reviewer`](../../../spec/features/reviewer-gates/README.md#req-multi-role-reviewer)); a findings-only reviewer reports no within-band letter (treated as the default `B` in Step 2.8).
-7. **Check for the threshold-aware halt condition.** If the verdict is `Issues Found` **and** the resolved threshold is a zero-`Blocker` bar (`A` or `B`): **halt the pass immediately** — record the remaining entries as "not dispatched in this pass" (their verdict-map slots remain absent) and proceed to Step 2.8 (Compute the grade). The first `Blocker` already guarantees `grade < threshold` at these thresholds, so dispatching further reviewers is wasted effort — this is the mandatory halt of [`and-composition`](../../../spec/features/reviewer-gates/README.md#req-and-composition), now scoped to zero-`Blocker` thresholds. If the threshold is **lenient** (`C`, `D`, or `F`): do NOT halt — continue dispatching the remaining entries so the full `Blocker` union can be counted, because a tolerable `Blocker` count may still satisfy `grade ≥ threshold`. When the dispatch set is exhausted (or the halt fired), proceed to Step 2.8.
+7. **No early-halt.** Record the verdict and findings and continue to the next `type: ai` entry. The runner does NOT halt on `Issues Found` (per [`and-composition`](../../../spec/features/reviewer-gates/README.md#req-and-composition)): every `type: ai` entry in the dispatch set is dispatched, so the `Blocker` union — and hence the grade — is exact and every `Blocker` surfaces in a single pass. When the automated entries are exhausted, proceed to Step 2.8.
 
-### Step 2.8 — Compute the grade and derive the gate verdict
+### Step 2.8 — Compute the automated grade and route
 
-After the dispatch loop completes for this pass — whether it ran the full dispatch set or halted early per the zero-`Blocker` threshold rule — compute the gate grade from the findings collected so far, per [`grade-band-mapping`](../../../spec/features/reviewer-gates/README.md#req-grade-band-mapping) and [`grade-aggregation`](../../../spec/features/reviewer-gates/README.md#req-grade-aggregation):
+After the automated phase (Step 2) has dispatched every `type: ai` entry, compute the **automated grade** from their findings, per [`grade-band-mapping`](../../../spec/features/reviewer-gates/README.md#req-grade-band-mapping) and [`grade-aggregation`](../../../spec/features/reviewer-gates/README.md#req-grade-aggregation):
 
-1. **Blocker union.** Form the union of all `Blocker` findings across every reviewer **dispatched in this pass** and (for a multi-role reviewer) every lens. Let `n = |union|`.
+1. **Blocker union.** Form the union of all `Blocker` findings across every `type: ai` reviewer dispatched this pass and (for a multi-role reviewer) every lens. Let `n = |union|`. (Because no reviewer was halted, this union is exact.)
 2. **Band by Blocker count.** `n == 0` → pass band (`A`/`B`); `n == 1` → `C`; `2 ≤ n ≤ 3` → `D`; `n ≥ 4` → `F`.
-3. **Within-band letter (pass band only).** Across the reviewers that reported a within-band letter, take the **lowest** (since `A > B`, any reported `B` wins over `A`). A reviewer that reported no within-band letter (findings-only) contributes the default `B`. Result: the grade is `A` iff at least one reviewer reported `A` and none reported `B`; otherwise `B`. (A multi-role reviewer reports exactly one within-band letter — lenses feed only the `Blocker` union, not separate letters.)
-4. **Derive the verdict.** With letters ordered `A > B > C > D > F`, the gate verdict is `Approved` iff `grade ≥ threshold`, else `Issues Found` (per [`threshold-derived-verdict`](../../../spec/features/reviewer-gates/README.md#req-threshold-derived-verdict)).
+3. **Within-band letter (pass band only).** Across the reviewers that reported a within-band letter, take the **lowest** (since `A > B`, any reported `B` wins over `A`). A reviewer that reported no within-band letter (findings-only) contributes the default `B`. Result: the grade is `A` iff at least one reviewer reported `A` and none reported `B`; otherwise `B`.
+4. **Route on the automated grade** (letters ordered `A > B > C > D > F`):
+   - If the automated grade `< threshold`: the gate verdict is `Issues Found`. **Skip the human phase** — do NOT dispatch any `type: human` reviewer (a human MUST NOT be asked to approve an artifact the automated reviewers already failed) — and go to Step 4.
+   - If the automated grade `≥ threshold`: the automated reviewers are satisfied; proceed to Step 2.9 for the human phase (final sign-off).
 
-The early-halt at zero-`Blocker` thresholds never changes this verdict: if the halt fired, `n ≥ 1`, so `grade ≤ C < threshold` (threshold is `A` or `B`) → `Issues Found`. The halt only bounds how many `Blocker`s were counted; it cannot turn a fail into a pass.
+### Step 2.9 — Human phase: final sign-off (only when the automated grade passes)
 
-Proceed to Step 3 when the derived verdict is `Approved`, else Step 4.
+Reached only when Step 2.8 routed here (automated grade `≥ threshold`). Dispatch each `type: human` entry in the dispatch set, in declared order, serially (per `dispatch-serial`). For each:
+
+1. Record dispatch start/end timestamps (same instrumentation as Step 2).
+2. Present the artifact under review to the user and invoke the consumer skill's approval-phrase recognizer (the same one used by `specstudio:ideate` / `specstudio:specify`):
+   - Explicit approval phrase (`approve` / `approved` / `accept` / `accepted` / `lgtm` or direct semantic equivalents) → `Approved` (contributes no `Blocker`).
+   - Explicit change request → `Issues Found`, captured as a single `Blocker` finding under the entry's `name:`.
+   - Ambiguous response → ask the user to clarify; not yet a verdict.
+3. Record the verdict (and any finding) in the verdict map.
+
+After the human entries, **re-compute the grade** including any human-contributed `Blocker`s (Step 2.8 steps 1–3 over the full union), and derive the final verdict: `Approved` iff `grade ≥ threshold`, else `Issues Found`. A human change request adds a `Blocker`, so it can only lower the grade — a human confirms or blocks, never raises, the automated grade. Proceed to Step 3 (`Approved`) or Step 4 (`Issues Found`).
 
 ### Step 3 — Gate verdict is `Approved`
 
-When Step 2.8 derives `Approved` (`grade ≥ threshold`), return `Approved` with the computed grade and the per-reviewer verdict map. (At the default threshold `B` this coincides exactly with "every dispatched reviewer returned `Approved`" — zero `Blocker`s — with every previously-`Approved` entry skipped per Step 1's non-structural-fix allowance carrying its verdict forward.)
+When the final grade (after the human phase, Step 2.9) satisfies `grade ≥ threshold`, return `Approved` with the computed grade and the per-reviewer verdict map. At the default threshold `B` this coincides exactly with "zero `Blocker`s across all `type: ai` reviewers, and the human approved."
 
 ### Step 4 — Gate verdict is `Issues Found`
 
@@ -106,9 +112,9 @@ When Step 2.8 derives `Issues Found` (`grade < threshold`), the gate did not rel
 Surface to the user:
 
 - The computed grade and the resolved threshold (e.g., "Grade `C`, threshold `B` — not released").
-- The reviewer(s) whose findings drove the failing grade and their structured findings. At a zero-`Blocker` threshold the halt makes this the first reviewer that returned `Issues Found`; at a lenient threshold (no early-halt) surface every dispatched reviewer's `Blocker` findings. **At a minimum every `Blocker` finding contributing to the grade MUST be surfaced verbatim.** Advisory findings SHOULD also be surfaced (the consumer MAY format them under a clearly-labeled "Advisory" section), but they do not affect the verdict.
+- Every reviewer whose findings drove the failing grade and their structured findings. Because there is no early-halt, surface every dispatched reviewer's `Blocker` findings so the author can fix them all in one pass. **At a minimum every `Blocker` finding contributing to the grade MUST be surfaced verbatim.** Advisory findings SHOULD also be surfaced (the consumer MAY format them under a clearly-labeled "Advisory" section), but they do not affect the verdict.
 - A clear statement that the gate did NOT release and no downstream event (e.g., `feature.approved`) was emitted.
-- A clear statement that any subsequent reviewer in the list was NOT dispatched in this pass, naming them by `name:` if the user benefits from seeing the deferred set (especially for `type: human` reviewers: the user themselves may be the next-in-line reviewer who was halted before; saying so explicitly avoids confusion).
+- When the human phase was skipped (automated grade below threshold), a clear statement that the `type: human` reviewer(s) were NOT dispatched because the automated reviewers must pass first — naming them by `name:` so the user understands they were not asked to approve a failing artifact.
 
 Severity discipline: the runner MUST NOT downgrade a `Blocker` finding to `Advisory`, MUST NOT collapse multiple findings into a single message that obscures severity, and MUST NOT omit a `Blocker` finding from what is surfaced to the user.
 
@@ -134,7 +140,7 @@ This step is invoked **between passes**, not within a single pass. After the use
 - Re-dispatch every reviewer whose previous-pass verdict was `Issues Found`. Always — regardless of the structural-fix flag.
 - Re-dispatch every reviewer whose previous-pass verdict was `Approved`, **if and only if** the structural-fix flag is `true`.
 - For previously-`Approved` reviewers when the flag is `false`: skipping is permitted per Step 1's non-structural-fix allowance; the previous `Approved` verdict carries forward into the new pass's verdict map without re-dispatch.
-- For reviewers absent from the previous-pass verdict map (the ones halted before in the previous pass): always dispatch — the previous pass never collected their verdict.
+- For reviewers absent from the previous-pass verdict map (e.g., a `type: human` entry deferred because the previous automated grade failed): dispatch in its phase — the previous pass never collected its verdict (a `type: human` entry still runs only if this pass's automated grade ≥ threshold).
 
 **What the consumer MUST NOT do:**
 
@@ -178,13 +184,13 @@ This runner is the implementation of the following acceptance criteria from the 
 | AC | Where verified in this runner |
 |---|---|
 | [`serial-dispatch-observed`](../../../spec/features/reviewer-gates/README.md#ac-serial-dispatch-observed) | Step 2 (serial dispatch loop with per-entry start/end timestamping) + Step 6 (mocked-Agent-tool spy harness: no-overlap and start-order-equals-registry-order assertions). |
-| [`and-composition-blocks-on-any-issues-found`](../../../spec/features/reviewer-gates/README.md#ac-and-composition-blocks-on-any-issues-found) | Step 2.7 (halt on first `Issues Found` within the pass — subsequent entries not dispatched), Step 4 (surface the first failing reviewer's `Blocker` findings; do NOT release any downstream gate; do NOT emit `feature.approved`). |
+| [`and-composition-blocks-on-any-issues-found`](../../../spec/features/reviewer-gates/README.md#ac-and-composition-blocks-on-any-issues-found) | Step 2 (all `type: ai` dispatched, no early-halt) + Step 2.8 (automated grade `C` < `B` → `Issues Found`, human phase skipped) + Step 4 (surface the `Blocker`; do NOT release; do NOT emit `feature.approved`). |
 | [`rerun-policy-applies-on-structural-fix`](../../../spec/features/reviewer-gates/README.md#ac-rerun-policy-applies-on-structural-fix) | Step 1 (rerun-pass dispatch-set computation: re-dispatch previously-`Issues Found` always; re-dispatch previously-`Approved` when structural-fix flag is `true`) + Step 5 (structural-section enumeration for Feature artifacts and per-artifact-type extension note). |
 | [`grade-band-by-blocker-count`](../../../spec/features/reviewer-gates/README.md#ac-grade-band-by-blocker-count) | Step 2.8.1–2.8.2 (Blocker union over dispatched reviewers → band: 0→A/B, 1→C, 2–3→D, 4+→F). |
 | [`within-band-letter-derivation`](../../../spec/features/reviewer-gates/README.md#ac-within-band-letter-derivation) | Step 2.8.3 (lowest within-band letter across reviewers; findings-only reviewer contributes default `B`) + Step 2.8.4 (threshold `A` releases only on grade `A`; default `B` releases on `A`/`B`). |
 | [`worst-wins-union-across-reviewers`](../../../spec/features/reviewer-gates/README.md#ac-worst-wins-union-across-reviewers) | Step 2.8.1 (union of `Blocker`s across reviewers) — one Blocker from any reviewer → grade `C`, fails at default `B`. |
 | [`threshold-default-reproduces-today`](../../../spec/features/reviewer-gates/README.md#ac-threshold-default-reproduces-today) | Step 2.8.4 with default threshold `B`: zero `Blocker`s → grade ≥ `B` → `Approved`; any `Blocker` → grade ≤ `C` → `Issues Found` (identical to pre-grade AND-composition). |
-| [`lenient-threshold-tolerates-blocker`](../../../spec/features/reviewer-gates/README.md#ac-lenient-threshold-tolerates-blocker) | Step 2.7 (no early-halt at lenient threshold) + Step 2.8.4 (`threshold: C`, one `Blocker` → grade `C` → `C ≥ C` → `Approved`). |
+| [`lenient-threshold-tolerates-blocker`](../../../spec/features/reviewer-gates/README.md#ac-lenient-threshold-tolerates-blocker) | Step 2 (no early-halt) + Step 2.8 (`threshold: C`, one `Blocker` → grade `C` → `C ≥ C` → automated grade passes → `Approved`). |
 
 ### Walk-through against AC `serial-dispatch-observed`
 
@@ -198,9 +204,9 @@ Following this runner: Step 1 includes all three entries in the dispatch set (fi
 
 > **Given** a `gates.specify.reviewers` list with two `ai` entries followed by one `human` entry, where the first `ai` entry returns `Approved` and the second `ai` entry returns `Issues Found` with one `Blocker` finding,
 > **When** `specstudio:specify` runs through the gate,
-> **Then** the gate MUST NOT release, the skill MUST surface the `Blocker` finding to the user, the third entry (the human) MUST NOT be dispatched in the same pass after the failure, and the skill MUST NOT emit `feature.approved`.
+> **Then** both `ai` entries MUST be dispatched (no early-halt), the automated grade MUST be `C`, the gate MUST NOT release, the skill MUST surface the `Blocker` finding, the human entry MUST NOT be dispatched (automated grade below the default threshold `B`), and the skill MUST NOT emit `feature.approved`.
 
-Following this runner: Step 1 includes all three in the dispatch set. Step 2 dispatches the first `ai` entry, gets `Approved`, appends to the verdict map. Step 2 then dispatches the second `ai` entry, gets `Issues Found` with one `Blocker` finding. Step 2.7's halt condition fires — the runner jumps to Step 4 WITHOUT dispatching the third (human) entry. Step 4 surfaces the second `ai` entry's name and its `Blocker` finding verbatim, returns verdict `Issues Found` with the verdict map containing only the two reached entries. The consumer (`specstudio:specify`), per its skill spec, does not emit `feature.approved` when the runner returns `Issues Found`. Outcome matches.
+Following this runner: Step 1 includes all three in the dispatch set. Step 2 (automated phase) dispatches the first `ai` entry (`Approved`), then the second `ai` entry (`Issues Found`, one `Blocker`) — no halt, both run. Step 2.8 computes the automated grade from the union (one `Blocker` → `C`); since `C < B` (default threshold) it routes to Step 4 and skips the human phase, so the third (human) entry is NOT dispatched. Step 4 surfaces the second `ai` entry's `Blocker` verbatim and returns `Issues Found`. The consumer (`specstudio:specify`) does not emit `feature.approved`. Outcome matches.
 
 ### Walk-through against AC `rerun-policy-applies-on-structural-fix`
 

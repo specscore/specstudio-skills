@@ -7,6 +7,7 @@
 **Owner:** alex
 **Source Ideas:** reviewer-gates
 **Supersedes:** —
+**Grade:** A
 
 ## Summary
 
@@ -66,9 +67,14 @@ Every reviewer (regardless of type) MUST resolve to exactly one of two verdicts:
 
 #### REQ: and-composition
 
-A gate MUST release only when every reviewer in its `reviewers:` list returns `Approved`. Any single `Issues Found` from any reviewer MUST block the gate. Within a single gate pass, on the first `Issues Found` verdict the consumer MUST halt — subsequent reviewers in the list MUST NOT be dispatched in that pass. Halting after the first failure is mandatory (not an optimization): it prevents wasting the user's time on later reviewers (notably `type: human`) when the gate is already known to fail, and re-dispatch on the next pass is governed by `rerun-policy`. Advisory findings MAY be ignored by the consumer. Consumers MUST NOT silently downgrade a `Blocker` finding to `Advisory` severity and MUST NOT skip a registered reviewer.
+A gate's verdict is the **grade** computed from all reviewers' findings, released iff `grade ≥ threshold` (per `threshold-derived-verdict`). The gate **does NOT early-halt**: every `type: ai` reviewer is always dispatched, so the full `Blocker` union — and therefore the grade — is exact in a single pass. Surfacing every `Blocker` at once (rather than one reviewer per pass) lets the author fix all findings before a single re-run, avoiding fix-one-rerun-fix-next iteration.
 
-This "any `Blocker` blocks the gate" rule is the **default-threshold (`B`) case** of the generalized grade model in `### Grade and threshold`: at threshold `B`, `grade ≥ threshold` holds iff the aggregated `Blocker` count is zero, so AND-composition and the grade model coincide. At a non-default threshold the release condition is `grade ≥ threshold` per `threshold-derived-verdict`, and the halt-after-first-`Issues Found` rule becomes **threshold-aware**: it applies only when the threshold is a zero-`Blocker` bar (`A` or `B`, including the default) — there the first `Blocker` already guarantees `grade < threshold`, so halting is correct and reproduces today's behavior. When the threshold is **lenient** (`C`, `D`, or `F`), the gate MUST NOT early-halt on the first `Blocker`: it MUST dispatch all reviewers, build the full `Blocker` union, and release iff `grade ≥ threshold` — otherwise a tolerable `Blocker` count could never release. The halt, when it applies, still governs dispatch ordering only and never downgrades severities.
+Dispatch is **two-phase**:
+
+1. **Automated phase.** Dispatch every `type: ai` reviewer in `reviewers:` list order (serially per `dispatch-serial`) with no early-halt. Collect findings from all of them and compute the **automated grade** from the full `Blocker` union (`grade-aggregation`, `grade-band-mapping`).
+2. **Human phase.** Dispatch the `type: human` reviewer(s), in list order, **only if** the automated grade already satisfies `grade ≥ threshold`. A human change request contributes a single `Blocker`, which re-grades the gate (it may drop the grade below the threshold). If the automated grade is below the threshold, the consumer MUST NOT dispatch any `type: human` reviewer — it surfaces every automated-phase `Blocker` so the author can fix them in one pass. (A human MUST NOT be asked to approve an artifact the automated reviewers already failed.)
+
+The gate releases iff the final grade (after any human-phase findings) satisfies `grade ≥ threshold`. Re-dispatch on the next pass is governed by `rerun-policy`. Advisory findings MAY be ignored by the consumer. Consumers MUST NOT silently downgrade a `Blocker` finding to `Advisory` severity and MUST NOT skip a registered `type: ai` reviewer (a `type: human` reviewer is deferred or skipped only by the automated-grade gate in phase 2). At the default threshold `B`, the gate releases iff the aggregated `Blocker` count is zero — identical to the prior binary behavior.
 
 #### REQ: rerun-policy
 
@@ -101,13 +107,24 @@ The Approve threshold MUST be resolvable from `specscore.yaml` in this order: (1
 
 #### REQ: grade-aggregation
 
-When a gate's `reviewers:` list contains more than one reviewer, AND when a single multi-role reviewer reports findings across multiple lenses, the gate MUST aggregate by **worst-wins**: the `Blocker` set is the **union** of all `Blocker` findings across every reviewer **dispatched in the current pass** and every lens, and the gate grade is computed from that union per `grade-band-mapping`. Because `and-composition`'s early-halt applies at zero-`Blocker` thresholds (`A`/`B`), in a multi-reviewer **panel** gated at such a threshold the failing-band letter (`C`/`D`/`F`) reflects only the `Blocker`s collected up to the halt; this never changes the pass/fail verdict (any `Blocker` yields a grade no higher than `C`, below `B`). At a lenient threshold the gate dispatches all reviewers (no early-halt), so the union — and thus the letter — is exact. The default single multi-role reviewer collects all its lenses' findings in one dispatch, so its grade is always exact regardless of halting or threshold. A reviewer's lenses contribute only to this `Blocker` union — they do NOT each emit a separate letter; a multi-role reviewer emits exactly **one** within-band letter representing its overall pass-band judgment (per `multi-role-reviewer`). In the pass band, the lowest within-band letter across reviewers wins, and a reviewer that supplies no within-band letter contributes the default `B` (per `grade-band-mapping`). This generalizes `and-composition` — any single `Issues Found` (i.e., any `Blocker`) still blocks the gate at the default threshold. The halt-after-first-`Issues Found` dispatch rule in `and-composition` governs dispatch ordering only and is unchanged by this REQ.
+When a gate has multiple reviewers, AND when a single multi-role reviewer reports findings across multiple lenses, the gate MUST aggregate by **worst-wins**: the `Blocker` set is the **union** of all `Blocker` findings across every `type: ai` reviewer and every lens, and the gate grade is computed from that union per `grade-band-mapping`. Because the gate does NOT early-halt (`and-composition`), every `type: ai` reviewer always runs in the automated phase, so this union — and therefore the grade — is always **exact** (no panel truncation). A reviewer's lenses contribute only to the `Blocker` union — they do NOT each emit a separate letter; a multi-role reviewer emits exactly **one** within-band letter representing its overall pass-band judgment (per `multi-role-reviewer`). In the pass band, the lowest within-band letter across reviewers wins, and a reviewer that supplies no within-band letter contributes the default `B` (per `grade-band-mapping`). At the default threshold `B`, any single `Blocker` from any reviewer still blocks the gate (grade ≤ `C` < `B`).
 
 #### REQ: multi-role-reviewer
 
 The **recommended default reviewer shape** for a stage is **one `type: ai` reviewer that evaluates the artifact through multiple lenses** — at minimum Business-Analyst (BA), Developer, and QA. A reviewer that takes this multi-role shape MUST, in addition to the `verdict-contract` findings list, emit a per-lens sub-assessment naming what each lens checked AND exactly **one** within-band letter representing its overall pass-band judgment (one letter for the reviewer, not one per lens — lenses contribute to the `Blocker` union per `grade-aggregation`). When a multi-role reviewer is used, its **BA lens MUST treat "the requirements do not demonstrably address the artifact's stated `## Problem`" as a `Blocker` category**, closing the problem→requirements traceability gap. The lens set is fixed in MVP — per-stage lens configuration is out of scope (see `## Not Doing`).
 
 This shape is the recommended default, not a constraint on every `type: ai` entry: a findings-only prompt (such as the current baseline at `skills/specify/references/reviewer-prompt.md`) remains valid per `verdict-contract` and contributes the default `B` in the pass band. Upgrading the baseline prompt to the multi-role shape is part of the grade increment (see the [Plan](../../plans/reviewer-gates.md)'s grade-increment task). A multi-reviewer **panel** (separate `type: ai` entries per role) remains available by adding entries to `gates.<stage>.reviewers`, and the `consilium` skill remains the heavyweight multi-role escape hatch. This REQ governs reviewer-prompt content and output shape; it does not change the entry schema in `ai-entry-shape`.
+
+### Recording the grade
+
+#### REQ: grade-recording
+
+A **producer** consumer that releases a gate MUST record the released grade so the outcome is durable in two places:
+
+1. **Event payload.** The gate-release event the producer emits MUST carry the grade — e.g., `specstudio:specify`'s `feature.approved` payload includes `grade: <letter>` (the "Feature approved with `B` grade" record).
+2. **Artifact metadata.** The producer MUST write the released grade onto the approved artifact as a `**Grade:** <letter>` body-metadata line, added immediately after `**Supersedes:**` (or updated in place if already present), on every gate release. The line reflects the artifact's grade at its most recent approval.
+
+The gate runner itself writes nothing — reviewers are read-only per `verdict-contract`; recording is the producer's action on release. **Signal-only** consumers (e.g., the manual `/score`, which produces no canonical artifact) do NOT record via this REQ — they surface/persist the grade through their own flags (`--save` / `--badge`), owned by [`score-command`](../score-command/README.md).
 
 ### `specstudio:specify` wiring
 
@@ -153,8 +170,8 @@ The skill `skills/specify/SKILL.md`, the Feature `spec/features/skills/specify/R
 - **Consumer (MVP).** `specstudio:specify` — reads `gates.specify.reviewers`, validates each entry's shape per `reviewer-entry-required-fields` / `mvp-type-set` / `ai-entry-shape` / `human-entry-shape` / `no-untyped-entry`, dispatches entries serially per `dispatch-serial`, aggregates verdicts under `and-composition`, and re-runs per `rerun-policy`.
 - **Future consumers (out of MVP scope).** `specstudio:plan`, `specstudio:implement`, `specstudio:verify`, `specstudio:recap`. Each will be a separate follow-on Feature; this contract is designed consumer-agnostic so future wiring needs only schema reads, not contract changes.
 - **Reviewer dispatch surfaces.** `type: ai` dispatches via the consumer skill's Agent tool with the prompt file as the system prompt. `type: human` dispatches via the consumer skill's existing user-prompt + approval-phrase recognizer.
-- **Verdict aggregation.** Stateless per-gate. The gate computes an A–F grade from the worst-wins union of `Blocker` findings across reviewers and lenses (`grade-aggregation`, `grade-band-mapping`) and releases iff `grade ≥ threshold` (`threshold-derived-verdict`). At the default threshold `B` this is identical to "`Approved` iff every reviewer's last verdict is `Approved`." No persisted state between gate runs; rerun discipline is captured in `rerun-policy`.
-- **Outputs.** This Feature defines no artifact writes and no new events. Consumer skills emit their own events (e.g., `feature.approved`); this Feature is purely a contract.
+- **Verdict aggregation.** Stateless per-gate. Two-phase, no early-halt (`and-composition`): all `type: ai` reviewers run → exact `Blocker` union → A–F grade (`grade-aggregation`, `grade-band-mapping`); the `type: human` phase runs only if the automated grade ≥ threshold. The gate releases iff the final `grade ≥ threshold` (`threshold-derived-verdict`). At the default threshold `B` this is identical to "release iff zero `Blocker`s." No persisted state between gate runs; rerun discipline is captured in `rerun-policy`.
+- **Outputs.** The gate runner performs no artifact writes and emits no events (reviewers are read-only). The grade is part of the gate's released verdict; per `grade-recording`, a **producer** consumer records it on release — in its own event payload (e.g., `feature.approved` carrying `grade`) and as a `**Grade:**` body-metadata line on the approved artifact. The runner remains a pure contract; recording is the producer's action.
 
 ## Interaction with Other Features
 
@@ -217,7 +234,7 @@ ACs are grouped here with explicit REQ back-references, mirroring sibling Featur
 
 **Given** a `gates.specify.reviewers` list with two `ai` entries followed by one `human` entry, where the first `ai` entry returns `Approved` and the second `ai` entry returns `Issues Found` with one `Blocker` finding,
 **When** `specstudio:specify` runs through the gate,
-**Then** the gate MUST NOT release, the skill MUST surface the `Blocker` finding to the user, the third entry (the human) MUST NOT be dispatched in the same pass after the failure (the consumer halts after the first `Issues Found` in the current pass), and the skill MUST NOT emit `feature.approved`.
+**Then** both `ai` entries MUST be dispatched (the gate does NOT early-halt), the automated grade MUST be `C` (one `Blocker`), the gate MUST NOT release, the skill MUST surface the `Blocker` finding to the user, the `human` entry MUST NOT be dispatched (the automated grade `C` is below the default threshold `B`, so the human phase is skipped), and the skill MUST NOT emit `feature.approved`.
 
 ### AC: rerun-policy-applies-on-structural-fix (verifies REQ:rerun-policy)
 
@@ -308,6 +325,12 @@ ACs are grouped here with explicit REQ back-references, mirroring sibling Featur
 **Given** three zero-`Blocker` pass-band gate runs — (a) a single reviewer supplies within-band letter `A`; (b) one reviewer supplies `A` and another supplies `B`; (c) a findings-only reviewer supplies no within-band letter,
 **When** the gate computes the grade,
 **Then** the grade MUST be `A` in (a), `B` in (b) (lowest-wins across reviewers), and `B` in (c) (default when no letter is supplied); and a configured threshold of `A` MUST release only in case (a), while the default threshold `B` MUST release in all three.
+
+### AC: grade-recorded-on-release (verifies REQ:grade-recording)
+
+**Given** a Feature whose `specstudio:specify` gate releases with grade `B` (zero `Blocker`s, no within-band `A`),
+**When** the gate releases,
+**Then** `specstudio:specify` MUST emit a `feature.approved` event whose payload includes `grade: B`, AND the Feature's `README.md` MUST contain a `**Grade:** B` body-metadata line immediately after `**Supersedes:**` (added if absent, updated in place if already present), AND `specscore spec lint` MUST pass with that line present.
 
 ### AC: ba-lens-problem-traceability-blocker (verifies REQ:multi-role-reviewer)
 

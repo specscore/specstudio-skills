@@ -58,7 +58,7 @@ Create a task for each and complete in order:
 9. **Lint** — `specscore spec lint`.
 10. **Inline self-review** — placeholders, consistency, scope, ambiguity.
 11. **Run the reviewer gate** — load and dispatch `gates.specify.reviewers` from `specscore.yaml` per the [Reviewer Gates](../../spec/features/reviewer-gates/README.md) Feature. See the `## Reviewer Gate` section below.
-12. **Emit events** — `feature.specified` after lint passes and before reviewer-gate dispatch; `feature.approved` after the reviewer gate releases (every entry returned `Approved`, including the `type: human` entry that captured the user's approval). See [events.md](../shared/events.md).
+12. **Emit events** — `feature.specified` after lint passes and before reviewer-gate dispatch; `feature.approved` (carrying the released `grade`) after the reviewer gate releases, and write the `**Grade:**` body-metadata line per Step 4. See [events.md](../shared/events.md).
 13. **Transition** — present the transition menu (see `## Transition`).
 14. **Throughout** — watch for sidekick ideas per [sidekick-capture.md](../shared/sidekick-capture.md). When an out-of-scope improvement surfaces, invoke `specstudio:sidekick` with a one-liner, acknowledge in one line, and return to the current checklist step immediately. Do not derail to discuss the sideline idea.
 
@@ -213,11 +213,12 @@ The skill MUST dispatch exactly the entries in `gates.specify.reviewers` — no 
 
 ### Step 4 — On `Approved`
 
-When the runner returns `Approved` (every entry returned `Approved`):
+When the runner returns `Approved` (the released grade satisfies `grade ≥ threshold`):
 
 - Update `**Status:** Under Review → Approved` in the body metadata.
-- Re-run lint to confirm the transition is clean.
-- Emit `feature.approved` (see Checklist step 12).
+- **Record the grade** (per [`reviewer-gates#req:grade-recording`](../../spec/features/reviewer-gates/README.md#req-grade-recording)): write the runner's released grade as a `**Grade:** <letter>` body-metadata line immediately after `**Supersedes:**` — add it if absent, update it in place if already present.
+- Re-run lint to confirm the transition + grade line are clean.
+- Emit `feature.approved` with `grade: <letter>` in the payload (see Checklist step 12 and [events.md](../shared/events.md)).
 - Proceed to `## Transition`.
 
 ### Step 5 — On `Issues Found`

@@ -32,6 +32,7 @@ All scenarios are scaffolded with `**Status:** pending`; their concrete Given/Wh
 | [worst-wins-union-across-reviewers.md](worst-wins-union-across-reviewers.md) | `reviewer-gates#ac:worst-wins-union-across-reviewers` |
 | [within-band-letter-derivation.md](within-band-letter-derivation.md) | `reviewer-gates#ac:within-band-letter-derivation` |
 | [ba-lens-problem-traceability-blocker.md](ba-lens-problem-traceability-blocker.md) | `reviewer-gates#ac:ba-lens-problem-traceability-blocker` |
+| [grade-recorded-on-release.md](grade-recorded-on-release.md) | `reviewer-gates#ac:grade-recorded-on-release` |
 
 ## Open Questions
 
