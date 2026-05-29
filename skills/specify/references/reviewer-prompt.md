@@ -32,6 +32,20 @@ Agent tool (subagent_type: general-purpose):
     | Rehearse integration | Either stubs exist for testable ACs, OR a skip-reason is recorded |
     | Body metadata | Title `# Feature: <name>`; `**Status:**`, `**Date:**`, `**Owner:**` present in that order immediately after title; `**Source Ideas:**` and `**Supersedes:**` present (value `—` if empty); when `**Source Ideas:**` is non-empty, each referenced slug resolves to a real Idea |
 
+    ## Multi-role lenses
+
+    Evaluate the Feature through three lenses and report a one-line sub-assessment per lens:
+
+    - **BA (Business Analyst):** Do the requirements demonstrably address the Feature's stated `## Problem`? Are they complete, traceable, and free of unrequested scope? (Owns Completeness, Assumption carryover, and the problem→requirements traceability Blocker below.)
+    - **Developer:** Is each REQ implementable as written, internally consistent, and unambiguous — would two implementers build the same thing? (Owns Consistency, Clarity, Scope, YAGNI.)
+    - **QA:** Does every REQ have ≥1 observable Given/When/Then AC, and are Rehearse stubs present or skip-reasons recorded? (Owns Schema, Rehearse integration.)
+
+    A single reviewer carries all three lenses. A finding from any lens uses the shared Blocker/Advisory taxonomy below; lenses do NOT each carry their own grade.
+
+    ## Within-band letter
+
+    When you would return `Approved` (no Blocker findings), also report a single overall **within-band letter**: `A` if the Feature is exemplary across all three lenses (no Advisory findings worth acting on), otherwise `B`. Report exactly one letter for the whole review — never one per lens. When you return `Issues Found` (≥1 Blocker), do NOT report a within-band letter — the grade falls in the failing band, which the gate computes from the Blocker count.
+
     ## Calibration
 
     Only flag issues that would cause real problems during planning or
@@ -49,8 +63,15 @@ Agent tool (subagent_type: general-purpose):
 
     **Status:** Approved | Issues Found
 
+    **Within-band letter (only when Status is Approved):** A | B
+
+    **Lens sub-assessments:**
+    - BA: [one line — does it address the stated Problem?]
+    - Developer: [one line — implementable, consistent, unambiguous?]
+    - QA: [one line — observable ACs, Rehearse coverage?]
+
     **Issues (if any):**
-    - [File:Section]: [specific issue] — [why it matters for planning or implementation]
+    - [Blocker|Advisory] [File:Section]: [specific issue] — [why it matters for planning or implementation]
 
     **Recommendations (advisory, do not block approval):**
     - [suggestions]
@@ -75,6 +96,7 @@ This baseline reviewer maps findings to severities as follows. The taxonomy is r
 4. **Architecture ↔ requirements contradiction** — `## Architecture` describes a different system than the one the `#### REQ:` rules describe; or REQs and ACs disagree.
 5. **Vague REQ** — a requirement could be interpreted two ways, would lead two implementers to build different things, or uses MUST/SHOULD/MAY language ambiguously.
 6. **Missing source-Idea reasoning** — when `**Source Ideas:**` is non-empty, the Idea's Must-be-true assumptions are not addressed by any AC and are not explicitly deferred under `## Outstanding Questions` or `## Not Doing`.
+7. **Problem not addressed (BA lens)** — the Feature's requirements do not demonstrably address its stated `## Problem`: the REQs/ACs solve a different or narrower problem than the one stated, or the `## Problem` is not traceable to any requirement. Internally consistent, well-formed REQs that solve the *wrong* problem are still a `Blocker`.
 
 **Advisory — non-gate-failing findings.** Every other category of finding MUST be reported with severity `Advisory`. The consumer (`specstudio:specify`) MAY ignore Advisory findings; they do not affect the gate verdict. Examples include: minor wording polish, stylistic preferences, uneven section depth, suggested alternative phrasings, optional clarifications, additional Outstanding Questions to consider.
 
