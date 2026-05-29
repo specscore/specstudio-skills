@@ -121,7 +121,7 @@ This shape is the recommended default, not a constraint on every `type: ai` entr
 
 A **producer** consumer that releases a gate MUST record the released grade so the outcome is durable in two places:
 
-1. **Event payload.** The gate-release event the producer emits MUST carry the grade — e.g., `specstudio:specify`'s `feature.approved` payload includes `grade: <letter>` (the "Feature approved with `B` grade" record).
+1. **Event payload.** The gate-release event the producer emits MUST carry the grade — e.g., `specstudio:specify`'s `feature.approved` payload includes `grade: <letter>` (e.g., a "Feature approved with grade `B`" record).
 2. **Artifact metadata.** The producer MUST write the released grade onto the approved artifact as a `**Grade:** <letter>` body-metadata line, added immediately after `**Supersedes:**` (or updated in place if already present), on every gate release. The line reflects the artifact's grade at its most recent approval.
 
 The gate runner itself writes nothing — reviewers are read-only per `verdict-contract`; recording is the producer's action on release. **Signal-only** consumers (e.g., the manual `/score`, which produces no canonical artifact) do NOT record via this REQ — they surface/persist the grade through their own flags (`--save` / `--badge`), owned by [`score-command`](../score-command/README.md).

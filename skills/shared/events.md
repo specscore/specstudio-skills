@@ -119,7 +119,7 @@ payload:
   change_summary: <string ≤2 sentences>         # always non-null
 ```
 
-The change-context fields are never `null` here — the prior revision is the last `feature.specified` emission. `grade` is the gate's released grade (since a gate releases only when `grade ≥ threshold`, it is always at or above the configured Approve threshold — `B` by default); it is the "Feature approved with `B` grade" record, mirrored onto the artifact as a `**Grade:**` body-metadata line per [`reviewer-gates#req:grade-recording`](../../spec/features/reviewer-gates/README.md#req-grade-recording).
+The change-context fields are never `null` here — the prior revision is the last `feature.specified` emission. `grade` is the gate's released grade (since a gate releases only when `grade ≥ threshold`, it is always at or above the configured Approve threshold — `B` by default); it is the "Feature approved with grade `B`" record, mirrored onto the artifact as a `**Grade:**` body-metadata line per [`reviewer-gates#req:grade-recording`](../../spec/features/reviewer-gates/README.md#req-grade-recording).
 
 ### `feature.updated`
 Fired after every successful `specscore spec lint` pass following a write or edit, while the Feature's `**Status:**` is `Implementing` or `Stable`. Distinguishes post-approval iteration from pre-approval drafting; consumers that watch only for material changes to approved Features subscribe here rather than to `feature.specified`.
