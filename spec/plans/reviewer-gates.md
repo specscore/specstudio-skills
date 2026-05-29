@@ -75,6 +75,14 @@ Transition `spec/features/skills/review/README.md` to `**Status:** Archived` via
 
 Edit four files: (1) repo-root `README.md` — add at least one link whose href resolves to `spec/features/reviewer-gates/README.md`, and update the pipeline-overview sentence to remove the standalone `review` step (since reviews become stage-internal). (2) `skills/specify/SKILL.md` — add at least one link to the `reviewer-gates` Feature in its reviewer-dispatch section. (3) `spec/features/skills/specify/README.md` — add at least one link to the `reviewer-gates` Feature (likely in the new `### Reviewer gate` topic written in Task 5; coordinate to avoid duplicate linking). (4) `spec/features/README.md` — verify the existing index row for `reviewer-gates` (added when this Feature was approved) has a one-line description; if not, edit to include one. Confirm `specscore spec lint` passes.
 
+### Task 8: Grade increment — grade-as-verdict-currency
+
+**Verifies:** reviewer-gates#ac:grade-band-by-blocker-count, reviewer-gates#ac:threshold-default-reproduces-today, reviewer-gates#ac:threshold-resolution-order, reviewer-gates#ac:invalid-threshold-refused, reviewer-gates#ac:lenient-threshold-tolerates-blocker, reviewer-gates#ac:worst-wins-union-across-reviewers, reviewer-gates#ac:within-band-letter-derivation, reviewer-gates#ac:ba-lens-problem-traceability-blocker
+**Status:** pending
+**Depends-On:** 2
+
+The grade increment added by the grade-as-verdict-currency revision (see the Feature's `### Grade and threshold` topic and `spec/research/reviewer-gates-grade-design.md`). It is a distinct, later implementation pass and is **not** part of the original Batches 1–4 — it begins only after the binary gate (Tasks 1–7) is shipped. Scope: (a) extend the gate runner (Task 2) to compute an A–F grade from the worst-wins union of `Blocker` findings across reviewers and lenses, mapping count→band (`C`=1, `D`=2–3, `F`=4+) and zero-Blocker→pass band (`A`/`B` by within-band judgment) per `grade-band-mapping` and `grade-aggregation`; (b) resolve the Approve threshold per `threshold-config` (per-stage `gates.<stage>.threshold` → top-level `grade.threshold` → default `B`) and validate it at load time per Task 1's loader, deriving the verdict `Approved` iff `grade ≥ threshold` per `threshold-derived-verdict`; (c) author the multi-role reviewer prompt (BA/dev/QA lenses, per-lens sub-assessment, within-band letter, and the BA problem→requirements traceability `Blocker` category) per `multi-role-reviewer`. Test via fixtures: blocker-count→grade mapping, default-threshold migration parity, threshold resolution order, invalid-threshold refusal, lenient-threshold release, worst-wins union, and a mocked multi-role reviewer that emits the BA traceability Blocker. The judgment-quality portion of `ba-lens-problem-traceability-blocker` is validated at the assumption layer, not as a deterministic fixture.
+
 ## Open Questions
 
 None at this time.
