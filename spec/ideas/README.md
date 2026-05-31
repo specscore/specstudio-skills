@@ -11,7 +11,6 @@ Pre-spec one-pagers for SpecStudio. Each Idea is the output of `specstudio:ideat
 | [flexible-lifecycle-flows](flexible-lifecycle-flows.md) | Implementing | 2026-05-25 | alexander.trakhimenok | flexible-lifecycle-flows |
 | [idea-skills-destination-resolution](idea-skills-destination-resolution.md) | Specified | 2026-05-20 | alexandertrakhimenok | sidekick-capture/destination-resolution |
 | [manual-review-and-score-commands](manual-review-and-score-commands.md) | Implementing | 2026-05-28 | alex | score-command |
-| [map-skill](map-skill.md) | Draft | 2026-05-22 | alex | — |
 | [retrofit-evaluation-skill](retrofit-evaluation-skill.md) | Draft | 2026-05-22 | alex | — |
 | [retrofit-skill](retrofit-skill.md) | Draft | 2026-05-22 | alex | — |
 | [reviewer-gates](reviewer-gates.md) | Implementing | 2026-05-22 | alex | reviewer-gates |
@@ -23,6 +22,7 @@ Pre-spec one-pagers for SpecStudio. Each Idea is the output of `specstudio:ideat
 | [specstudio-plan-skill](specstudio-plan-skill.md) | Implementing | 2026-04-20 | alexander.trakhimenok | skills/plan |
 | [specstudio-recap-skill](specstudio-recap-skill.md) | Implementing | 2026-05-22 | alex | skills/recap |
 | [specstudio-verify-skill](specstudio-verify-skill.md) | Implementing | 2026-05-22 | alex | skills/verify |
+| [survey-skill](survey-skill.md) | Implementing | 2026-05-22 | alex | skills/survey |
 | [synchestra-removal](synchestra-removal.md) | Approved | 2026-05-24 | alexander.trakhimenok | — |
 | [synchestra-removal-followup](synchestra-removal-followup.md) | Draft | 2026-05-25 | alexander.trakhimenok | — |
 | [third-party-skill-integration-contracts](third-party-skill-integration-contracts.md) | Implementing | 2026-05-08 | alexander.trakhimenok | third-party-integration |

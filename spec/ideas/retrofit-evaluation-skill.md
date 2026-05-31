@@ -13,11 +13,11 @@ How might we automatically score the quality of retrofit output against ground-t
 
 ## Context
 
-Born from the pre-approval review of `retrofit-skill` (see `spec/ideas/retrofit-skill.md` Review Notes) and a follow-up user direction. The Test Engineer review explicitly called out the absence of a feedback loop on AC quality — Phase C approves the candidate Feature list, Phase D drafts ACs and exits with no verification gate, leaving the most error-prone step ungated. The user then identified that this loop deserves its own skill rather than being baked into retrofit (because a producer cannot fairly grade itself). Family context: `map-skill` (activation hook) → `retrofit-skill` (opt-in deep path) → `retrofit-evaluation-skill` (this; internal quality loop). Without an automated grader, retrofit's quality is invisible to the team improving it — every prompt change is a guess.
+Born from the pre-approval review of `retrofit-skill` (see `spec/ideas/retrofit-skill.md` Review Notes) and a follow-up user direction. The Test Engineer review explicitly called out the absence of a feedback loop on AC quality — Phase C approves the candidate Feature list, Phase D drafts ACs and exits with no verification gate, leaving the most error-prone step ungated. The user then identified that this loop deserves its own skill rather than being baked into retrofit (because a producer cannot fairly grade itself). Family context: `survey-skill` (activation hook) → `retrofit-skill` (opt-in deep path) → `retrofit-evaluation-skill` (this; internal quality loop). Without an automated grader, retrofit's quality is invisible to the team improving it — every prompt change is a guess.
 
 ## Recommended Direction
 
-An internal-facing specstudio skill — `specstudio:retrofit-evaluation` (proposed rename to `specstudio:grade`, see Open Questions) — that consumes (1) a sandbox directory of retrofit output produced via retrofit's `--ignore-existing-specs --output-dir` calibration mode, and (2) a ground-truth `spec/features/` tree. Produces a structured quality report (markdown rendered from a JSON source, same JSON-first discipline as map-skill).
+An internal-facing specstudio skill — `specstudio:retrofit-evaluation` (proposed rename to `specstudio:grade`, see Open Questions) — that consumes (1) a sandbox directory of retrofit output produced via retrofit's `--ignore-existing-specs --output-dir` calibration mode, and (2) a ground-truth `spec/features/` tree. Produces a structured quality report (markdown rendered from a JSON source, same JSON-first discipline as survey-skill).
 
 **Scoring dimensions:**
 
@@ -88,7 +88,7 @@ A three-week spike, started after retrofit-skill MVP exists. **Calibration corpu
 ## SpecScore Integration
 
 - **New Features this would create:** `retrofit-evaluation-skill` (one parent Feature; likely subdivided at spec time into `feature-matching` (Coverage), `ac-equivalence-grading` (AC faithfulness), `hallucination-detection`, `structural-grading`, and `report-generation`).
-- **Existing Features affected:** Closes the feedback loop on `retrofit-skill`. May share AC-equivalence judge prompts with `specify`'s reviewer-gates Feature (both ask "are these ACs equivalent / faithful?"). Could also be repurposed to grade `map-skill` output (architecture summary accuracy) — out of scope for retrofit-evaluation MVP but a natural extension.
+- **Existing Features affected:** Closes the feedback loop on `retrofit-skill`. May share AC-equivalence judge prompts with `specify`'s reviewer-gates Feature (both ask "are these ACs equivalent / faithful?"). Could also be repurposed to grade `survey-skill` output (architecture summary accuracy) — out of scope for retrofit-evaluation MVP but a natural extension.
 - **Dependencies:**
   - `retrofit-skill` MVP must exist with calibration mode (`--ignore-existing-specs --output-dir`) shipped.
   - Ground-truth calibration corpus must exist — at minimum `specstudio-skills` (already has Features) plus one external repo with hand-written SpecScore specs.
@@ -103,7 +103,7 @@ A three-week spike, started after retrofit-skill MVP exists. **Calibration corpu
 - *Report storage — DECIDED.* Reports live at `.specscore/eval/<corpus-slug>-<iso-date>.{md,json}` (hidden, NOT committed). Eval output is internal to the retrofit team's iteration loop, not user-facing; committing every iteration's report would bloat the repo and clutter PR reviews. Regression tracking is solved via `.specscore/eval/history.jsonl` — one append-only summary line per run capturing the headline scores and timestamp, suitable for plotting and trend detection without checking in the full reports.
 - *Failure-mode classification.* Assumed reports include a "common failure modes" section auto-clustered across the corpus (e.g. "Feature 'auth middleware' consistently mis-named 'authentication'") to drive prompt iteration. May or may not be useful — confirm at spec time.
 - *Threshold for "ship-ready" retrofit.* Assumed retrofit ships when Coverage precision ≥ 0.7, Coverage recall ≥ 0.7, AC-faithfulness κ ≥ 0.6 (or inter-human ceiling), Hallucination rate ≤ 10%, DLP-scrub recall ≥ 0.9 against planted-secrets corpus. These numbers are placeholders — calibrate against real iterations before locking.
-- *Naming.* Assumed the canonical user-facing slug remains `retrofit-evaluation-skill` for this Idea's lifecycle, but the eventual specstudio skill verb is **`specstudio:grade`** (single-verb house style, matches `ideate`/`specify`/`plan`/`implement`/`verify`/`recap`). Family review flagged the current compound name violates the house style. Renaming the Idea slug now would invalidate the cross-Idea references in `retrofit-skill.md` and `map-skill.md`; defer the file rename to spec time.
+- *Naming.* Assumed the canonical user-facing slug remains `retrofit-evaluation-skill` for this Idea's lifecycle, but the eventual specstudio skill verb is **`specstudio:grade`** (single-verb house style, matches `ideate`/`specify`/`plan`/`implement`/`verify`/`recap`). Family review flagged the current compound name violates the house style. Renaming the Idea slug now would invalidate the cross-Idea references in `retrofit-skill.md` and `survey-skill.md`; defer the file rename to spec time.
 
 **Genuine opens (no assumed answer):**
 - **Adversarial-set rotation.** Planted-bug patterns become known to the prompt-iteration team over time, neutralizing their tripwire value. Proposed mitigation: rotate the active adversarial set each release, keep the active set out of the train corpus, archive retired adversarials for regression tracking only. Frequency, generation procedure, and rotation discipline are open.
@@ -112,7 +112,7 @@ A three-week spike, started after retrofit-skill MVP exists. **Calibration corpu
 - Privacy: calibration repos may include ground-truth specs from private codebases shared with the retrofit team but not publishable. How does the team store and version these? Separate private repo? Encrypted bundle?
 - LLM judge prompt versioning — pinned per retrofit-evaluation release, or free-running? Pinned gives reproducibility; free-running tracks judge improvements. Probably pin per release, surface diffs in the report.
 - Cost — running 5+ iterations of retrofit-evaluation against the corpus could become expensive (judge calls per AC × ACs × iterations × corpus). Budget modeling needed at spec time.
-- Does retrofit-evaluation also grade map-skill output (architecture summary accuracy, zone proposal quality)? Probably yes but as a separate dimension or separate run; out of scope for MVP.
+- Does retrofit-evaluation also grade survey-skill output (architecture summary accuracy, zone proposal quality)? Probably yes but as a separate dimension or separate run; out of scope for MVP.
 - Should retrofit-evaluation produce *prescriptive* suggestions ("retrofit consistently misclassifies validation Features — consider adding examples to the AC-derivation prompt")? Or just descriptive scores and let humans interpret? MVP leans descriptive; prescriptive is a stretch goal.
 - CI integration — eventually retrofit-evaluation should run against retrofit's calibration corpus on every retrofit prompt change. Defer to post-MVP; the Not-Doing item is explicit.
 - Statistical confidence — single-corpus scores are point estimates with unknown variance. Should reports include bootstrap CIs? At what corpus size does that become meaningful?
@@ -124,7 +124,7 @@ A three-week spike, started after retrofit-skill MVP exists. **Calibration corpu
 ---
 ## Review Notes
 
-This Idea was drafted in an autonomous-mode pass after the user stepped away. It has not yet been through a pre-approval reviewer panel; that pass happens after the sibling Ideas (`map-skill`, `retrofit-skill`) are also drafted, so a cross-cutting family review can run alongside per-Idea reviews. Findings will be folded back in or recorded as additional Open Questions before user approval.
+This Idea was drafted in an autonomous-mode pass after the user stepped away. It has not yet been through a pre-approval reviewer panel; that pass happens after the sibling Ideas (`survey-skill`, `retrofit-skill`) are also drafted, so a cross-cutting family review can run alongside per-Idea reviews. Findings will be folded back in or recorded as additional Open Questions before user approval.
 
 ---
 *This document follows the https://specscore.md/idea-specification*

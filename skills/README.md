@@ -26,6 +26,7 @@ Each in-line phase consumes the previous phase's lint-clean artifact and gates t
 | Skill | Status | Purpose |
 |---|---|---|
 | [`init`](./init/SKILL.md) | Shipped | Bootstrap a SpecScore-managed project: `specscore.yaml`, `spec/` tree, instruction snippet, orchestration setup. One-time-per-project. |
+| [`survey`](./survey/SKILL.md) | Shipped | Produce a fast architecture survey from file topology and structural manifests without reading source files. |
 | [`ideate`](./ideate/SKILL.md) | Shipped | Refine raw ideas into lint-clean SpecScore Idea artifacts. |
 | [`specify`](./specify/SKILL.md) | Shipped | Turn an approved Idea into a lint-clean SpecScore Feature with G/W/T acceptance criteria. |
 | [`plan`](./plan/SKILL.md) | Shipped | Turn an approved Feature into an ordered, AC-mapped Plan artifact at `spec/plans/<slug>.md`. |
@@ -64,6 +65,15 @@ Bootstraps a SpecScore-managed project in one wizard-driven step. Detects curren
 - **Two modes:** default (full wizard) and `--update` (drift-only reconciliation).
 - **CLI delegation:** prefers `specscore init`; AI-agent fallback when the CLI is absent. CLI installation is delegated to `specscore:install` with explicit user consent.
 - **Source:** [`init/SKILL.md`](./init/SKILL.md)
+
+### `survey` — Shipped
+
+Produces a fast architecture survey for an existing codebase without reading source implementation files. It scans file topology, reads only allowlisted structural manifests, writes JSON-first artifacts under `spec/research/`, and stages the result.
+
+- **Output:** `spec/research/<slug>-survey.json`, optional `spec/research/<slug>-survey.md`, and `spec/research/README.md` when using the default output directory.
+- **Triggers:** `specstudio:survey`, `/survey`, `/specstudio:survey`, "survey this repo", "architecture survey", "map this repo".
+- **Gate:** No source implementation file content reads, no Feature/Plan/code writes, no automatic transition to retrofit.
+- **Source:** [`survey/SKILL.md`](./survey/SKILL.md)
 
 ### `ideate` — Shipped
 

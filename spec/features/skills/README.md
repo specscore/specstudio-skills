@@ -12,6 +12,7 @@ SpecStudio ships as a set of Claude Code skills, one per phase of the spec-drive
 
 | Directory | Description |
 |---|---|
+| [`survey/`](survey/README.md) | Produce a fast architecture survey for an existing codebase without reading source files. |
 | [`ideate/`](ideate/README.md) | Refine raw ideas into lint-clean SpecScore Idea artifacts. |
 | [`specify/`](specify/README.md) | Turn an approved Idea (or a clear buildable intent) into a SpecScore Feature with G/W/T acceptance criteria. |
 | [`plan/`](plan/README.md) | Turn an approved Feature into an ordered, AC-mapped Plan artifact. |
