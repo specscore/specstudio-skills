@@ -5,8 +5,8 @@ description: |
   source-code changes by dispatching one subagent per task in parallel
   batches computed from the Plan's **Depends-On:** dependency graph.
   Hard-gates on per-batch user approval of the consolidated staged
-  diff. Stages-only (mirrors ideate/specify/plan); provides a
-  Verifies: commit-message trailer template the user pastes.
+  diff. Stages by default, with an explicit per-batch commit-on-behalf
+  override; provides a Verifies: commit-message trailer template.
   Also accepts a Feature directly (no Plan) or an Idea directly
   (no Feature or Plan) for single-pass conversational implementation.
   Trigger: "implement", "/implement", "implement this plan",
@@ -16,7 +16,7 @@ aliases: [implement]
 
 # Implement
 
-Turn an approved SpecScore Plan, Feature, or Idea into staged, AC-traceable source-code changes. Plan-sourced mode uses parallel subagent dispatch with per-batch user approval. Feature-sourced and Idea-sourced modes operate as a single-pass conversation.
+Turn an approved SpecScore Plan, Feature, or Idea into staged, AC-traceable source-code changes. Plan-sourced mode uses parallel subagent dispatch with per-batch user approval. Feature-sourced and Idea-sourced modes operate as a single-pass conversation. By default the user commits the staged set; with an explicit per-batch override, the skill may commit the approved staged set on the user's behalf.
 
 ## Hard Gate
 
@@ -26,7 +26,7 @@ Do NOT invoke `specstudio:verify`, `writing-plans`, `frontend-design`, `mcp-buil
   2. The consolidated staged diff for the batch is lint-clean (`specscore spec lint` exits zero against the project, including any Plan-file changes staged in stub mode).
   3. The conflict-detection check has passed (no line-overlap between sibling subagents' staged diffs) OR the user has explicitly approved a manual conflict-resolution path.
   4. The user has explicitly approved the batch's consolidated staged diff.
-  5. The user has committed the staged set (the skill MUST NOT advance to the next batch while the working tree still has the prior batch staged but uncommitted).
+  5. The approved staged set has been committed, either by the user or by the skill after an explicit per-batch commit-on-behalf override. The skill MUST NOT advance to the next batch while the working tree still has the prior batch staged but uncommitted.
 
 The only skill invoked after `specstudio:implement` is `specstudio:verify` (or — while `verify` is unshipped — a hand-back to the user with that recommendation).
 </HARD-GATE>
@@ -45,7 +45,7 @@ The only skill invoked after `specstudio:implement` is `specstudio:verify` (or �
 - The Plan's `**Source Feature:**` has regressed to `Draft` or `Under Review` → stop, surface the spec drift, recommend re-approving the Feature via `specstudio:specify` or reverting.
 - The Feature's `**Status:**` is `Draft` or `Under Review` → tell the user to run `specstudio:specify` first.
 - The Idea's `**Status:**` is `Draft` or `Under Review` → tell the user to run `specstudio:ideate` first.
-- The user asks the skill to commit on their behalf → refuse; the skill stages, the user commits.
+- The user asks the skill to commit before the consolidated diff is approved, lint-clean, and conflict-checked → refuse; the override is available only after the batch approval gate.
 
 ## Pre-Flight
 
@@ -74,7 +74,7 @@ No Plan exists. The skill resolves a Feature directly. Instead of batch dispatch
 - **Implementation:** The skill implements the user's described change conversationally, staging via `git add`.
 - **Verifies: trailer:** Uses Feature AC IDs: `Verifies: <feature-slug>#ac:<ac-slug>, ...` listing every AC addressed by the staged change.
 - **Lint and self-review:** `specscore spec lint` still runs against staged changes.
-- **User-approval gate:** The consolidated staged diff is presented for user approval before the user commits.
+- **User-approval gate:** The consolidated staged diff is presented for user approval before the staged set is committed by the user or by explicit commit-on-behalf override.
 - **Promotion:** On completion, hand off to `specstudio:verify` (or hand-back if unshipped), same as Plan-sourced.
 
 ### Idea-sourced (single-pass)
@@ -84,7 +84,7 @@ No Feature or Plan exists. The skill resolves an Idea directly. Same single-pass
 - **Source of truth:** The Idea's `## Recommended Direction` section (instead of Feature ACs).
 - **Verifies: trailer:** Uses `Verifies: idea:<slug>` (instead of Feature AC IDs).
 
-All other single-pass behavior (no subagents, no batch dispatch, no task-status writes, lint, user-approval gate, stage-only) is identical to Feature-sourced.
+All other single-pass behavior (no subagents, no batch dispatch, no task-status writes, lint, user-approval gate, commit-on-behalf override) is identical to Feature-sourced.
 
 ## Checklist (per invocation)
 
@@ -103,10 +103,10 @@ Create a task for each and complete in order:
 9. **Lint.** Run `specscore spec lint`. On failure (typically Plan-file edits the skill produced), run `specscore spec lint --fix` exactly once, re-lint. On persistent failure: unstage Plan-file changes (`git restore --staged spec/plans/<slug>.md`), surface violations with rule IDs, stop the batch.
 10. **Inline self-review.** Scan staged Plan-file changes for: (a) Status transitions violating the state machine (e.g., `done → in-progress` without user action), (b) writeback bodies still containing placeholder tokens (`<!-- implement: pending -->`, `TBD`, `TODO`), (c) Status values outside the canonical four-token set. Findings stop the batch.
 11. **Emit `implement.batch-started`** (already done on step 3 — confirm payload was emitted: Plan slug, batch number, task numbers, dispatched count).
-12. **Present consolidated diff.** User-facing message contains: per-task status summary (including any `DONE_WITH_CONCERNS` concerns or `BLOCKED` reports), the staged diff (or per-file summary if very large), the proposed commit-message template with mandatory `Verifies:` trailer listing every AC ID covered by **successful** tasks (DONE / DONE_WITH_CONCERNS only; BLOCKED tasks' ACs NOT included), and an explicit approval + commit instruction.
+12. **Present consolidated diff.** User-facing message contains: per-task status summary (including any `DONE_WITH_CONCERNS` concerns or `BLOCKED` reports), the staged diff (or per-file summary if very large), the proposed commit-message template with mandatory `Verifies:` trailer listing every AC ID covered by **successful** tasks (DONE / DONE_WITH_CONCERNS only; BLOCKED tasks' ACs NOT included), and an explicit approval + commit instruction. Also state that the user may explicitly request the skill to commit the approved staged set on their behalf.
 13. **User-approval gate.** Wait for explicit approval phrase (`approve`, `approved`, `accept`, `accepted`, `lgtm`, or semantic equivalents in any language). On vague positive (`looks good`, `ship it`, `🚀`): ask one explicit confirmation question — never silently advance.
-14. **Pre-commit detection.** Before dispatching the next batch, verify the working tree is clean (the user has committed the staged set). If staged-but-uncommitted: refuse to advance, prompt to commit.
-15. **Emit `implement.batch-completed`.** Payload: Plan slug, batch number, task numbers, commit SHA (from `git rev-parse HEAD`), `Verifies:` AC IDs covered.
+14. **Pre-commit detection / commit override.** Before dispatching the next batch, verify the batch's staged set has been committed. If staged-but-uncommitted and the user has not explicitly requested the commit-on-behalf override, refuse to advance and prompt the user to commit or request the override. If the user explicitly requests the override, run `git commit` using either the exact message the user provided or the proposed template, then verify the new `HEAD` contains the required `Verifies:` trailer. Do not amend, squash, sign, push, or include unstaged changes unless the user explicitly asks through a separate non-implement workflow.
+15. **Emit `implement.batch-completed`.** Payload: Plan slug, batch number, task numbers, commit SHA (from `git rev-parse HEAD` after the user commit or approved override commit), `Verifies:` AC IDs covered.
 16. **Emit `plan.updated`.** Payload's `changed_sections` lists every task slug whose Status or body changed in this batch. `change_summary` factual, ≤2 sentences.
 17. **Loop back to step 2.** Compute next batch; if none, transition.
 18. **Final transition.** When all tasks `**Status:** done`: update Plan body-metadata `**Status:** Implementing → Completed` (the counterpart to step 4b — this is the second body-metadata Status transition the skill writes), re-run lint, emit `plan.updated`, hand off to `specstudio:verify` (or, if `verify` is unshipped, recommend the user run their project's test/Rehearse suite manually).
@@ -127,7 +127,7 @@ Subagent prompt contains, in this order:
 5. **Commit-message trailer convention.** `Verifies: <feature-slug>#ac:<ac-slug>, ...` listing every AC ID from this task's `**Verifies:**`.
 6. **Discipline pointer.** For tasks involving behavior change: the TDD pointer — reference `agent-skills:test-driven-development` or `superpowers:test-driven-development` when available; otherwise an in-skill TDD instruction (write failing test → minimal fix → refactor). For tasks with no testable surface (pure-documentation edits, file renames, deletions, formatting-only changes): substitute the AC-verification adapter clause — "re-read the artifact after editing and confirm each predicate in the AC's `Then` clause directly." The adapter preserves the verification discipline while honoring the actual task shape.
 7. **Return-shape contract.** One of `DONE` / `DONE_WITH_CONCERNS` / `NEEDS_CONTEXT` / `BLOCKED`, with required fields per status.
-8. **Stage-only instruction.** "Stage your changes with `git add`. Do NOT run `git commit`. The parent skill aggregates and the user commits."
+8. **Stage-only instruction.** "Stage your changes with `git add`. Do NOT run `git commit`. The parent skill aggregates the approved batch and handles the commit gate."
 
 ### Stub posture (`**Mode:** stub`)
 
@@ -162,9 +162,21 @@ Cap concurrent subagents at **5 per batch** in MVP. When the next executable bat
 
 **Mixed terminal statuses are NOT conflicts.** A batch where 3 subagents are DONE and 2 are BLOCKED is a partial success: present the 3 DONE subagents' diff for user approval and commit, mark the 2 BLOCKED tasks `**Status:** blocked` (with cited causes), advance. Atomic-rollback semantics apply only to *line-overlap conflicts*, not to mixed-terminal batches.
 
-## Stage-Only and Commit-Message Template
+## Staging, Commit Override, and Commit-Message Template
 
-The skill stages every change via `git add` and NEVER runs `git commit` on the user's behalf. Mirrors `ideate` / `specify` / `plan`.
+The skill stages every change via `git add` by default. Unlike `ideate` / `specify` / `plan`, `implement` may run `git commit` only after the user explicitly requests a per-batch commit-on-behalf override for a staged set that already passed conflict detection, lint, self-review, and user approval. The override is not persistent across batches.
+
+### Commit-on-behalf override
+
+When the user explicitly asks the skill to commit an approved staged batch (for example, "commit on my behalf" or "please commit this batch"), the skill MAY run `git commit` using the proposed template unless the user supplies an exact commit message. The commit MUST include the required `Verifies:` trailer for the successful tasks in the batch. The skill MUST verify the commit succeeded and that `git rev-parse HEAD` changed before emitting `implement.batch-completed`.
+
+The override MUST NOT:
+
+- Bypass the consolidated-diff approval gate.
+- Commit before conflict detection, lint, and inline self-review pass.
+- Commit unrelated unstaged files.
+- Amend, squash, sign, push, or otherwise rewrite history unless the user leaves `implement` and explicitly requests that separate git operation.
+- Allow subagents to commit; subagents always stage only.
 
 ### Commit-message template (provided every batch / single-pass)
 
@@ -217,7 +229,7 @@ When `**Mode:** stub` and a subagent returns `DONE` / `DONE_WITH_CONCERNS`:
 1. Replace the task's placeholder body `<!-- implement: pending -->` with the subagent's SHA-free 1–2 sentence "what landed" summary.
 2. Stage the Plan-file change via `git add` as part of the **same staging set** as the subagent's code changes.
 3. The user reviews one consolidated `git diff --staged` containing both code and Plan-file edits.
-4. The user commits both atomically as one commit per the template.
+4. The user commits both atomically as one commit per the template, or explicitly asks the skill to commit the approved staged set via the commit-on-behalf override.
 
 **No two-phase commit.** No placeholder SHAs to reconcile. No separate "approve the journal entry" step.
 
@@ -280,7 +292,7 @@ The skill MUST NOT yes-machine weak Plans or silently retry blocked subagents. W
 - [ ] Conflict detection ran post-batch; conflicts surfaced and resolved per the three resolution paths
 - [ ] Consolidated batch diff presented with: per-task status summary, staged diff (or summary), `Verifies:` trailer template covering only successful tasks' AC IDs
 - [ ] User explicitly approved each batch (explicit phrase OR vague + confirmation)
-- [ ] User committed the staged set before the next batch dispatched
+- [ ] Approved staged set was committed before the next batch dispatched, either by the user or by explicit per-batch commit-on-behalf override
 - [ ] Plan `**Status:**` field updated correctly per the state machine (no fifth tokens; no auto-fix violating the canonical four-token set)
 - [ ] In `stub` mode: every successful task's placeholder body replaced with a SHA-free 1–2 sentence summary; bundled with code in one staging set
 - [ ] In `full` mode: NO task body modified by the skill (only Status writes)
@@ -292,14 +304,14 @@ The skill MUST NOT yes-machine weak Plans or silently retry blocked subagents. W
 
 ## Red Flags
 
-- Running `git commit` instead of `git add` (skill stages, never commits)
+- Running `git commit` before explicit batch approval and explicit commit-on-behalf override
 - Auto-advancing past a `BLOCKED` subagent without surfacing to the user
 - Silently retrying a `BLOCKED` task without user resolution
 - Introducing a fifth `**Status:**` token (anything outside `{pending, in-progress, done, blocked}`)
 - Writeback body that references a commit SHA (the SHA doesn't exist at writeback time; linkage lives in the event payload)
 - Body writeback applied to a `full`-mode Plan (writeback is stub-only)
 - Atomic rollback applied to a mixed-terminal batch (rollback is for conflicts only)
-- Dispatching the next batch while the prior batch's stage is uncommitted
+- Dispatching the next batch while the prior batch's stage is uncommitted and no approved commit-on-behalf override has committed it
 - Dispatching a code-quality reviewer subagent inside the loop (deferred to `specstudio:review`)
 - Auto-switching the Plan's `**Mode:**` (posture is one-way; user creates a successor Plan)
 - Looping `specscore spec lint --fix` more than once
@@ -317,5 +329,5 @@ The skill MUST NOT yes-machine weak Plans or silently retry blocked subagents. W
 - [events.md](../shared/events.md) — event payloads emitted by this skill.
 - [sidekick-capture.md](../shared/sidekick-capture.md) — sidekick-idea handling during the skill's flow.
 - [PRINCIPLES.md](../../PRINCIPLES.md) — repo-level principles (user-attention economy, batched questions, parallel work while user is idle).
-- `superpowers:subagent-driven-development` — adopted four-status protocol; two deliberate departures documented above (staging-only; no code-quality reviewer subagent).
+- `superpowers:subagent-driven-development` — adopted four-status protocol; two deliberate departures documented above (staged-by-default batches with explicit commit override; no code-quality reviewer subagent).
 - `superpowers:dispatching-parallel-agents` — parallel-fanout pattern adapted to per-batch user gate.

@@ -17,6 +17,7 @@ Feature specifications for the SpecStudio plugin. This index lists every top-lev
 | [issue-artifact-type](issue-artifact-type/README.md) | Stable | TODO: Add description. |
 | [flexible-lifecycle-flows](flexible-lifecycle-flows/README.md) | Approved | TODO: Add description. |
 | [score-command](score-command/README.md) | Implementing | The single `specstudio:score` skill from the [`manual-review-and-score-commands`](../ideas/manual-review-and-score-commands.md) Idea: manually re-invokes the configured [`reviewer-gates`](reviewer-gates/README.md) dispatch pipeline against one or more SpecScore artifacts outside the producer-skill exit context. Skips `type: human` entries; supports single-artifact, multi-artifact, and recursive tree-wide invocation. Verdict-only contract here; grade output + `--save` + `--badge` are the next increment of the same command, gated on the `reviewer-gates` grade work. |
+| [change-publication-policy](change-publication-policy/README.md) | Draft | SpecStudio skills consume shared publication policy to decide whether to edit only, stage, commit, and push at artifact lifecycle events and command milestones. |
 
 ### skills
 
