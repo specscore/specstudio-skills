@@ -22,7 +22,18 @@ artifact:
   revision: <git SHA at time of emission>
 payload:
   # event-specific; see below
+publication_result:
+  resolved_actions: [stage, commit, push] | []
+  executed_actions: [stage, commit, push] | []
+  skipped_actions:
+    - action: <stage | commit | push>
+      reason: <string>
+  policy_sources: [<source descriptor>, ...] | []
+  commit_sha: <git SHA> | null
+  push_target: <remote>/<branch> | null
 ```
+
+`publication_result` is present on events emitted after a publication-policy checkpoint. It records what the policy resolved, what actually executed, what was skipped and why, and any commit or push target produced by the checkpoint. Additive fields MAY be included as the companion CLI result shape evolves.
 
 ## Emission Transport
 
@@ -277,6 +288,17 @@ This is a stricter event than the previous `idea.specified` (which fired on firs
 - Additive changes (new payload fields) do not bump version.
 - Breaking changes (renamed/removed fields) bump version; consumers must handle both until the old version is removed.
 
+## Publication Policy Milestone Catalog
+
+Use artifact lifecycle events as publication-policy targets whenever a canonical event exists. Use milestones only for checkpoints with no event. Stable milestone names:
+
+| Milestone | Command | When |
+|---|---|---|
+| `implement.batch-approved` | `implement` | After conflict detection, lint, inline self-review, and explicit user approval of a consolidated implementation batch; before any commit or push action for that batch. |
+| `implement.single-pass-approved` | `implement` | After explicit user approval of a Feature-sourced or Idea-sourced single-pass implementation diff; before any commit or push action for that change. |
+
+Skills MUST NOT introduce additional configurable milestone names without adding them to this catalog.
+
 ## Reference: Full Event Names
 
 | Event | Emitter | Trigger |
@@ -289,6 +311,13 @@ This is a stricter event than the previous `idea.specified` (which fired on firs
 | `feature.specified` | `specstudio:specify` | Reviewer-approved, lint-clean Feature write |
 | `feature.approved` | `specstudio:specify` | User approves the written Feature (exactly once) |
 | `feature.updated` | `specstudio:specify` | Every successful lint pass while `status` ∈ {Approved, Implementing, Stable} after approval |
+| `plan.drafted` | `specstudio:plan` | Reviewer-approved, lint-clean Plan write |
+| `plan.approved` | `specstudio:plan` | User approves the written Plan (exactly once) |
+| `plan.updated` | `specstudio:plan`, `specstudio:implement` | Every successful lint pass after an approved Plan is edited, including implementation status updates |
+| `implement.batch-started` | `specstudio:implement` | A Plan-sourced implementation batch dispatches |
+| `implement.batch-completed` | `specstudio:implement` | A Plan-sourced implementation batch reaches its publication checkpoint after user approval |
+| `verify.completed` | `specstudio:verify` | Verify report and index are written successfully |
+| `recap.completed` | `specstudio:recap` | Recap report and index are written successfully |
 | `lifecycle.phase-skipped` | `specstudio:ideate`, `specstudio:specify` | User chose a non-default downstream option at a transition menu (before downstream invocation) |
 | `sidekick-idea.captured` | `specstudio:sidekick` | Successful seed write at `spec/ideas/seeds/<slug>.md` (exactly once per seed) |
 | `sidekick-idea.reviewed` | `specstudio:consilium` | Successful `consilium-review` task completion (exactly once per task) |

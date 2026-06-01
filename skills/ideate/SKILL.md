@@ -52,10 +52,10 @@ Create a task for each and complete in order:
 4. **Phase 2 — Evaluate & Converge**.
 5. **Phase 3 — Crystallize** as a SpecScore Idea artifact. Bootstrap `spec/ideas/` if missing. Prefer the `specscore idea new` CLI scaffold over a direct file write when the CLI is available (see Phase 3 below).
 6. **Lint** the artifact: `specscore spec lint`. On failure, run `specscore spec lint --fix` once, re-lint; surface remaining violations to the user.
-7. **Auto-stage** every file you created (`spec/ideas/<slug>.md`, plus the bootstrap files if any) with `git add`. Tell the user the staged paths. Never commit on the user's behalf.
+7. **Publication checkpoint** — add every file you created or edited (`spec/ideas/<slug>.md`, plus bootstrap files if any) to the checkpoint manifest and apply [publication-policy.md](../shared/publication-policy.md) for the lifecycle event being emitted.
 8. **Inline self-review** — placeholders, contradictions, ambiguity, scope.
 9. **User review** — ask the user to review and approve the Recommended Direction. Recognize explicit approval phrases (`approve`, `approved`, `accept`, `accepted`, `lgtm`, plus their semantic equivalents in the user's language); treat vague positive signals as soft and ask one explicit confirmation question.
-10. **Emit events** — `idea.drafted` on every successful lint pass while `**Status:** Draft`; `idea.approved` exactly once on approval; `idea.updated` on every successful lint pass while `**Status:** Approved`. Both `drafted` and `updated` payloads carry `changed_sections`, `previous_revision`, and a factual `change_summary` (≤2 sentences). See [events.md](../shared/events.md).
+10. **Emit events** — `idea.drafted` on every successful lint pass while `**Status:** Draft`; `idea.approved` exactly once on approval; `idea.updated` on every successful lint pass while `**Status:** Approved`. Apply publication policy before emission so each event carries `publication_result`. Both `drafted` and `updated` payloads carry `changed_sections`, `previous_revision`, and a factual `change_summary` (≤2 sentences). See [events.md](../shared/events.md).
 11. **Throughout** — watch for sidekick ideas per [sidekick-capture.md](../shared/sidekick-capture.md). When an out-of-scope improvement surfaces, invoke `specstudio:sidekick` with a one-liner, acknowledge in one line, and return to the current checklist step immediately. Do not derail to discuss the sideline idea.
 
 ## Phase 1 — Understand & Expand (Divergent)
@@ -174,17 +174,17 @@ In both paths, after the artifact is complete, run `specscore spec lint`. The CL
 
 **Trust the CLI's fix policy.** The skill does NOT carry its own list of which lint rules are safely auto-fixable — that policy lives in the `specscore` CLI. If `--fix` silently repairs a violation that should require human input, file the issue against `specscore`, not this skill.
 
-### Step 3e — Auto-stage in git
+### Step 3e — Publication checkpoint
 
-After every successful artifact write or edit, stage the affected paths:
+After every successful artifact write or edit, build a checkpoint manifest containing the affected paths:
 
 ```bash
-git add spec/ideas/<slug>.md
+spec/ideas/<slug>.md
 # plus any bootstrap files you created in Step 3.0
-git add spec/ideas/README.md
+spec/ideas/README.md
 ```
 
-Report the staged paths to the user in the same response. Never run `git commit` — staging only. If staging fails (no git repo, detached worktree, lock contention), surface the failure and continue without aborting the artifact write.
+Resolve and apply [publication-policy.md](../shared/publication-policy.md) for `idea.drafted` before emitting that event. The disclosure must name the policy source when known, resolved actions, any branch-safety effect, and the manifest paths. If the policy includes `stage`, stage only manifest paths. If it includes `commit` or `push`, run the manifest and branch safety checks from the shared protocol first. If publication fails (no git repo, detached worktree, lock contention, branch refusal), surface the failure and continue without aborting the artifact write or bypassing the user review gate.
 
 ### Schema (authoritative — used by both paths)
 
@@ -264,7 +264,7 @@ After lint + self-review pass:
 
 > "Idea drafted and lint-clean at `spec/ideas/<slug>.md`. Please review the Recommended Direction and MVP Scope. Approve to choose your next step (Specify, Plan, or Implement), or request changes."
 
-Wait. If the user requests changes, make them, re-lint (with the auto-recovery flow above), re-stage, and emit a fresh `idea.drafted` event. Only proceed once the user approves.
+Wait. If the user requests changes, make them, re-lint (with the auto-recovery flow above), apply publication policy for the next `idea.drafted` checkpoint, and emit a fresh `idea.drafted` event. Only proceed once the user approves.
 
 ### Recognizing approval
 
@@ -289,16 +289,17 @@ Wait for the user. Proceed only on a follow-up explicit phrase. Never silently t
 
 - Update `**Status:** Draft → Approved` in the body metadata.
 - Re-run lint.
-- Emit `idea.approved` event (exactly once per Idea).
+- Apply publication policy for `idea.approved` using a manifest that includes the status-transition edit and any CLI-reported touched paths.
+- Emit `idea.approved` event (exactly once per Idea) with `publication_result`.
 
 ## Post-Approval Iteration
 
 Once `**Status:** Approved`, the Idea is alive but not frozen. The user MAY edit it further (refine the Recommended Direction, add an Outstanding Question, update assumptions). On every subsequent successful lint pass after a write or edit:
 
 - Status remains `Approved` (never roll back to `Draft`).
-- Emit `idea.updated` (NOT `idea.drafted`).
+- Apply publication policy for `idea.updated` using a manifest containing the changed Idea file and any CLI-reported touched paths.
+- Emit `idea.updated` (NOT `idea.drafted`) with `publication_result`.
 - Do NOT re-emit `idea.approved`.
-- Re-stage the changed file with `git add`.
 
 `idea.updated` is the signal downstream consumers use to notify Features that declare this Idea as a `Source Ideas` entry, so downstream specs can reconcile.
 
@@ -363,7 +364,7 @@ Promotion bookkeeping (`**Promotes To:**`, `**Status:** Approved → Specified`)
 - [ ] Artifact exists at `spec/ideas/<slug>.md`
 - [ ] `spec/ideas/` and `spec/ideas/README.md` exist (bootstrap if needed; never silent)
 - [ ] `specscore spec lint` passes (auto-recovery via `--fix` attempted at most once on initial failure)
-- [ ] All created files staged with `git add` and reported to user (never committed)
+- [ ] Created/edited paths added to the checkpoint manifest and publication policy applied with disclosure
 - [ ] "How Might We" statement, target user, success criteria all explicit
 - [ ] ≥2 alternatives stress-tested
 - [ ] Assumptions audited across Must/Should/Might tiers
@@ -371,6 +372,7 @@ Promotion bookkeeping (`**Promotes To:**`, `**Status:** Approved → Specified`)
 - [ ] User approved the Recommended Direction (explicit phrase OR vague-signal followed by explicit confirmation)
 - [ ] `**Status:**` is `Approved` (if approved) or `Draft` (if not yet)
 - [ ] Events emitted per state: `idea.drafted` while Draft; `idea.approved` once on transition; `idea.updated` while Approved
+- [ ] Emitted events include `publication_result`
 - [ ] `idea.drafted` and `idea.updated` payloads include `changed_sections`, `previous_revision`, and a factual `change_summary` (all `null` on first `idea.drafted`, non-null thereafter)
 
 ## Red Flags
@@ -387,7 +389,8 @@ Promotion bookkeeping (`**Promotes To:**`, `**Status:** Approved → Specified`)
 - Looping `specscore spec lint --fix` more than once
 - Encoding the skill's own list of "rules `--fix` shouldn't touch" — that policy belongs to the `specscore` CLI; if it gets it wrong, fix it there
 - Treating `yes` / `ok` / `sí` / `oui` / `+1` / `🚀` as explicit approval (silent status transition on vague signal)
-- Running `git commit` instead of `git add` (skill stages, never commits)
+- Hard-coding stage-only behavior instead of resolving publication policy for `idea.drafted`, `idea.approved`, or `idea.updated`
+- Letting publication policy bypass the Recommended Direction approval gate
 - Emitting `idea.drafted` for an Approved artifact, or re-emitting `idea.approved`
 - Speculating about user intent or editorializing in `change_summary` ("User is rethinking…", "Important changes…", "More aligned with best practices…") instead of describing the observable change in factual terms
 - `change_summary` longer than two sentences
@@ -404,6 +407,7 @@ Direct, thoughtful, slightly provocative. A sharp thinking partner, not a facili
 - [examples.md](references/examples.md) — sample ideation sessions.
 - [philosophy.md](../shared/philosophy.md) — shared tenets.
 - [path-conventions.md](../shared/path-conventions.md) — `spec/` vs `docs/` rules.
+- [publication-policy.md](../shared/publication-policy.md) — checkpoint resolution, manifest safety, first-run preference prompt, and publication disclosure.
 - [specscore-lint-rules.md](../shared/specscore-lint-rules.md) — lint contract this skill assumes.
 - [events.md](../shared/events.md) — event payloads emitted by this skill.
 - [question-cadence.md](../shared/question-cadence.md) — when to batch vs single-question.

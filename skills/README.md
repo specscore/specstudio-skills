@@ -19,7 +19,7 @@ flowchart LR
     classDef input fill:none,stroke:#888,stroke-dasharray:4 3,color:#555
 ```
 
-Each in-line phase consumes the previous phase's lint-clean artifact and gates the next. Green = Shipped, yellow = Defined, gray = Roadmap. `specify` also accepts a clear buildable intent directly — `ideate` is skippable when the problem and scope are already obvious. `init` sits outside the loop: it's the one-time-per-project bootstrap that creates `specscore.yaml` + the `spec/` tree + the canonical instruction snippet, then hands off to `ideate` / `specify` for normal use.
+Each in-line phase consumes the previous phase's lint-clean artifact and gates the next. Green = Shipped, yellow = Defined, gray = Roadmap. `specify` also accepts a clear buildable intent directly — `ideate` is skippable when the problem and scope are already obvious. `init` sits outside the loop: it's the one-time-per-project bootstrap that creates `specscore.yaml` + the `spec/` tree + the canonical instruction snippet, then hands off to `ideate` / `specify` for normal use. Producer handoffs use the shared [publication policy protocol](./shared/publication-policy.md) for staging, commits, pushes, manifest safety, and first-run preference prompts.
 
 ## Status
 
@@ -104,27 +104,27 @@ Turns an approved Feature into a single-file Plan at `spec/plans/<slug>.md` — 
 
 ### `implement` — Shipped
 
-Consumes an approved Plan; dispatches one subagent per task in parallel batches computed from the Plan's `**Depends-On:**` dependency graph; stages every batch's changes with a mandatory `Verifies: <feature-slug>#ac:<ac-slug>, ...` commit-message trailer that the user pastes when committing. Linear in user interaction (one approval per batch), parallel in execution (subagent fan-out within a batch).
+Consumes an approved Plan; dispatches one subagent per task in parallel batches computed from the Plan's `**Depends-On:**` dependency graph; publishes every approved batch through publication policy with a mandatory `Verifies: <feature-slug>#ac:<ac-slug>, ...` commit-message trailer when a commit is created. Linear in user interaction (one approval per batch), parallel in execution (subagent fan-out within a batch).
 
-- **Output:** staged source-code changes (one or more `git diff --staged` batches across the Plan's lifetime), plus per-task `**Status:**` writes on the Plan file; in `**Mode:** stub` Plans, also writes back task bodies with post-hoc 1–2 sentence summaries.
+- **Output:** source-code changes, publication checkpoint disclosures, plus per-task `**Status:**` writes on the Plan file; in `**Mode:** stub` Plans, also writes back task bodies with post-hoc 1–2 sentence summaries.
 - **Triggers:** `implement`, `/implement`, `specstudio:implement`, "implement this plan", or the `plan.approved` event.
-- **Gate:** Plan Status ∈ {Approved, Implementing}, Source Feature Status ∈ {Approved, Implementing, Stable}, lint after every batch, line-overlap conflict detection post-batch, explicit per-batch user approval, user-commit-before-next-batch. Promotion boundary is `specstudio:verify` only.
+- **Gate:** Plan Status ∈ {Approved, Implementing}, Source Feature Status ∈ {Approved, Implementing, Stable}, lint after every batch, line-overlap conflict detection post-batch, explicit per-batch user approval, publication policy applied, commit exists before the next batch. Promotion boundary is `specstudio:verify` only.
 - **Source:** [`implement/SKILL.md`](./implement/SKILL.md)
 
 ### `verify` — Shipped
 
-Consumes an approved Feature and its `Verifies:` commit-message trailers; dispatches one built-in AI subagent per AC (serial) to produce a machine-checkable verdict report at `spec/features/<feature-slug>/_verify/<sha>.md`. Aggregates verdicts into a Markdown report opened by a grep-friendly YAML summary block, emits `verify.completed`, and transitions only to `specstudio:recap`. Stages the report; never commits.
+Consumes an approved Feature and its `Verifies:` commit-message trailers; dispatches one built-in AI subagent per AC (serial) to produce a machine-checkable verdict report at `spec/features/<feature-slug>/_verify/<sha>.md`. Aggregates verdicts into a Markdown report opened by a grep-friendly YAML summary block, applies publication policy, emits `verify.completed`, and transitions only to `specstudio:recap`.
 
-- **Output:** per-AC verdict report at `spec/features/<feature-slug>/_verify/<sha>.md` + `_verify/README.md` index, both staged via `git add`.
+- **Output:** per-AC verdict report at `spec/features/<feature-slug>/_verify/<sha>.md` + `_verify/README.md` index, published according to policy.
 - **Triggers:** `verify`, `/verify`, `specstudio:verify`, "verify this feature", or the explicit downstream transition from `specstudio:implement`.
 - **Gate:** Feature Status ∈ {Approved, Implementing, Stable}, Feature exists at git HEAD, `specscore` CLI parses the Feature cleanly. Promotion boundary is `specstudio:recap` only.
 - **Source:** [`verify/SKILL.md`](./verify/SKILL.md)
 
 ### `recap` — Shipped
 
-Consumes an approved Feature plus the latest `specstudio:verify` report at HEAD; dispatches one built-in AI subagent per AC (serial) that classifies divergence between spec and code into the 4-bucket verdict set {no-drift, spec-tighter-than-code, code-tighter-than-spec, contradiction}. Aggregates verdicts into a drift report at `spec/features/<feature-slug>/_recap/<sha>.md`, emits `recap.completed`, and transitions only to `specstudio:review`. Stages the report; never commits.
+Consumes an approved Feature plus the latest `specstudio:verify` report at HEAD; dispatches one built-in AI subagent per AC (serial) that classifies divergence between spec and code into the 4-bucket verdict set {no-drift, spec-tighter-than-code, code-tighter-than-spec, contradiction}. Aggregates verdicts into a drift report at `spec/features/<feature-slug>/_recap/<sha>.md`, applies publication policy, emits `recap.completed`, and transitions only to `specstudio:review`.
 
-- **Output:** per-AC drift report at `spec/features/<feature-slug>/_recap/<sha>.md` + `_recap/README.md` index, both staged via `git add`.
+- **Output:** per-AC drift report at `spec/features/<feature-slug>/_recap/<sha>.md` + `_recap/README.md` index, published according to policy.
 - **Triggers:** `recap`, `/recap`, `specstudio:recap`, or the explicit downstream transition from `specstudio:verify`.
 - **Gate:** Feature Status ∈ {Approved, Implementing, Stable}, Feature exists at git HEAD, `_verify/` contains at least one report reachable at HEAD. Promotion boundary is `specstudio:review` only.
 - **Source:** [`recap/SKILL.md`](./recap/SKILL.md)

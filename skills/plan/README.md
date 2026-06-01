@@ -30,5 +30,5 @@ The MVP is intentionally narrow: single Feature per Plan, strict linear task ord
 - Plan against unapproved Features (refuses with a redirect to `specstudio:specify`).
 - Plan across multiple Features in one artifact (single-Feature scope).
 - Write DAG / parallel-branch plans (linear-only in MVP).
-- Generate code or commit on the user's behalf (auto-stages only).
+- Generate code or bypass publication policy. Staging, committing, and pushing Plan artifacts are handled by the shared publication checkpoint protocol after reviewer and user gates release.
 - Invoke any skill other than `specstudio:implement` on transition.

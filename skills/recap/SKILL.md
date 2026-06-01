@@ -9,7 +9,7 @@ description: |
   {no-drift, spec-tighter-than-code, code-tighter-than-spec, contradiction}.
   Aggregates verdicts into a Markdown report opened by a grep-friendly YAML
   summary block, emits `recap.completed`, and transitions only to
-  `specstudio:review`. Stages the report; never commits.
+  `specstudio:review`. Applies publication policy to the report checkpoint.
   Trigger: "recap", "/recap", "specstudio:recap", or the explicit downstream
   transition from `specstudio:verify`.
 aliases: [recap]
@@ -28,7 +28,7 @@ Do NOT invoke `specstudio:ideate`, `specstudio:specify`, `specstudio:plan`, `spe
   3. The verify report has been resolved (preferring the report whose `<sha>` matches `git rev-parse --short HEAD`; otherwise the report whose embedded `revision:` YAML field is most recent in branch history) and its top-of-file YAML summary block has been parsed into a per-AC `{verify_verdict, verify_justification}` map.
   4. The report has been written to `spec/features/<feature-slug>/_recap/<sha>.md` with a fenced ` ```yaml ` summary block (top-level `feature:`, `revision:`, `verify_revision:`, and `drift:` list with one entry per AC) followed by one `## AC: <ac-slug>` body section per AC.
   5. The `_recap/README.md` index has been created (if absent) or updated with the current run's row (if present), per `## Report Format → Index README`.
-  6. Both the report and the `_recap/README.md` index have been staged via `git add` (the skill MUST NOT run `git commit`).
+  6. Both the report and the `_recap/README.md` index are in the publication manifest and the `recap.completed` publication checkpoint has been resolved, disclosed, and applied.
   7. The `recap.completed` event has been emitted exactly once.
 
 The only skill invoked after `specstudio:recap` is `specstudio:review` (or — while `review` is unshipped — a hand-back to the user with the report path and a recommendation to inspect drift items manually). The skill MUST NOT invoke `ideate`, `specify`, `plan`, `implement`, `verify`, `ship`, `writing-plans`, `frontend-design`, or `mcp-builder` on transition.
@@ -45,7 +45,7 @@ The only skill invoked after `specstudio:recap` is `specstudio:review` (or — w
 - The Feature's `**Status:**` is `Draft` or `Under Review` → print the current Status and recommend `specstudio:specify` to re-approve. Write no report. Exit non-zero. (AC: `refuses-draft-feature`)
 - The Feature exists only in the working tree (uncommitted) → instruct the user to commit the Feature first. Write no report. Exit non-zero. (AC: `refuses-uncommitted-feature`)
 - The Feature's `_verify/` directory does not exist or contains zero `<sha>.md` report files reachable at HEAD → recommend running `specstudio:verify <feature-slug>` first. Write no report. Exit non-zero. Recap-without-verify is a category error: there is nothing to recap against. (AC: `refuses-when-no-verify-report`)
-- The user asks the skill to commit the report on their behalf → refuse; the skill stages, the user commits.
+- The user asks the skill to bypass publication policy, commit unrelated paths, or push without branch-policy approval → refuse.
 - The user asks the skill to invoke `ship`, `review` (when unshipped), or any non-`review` skill → refuse; the only permitted downstream transition is `specstudio:review`.
 
 ## Pre-Flight
@@ -79,8 +79,8 @@ Create a task for each and complete in order:
 7. **Tally counts.** Compute six non-negative integer counts over the full AC list: `no_drift_count`, `spec_tighter_count`, `code_tighter_count`, `contradiction_count`, `unmapped_count`, `errored_count`. Their sum equals the Feature's total AC count.
 8. **Write the report.** Create `spec/features/<feature-slug>/_recap/` if absent. Write the report file to `spec/features/<feature-slug>/_recap/<sha>.md` per `## Report Format` below.
 9. **Write or update the `_recap/README.md` index.** Per `## Report Format → Index README` below. If absent, create it with one row in `## Contents`. If present, append one row (newest-last) for the current run, preserving prior rows. Without this step the project's `readme-exists` lint rule will fail on the newly created `_recap/` directory.
-10. **Stage both files.** Run `git add spec/features/<feature-slug>/_recap/<sha>.md spec/features/<feature-slug>/_recap/README.md`. MUST NOT run `git commit`.
-11. **Emit `recap.completed`.** Per `## Event Emission` below. Exactly once per successful run.
+10. **Publication checkpoint.** Add `spec/features/<feature-slug>/_recap/<sha>.md` and `spec/features/<feature-slug>/_recap/README.md` to the manifest. Apply [publication-policy.md](../shared/publication-policy.md) for `recap.completed`, staging only manifest paths and committing/pushing only when policy and safety allow.
+11. **Emit `recap.completed`.** Per `## Event Emission` below, including `publication_result`. Exactly once per successful run.
 12. **Transition.** Per `## Promotion Boundary` below. Only `specstudio:review` (or hand-back when `review` is unshipped).
 13. **Determine exit code.** Per `## Exit Semantics` below. Non-zero iff `contradiction_count + errored_count > 0`. Otherwise zero.
 14. **Throughout** — watch for sidekick ideas (e.g., a flaky drift-narrator shape, a recurrent verify-vs-recap disagreement pattern, a deferred plan-completeness check). When an out-of-scope improvement surfaces, invoke `specstudio:sidekick` with a one-liner, acknowledge in one line, and return to the current checklist step immediately. Do not derail.
@@ -271,9 +271,9 @@ Locate the `## Contents` table. Insert a new row at the bottom of the table (new
 
 If the table is missing entirely (e.g., README was hand-edited), the skill MUST refuse to write the row, surface the missing-table error to the user, and recommend manual repair before re-running.
 
-### Staging discipline
+### Publication discipline
 
-After writing the report and the index README, the skill MUST stage both with a single `git add spec/features/<feature-slug>/_recap/<sha>.md spec/features/<feature-slug>/_recap/README.md`. The skill MUST NOT run `git commit` — committing the staged set is the user's call. This mirrors the `ideate` / `specify` / `plan` / `implement` / `verify` discipline.
+After writing the report and the index README, the skill MUST add both to the checkpoint manifest and apply [publication-policy.md](../shared/publication-policy.md) for `recap.completed`. If the allowed actions include `stage`, stage only those manifest paths. If they include `commit` or `push`, run the shared unrelated-index and branch-safety checks first. The disclosure must name the resolved policy, executed actions, skipped actions, and manifest paths.
 
 ### No-mapped-commits edge case
 
@@ -281,8 +281,8 @@ When a Feature has at least one verify report at HEAD but zero `Verifies:` trail
 
 - Write the report at the canonical path.
 - Mark every AC `unmapped` in both the YAML block and the body sections.
-- Stage the report (and index README) via `git add`.
-- Emit `recap.completed` with `unmapped_count` equal to the Feature's total AC count and the other five counts equal to zero.
+- Apply publication policy to the report and index manifest.
+- Emit `recap.completed` with `unmapped_count` equal to the Feature's total AC count, the other five counts equal to zero, and `publication_result`.
 - Exit zero.
 
 The report itself communicates that nothing has been mapped yet; the absence of a report is not the right signal. (Note: this edge case requires a verify report to be present — recap's pre-flight refuses outright when `_verify/` is empty.)
@@ -305,7 +305,7 @@ A pre-flight refusal (Draft Feature, uncommitted Feature, no verify report) exit
 
 ## Event Emission
 
-After the report is written and staged (and only on a successful run — pre-flight refusals do NOT emit), the skill MUST emit exactly one `recap.completed` event via the convention in [events.md](../shared/events.md). Use `specscore event emit <event.yaml>` when the CLI is available; fall back to appending the event JSONL line to `.specscore/events.jsonl`.
+After the report is written and publication policy has been applied (and only on a successful run — pre-flight refusals do NOT emit), the skill MUST emit exactly one `recap.completed` event via the convention in [events.md](../shared/events.md). Use `specscore event emit <event.yaml>` when the CLI is available; fall back to appending the event JSONL line to `.specscore/events.jsonl`.
 
 Payload shape (flat counts — NOT a nested `drift_counts` object):
 
@@ -333,6 +333,12 @@ payload:
   contradiction_count: <int ≥ 0>
   unmapped_count: <int ≥ 0>
   errored_count: <int ≥ 0>
+publication_result:
+  resolved_actions: [<stage | commit | push>, ...]
+  executed_actions: [<stage | commit | push>, ...]
+  skipped_actions: [{action: <stage | commit | push>, reason: <string>}]
+  commit_sha: <git SHA> | null
+  push_target: <remote>/<branch> | null
 ```
 
 **Invariants:**
@@ -349,12 +355,12 @@ The next skill is `specstudio:review`, and only `specstudio:review`.
 
 ### Transition
 
-After the report is written, staged, and `recap.completed` is emitted:
+After the report is written, publication policy is applied, and `recap.completed` is emitted:
 
 - If `specstudio:review` is shipped: offer to transition the user to `specstudio:review`, passing the recap `report_path` as input.
 - If `specstudio:review` is unshipped: hand back to the user with the report path and a recommendation to inspect drift items manually:
 
-  > "Recap complete. Report staged at `spec/features/<feature-slug>/_recap/<sha>.md`. The `specstudio:review` skill is not yet shipped — review the YAML summary block in the report for per-AC drift verdicts. Commit the report when you're ready."
+  > "Recap complete. Report written at `spec/features/<feature-slug>/_recap/<sha>.md` and publication policy applied. The `specstudio:review` skill is not yet shipped — review the YAML summary block in the report for per-AC drift verdicts."
 
 The skill MUST NOT invoke `ideate`, `specify`, `plan`, `implement`, `verify`, `ship`, `writing-plans`, `frontend-design`, or `mcp-builder` on transition. The hard gate above pins this; the transition step honors it.
 
@@ -377,11 +383,11 @@ When the subagent returns malformed responses twice in a row, the skill records 
 - [ ] Malformed drift verdicts were retried exactly once; second-time malformed verdicts were recorded as `error` (orchestrator-produced)
 - [ ] Report written at `spec/features/<feature-slug>/_recap/<sha>.md` with the fenced YAML block first (top-level `feature:`, `revision:`, `verify_revision:`; per-AC `ac` + `verdict` + `narrative` entries in Feature AC order), then `## AC:` body sections carrying drift verdict + narrative + verify verdict + verify justification + commits + evidence
 - [ ] `_recap/README.md` index created (if absent) or row-appended (if present) with columns `Report | Run revision | Verify revision | Drift summary`; table preserves prior rows in their existing order (newest-last)
-- [ ] Both report and `_recap/README.md` staged via `git add` in the same staging set; `git commit` NEVER invoked by the skill
+- [ ] Both report and `_recap/README.md` added to the checkpoint manifest; publication policy applied with disclosure
 - [ ] `specscore spec lint` exits zero after the run (no `readme-exists` failure on the `_recap/` directory)
-- [ ] `recap.completed` event emitted exactly once; payload contains the four identity fields (`feature_slug`, `revision`, `report_path`, `verify_report_path`) and the six flat count fields summing to the Feature's total AC count; no per-AC details in the payload
+- [ ] `recap.completed` event emitted exactly once; payload contains the four identity fields (`feature_slug`, `revision`, `report_path`, `verify_report_path`), the six flat count fields summing to the Feature's total AC count, and `publication_result`; no per-AC details in the payload
 - [ ] Exit code is non-zero iff `contradiction_count + errored_count > 0`; otherwise zero (the four other verdicts are informational and never contribute to non-zero exit)
-- [ ] No-mapped-commits edge case (every AC `unmapped`) still produced a complete report, staged it, emitted the event, and exited zero
+- [ ] No-mapped-commits edge case (every AC `unmapped`) still produced a complete report, applied publication policy, emitted the event, and exited zero
 - [ ] On transition: only `specstudio:review` invoked (or hand-back when unshipped); no other skill touched
 
 ## Red Flags
@@ -392,7 +398,8 @@ When the subagent returns malformed responses twice in a row, the skill records 
 - Dispatching two drift-narrator subagents concurrently (serial only; parallelism is explicitly deferred per the source Idea's `## Not Doing`)
 - Looping the malformed-verdict retry more than once (one retry; second malformed → `error`; never a third call)
 - Allowing a narrative longer than 500 characters to pass the verdict-contract check
-- Running `git commit` on the report (skill stages, user commits)
+- Hard-coding stage-only report handoff instead of resolving publication policy for `recap.completed`
+- Committing unrelated staged paths or pushing without branch-policy approval
 - Writing the report to `docs/` or to a path other than `spec/features/<feature-slug>/_recap/<sha>.md`
 - Treating `spec-tighter-than-code`, `code-tighter-than-spec`, or `unmapped` as a non-zero-exit signal (all three are informational at the recap layer; `review` and `ship` escalate them later)
 - Skipping the `recap.completed` event because "no contradictions" — the event fires on every successful run regardless of drift outcomes
@@ -415,6 +422,7 @@ When the subagent returns malformed responses twice in a row, the skill records 
 - [Plan: Recap Skill MVP](../../spec/plans/recap.md) — the seven-task plan this skill realizes.
 - [Verify Skill](../verify/SKILL.md) — the architectural twin; recap mirrors verify's structure exactly with the documented deltas (verify-report pre-flight, verify-report resolution, 4-bucket drift verdict, 500-char narrative cap, 6-count tally, recap-only event name, transition to review).
 - [philosophy.md](../shared/philosophy.md) — shared tenets.
+- [publication-policy.md](../shared/publication-policy.md) — checkpoint resolution, manifest safety, first-run preference prompt, and publication disclosure.
 - [events.md](../shared/events.md) — event-envelope contract and emission transport for `recap.completed`.
 - [sidekick-capture.md](../shared/sidekick-capture.md) — sidekick-idea handling during the skill's flow.
 - [PRINCIPLES.md](../../PRINCIPLES.md) — repo-level principles (user-attention economy, batched questions, parallel work while user is idle).

@@ -58,7 +58,7 @@ Create a task for each and complete in order:
 9. **Lint** — `specscore spec lint`.
 10. **Inline self-review** — placeholders, consistency, scope, ambiguity.
 11. **Run the reviewer gate** — load and dispatch `gates.specify.reviewers` from `specscore.yaml` per the [Reviewer Gates](../../spec/features/reviewer-gates/README.md) Feature. See the `## Reviewer Gate` section below.
-12. **Emit events** — `feature.specified` after lint passes and before reviewer-gate dispatch; `feature.approved` (carrying the released `grade`) after the reviewer gate releases, and write the `**Grade:**` body-metadata line per Step 4. See [events.md](../shared/events.md).
+12. **Publication + events** — maintain a checkpoint manifest for the Feature README, optional `_tests/`, assets, indexes, and CLI-reported touched paths. Apply [publication-policy.md](../shared/publication-policy.md) for `feature.specified` after lint passes and before reviewer-gate dispatch, then emit `feature.specified` with `publication_result`. After the reviewer gate releases, apply policy for `feature.approved`, then emit `feature.approved` (carrying the released `grade` and `publication_result`) and write the `**Grade:**` body-metadata line per Step 4. See [events.md](../shared/events.md).
 13. **Transition** — present the transition menu (see `## Transition`).
 14. **Throughout** — watch for sidekick ideas per [sidekick-capture.md](../shared/sidekick-capture.md). When an out-of-scope improvement surfaces, invoke `specstudio:sidekick` with a one-liner, acknowledge in one line, and return to the current checklist step immediately. Do not derail to discuss the sideline idea.
 
@@ -218,12 +218,17 @@ When the runner returns `Approved` (the released grade satisfies `grade ≥ thre
 - Update `**Status:** Under Review → Approved` in the body metadata.
 - **Record the grade** (per [`reviewer-gates#req:grade-recording`](../../spec/features/reviewer-gates/README.md#req-grade-recording)): write the runner's released grade as a `**Grade:** <letter>` body-metadata line immediately after `**Supersedes:**` — add it if absent, update it in place if already present.
 - Re-run lint to confirm the transition + grade line are clean.
-- Emit `feature.approved` with `grade: <letter>` in the payload (see Checklist step 12 and [events.md](../shared/events.md)).
+- Apply publication policy for `feature.approved` using a manifest that includes the Feature README, generated companion files, and any CLI-reported touched paths. This runs only after the gate releases; policy MUST NOT bypass reviewer or human approval.
+- Emit `feature.approved` with `grade: <letter>` and `publication_result` in the payload (see Checklist step 12 and [events.md](../shared/events.md)).
 - Proceed to `## Transition`.
 
 ### Step 5 — On `Issues Found`
 
 When the runner returns `Issues Found`, surface the failing reviewer's name and every `Blocker`-severity finding verbatim. Advisory findings SHOULD also be surfaced (clearly labeled). Address every `Blocker` inline (edits to the Feature `README.md`), re-run lint, then re-invoke the runner per its `rerun-policy`. Do NOT emit `feature.approved` while any reviewer's last verdict is `Issues Found`.
+
+## Post-Approval Iteration
+
+When revising an already-approved Feature in place, keep the existing status (`Approved`, `Implementing`, or `Stable`) unless a separate lifecycle rule requires a transition. After every successful lint pass following the edit, apply publication policy for `feature.updated` using the changed paths manifest, then emit `feature.updated` with `publication_result`. Do NOT re-emit `feature.approved`.
 
 ## Approval-Phrase Recognition
 
@@ -311,7 +316,8 @@ If the user has `obra/superpowers` installed, we may reuse its browser-based vis
 - [ ] `**Status:** Approved` in body metadata
 - [ ] Rehearse decision recorded (stubs scaffolded OR skip-reason noted)
 - [ ] Source Idea (if any) linked via the `**Source Ideas:**` body-metadata line — lifecycle tooling handles the reverse link
-- [ ] `feature.specified` + `feature.approved` events emitted
+- [ ] Publication policy applied at `feature.specified` and `feature.approved` checkpoints with manifest disclosure
+- [ ] `feature.specified` + `feature.approved` events emitted with `publication_result`
 
 ## Red Flags
 
@@ -327,6 +333,8 @@ If the user has `obra/superpowers` installed, we may reuse its browser-based vis
 - Writing to `docs/superpowers/specs/` instead of `spec/features/<slug>/`
 - Silently routing to `writing-plans` without presenting the transition menu
 - Invoking any skill other than `writing-plans` or `specstudio:implement` on transition
+- Hard-coding stage-only handoff behavior instead of resolving publication policy for `feature.specified` or `feature.approved`
+- Letting publication policy bypass the reviewer gate or the `type: human` approval entry
 
 ## References
 
@@ -337,6 +345,7 @@ If the user has `obra/superpowers` installed, we may reuse its browser-based vis
 - [visual-companion.md](references/visual-companion.md) — visual companion strategy (decision pending).
 - [philosophy.md](../shared/philosophy.md) — shared tenets.
 - [path-conventions.md](../shared/path-conventions.md) — `spec/` vs `docs/` rules.
+- [publication-policy.md](../shared/publication-policy.md) — checkpoint resolution, manifest safety, first-run preference prompt, and publication disclosure.
 - [specscore-lint-rules.md](../shared/specscore-lint-rules.md) — lint contract this skill assumes.
 - [events.md](../shared/events.md) — event payloads emitted by this skill.
 - [question-cadence.md](../shared/question-cadence.md) — when to batch vs single-question.

@@ -16,8 +16,8 @@ For each invocation, against one Plan:
 4. Aggregates subagent returns per the SDD-style four-status protocol (`DONE` / `DONE_WITH_CONCERNS` / `NEEDS_CONTEXT` / `BLOCKED`).
 5. Runs line-overlap conflict detection on the staged diffs.
 6. Presents a consolidated batch diff plus a `Verifies: <feature-slug>#ac:<ac-slug>, ...` commit-message template to the user.
-7. **Stages only — never commits.** User owns commit shape.
-8. After user-approval and commit, advances to the next batch. Repeats until all tasks are `**Status:** done`.
+7. Applies publication policy at the approved implementation milestone, preserving the `Verifies:` trailer and manifest safety.
+8. After user approval and the required commit exists, advances to the next batch. Repeats until all tasks are `**Status:** done`.
 
 The central guarantee: **every commit references the AC IDs it satisfies** via the `Verifies:` trailer, closing the spec↔code coherence loop at the implementation handoff.
 
@@ -31,7 +31,7 @@ The central guarantee: **every commit references the AC IDs it satisfies** via t
 
 ## What it does NOT do
 
-- **Commit on the user's behalf.** Stages via `git add`; user runs `git commit` with the suggested template.
+- **Bypass publication policy or approval gates.** Commits and pushes only happen when the approved milestone policy allows them and safety checks pass.
 - **Plan against unapproved Plans.** Refuses if Plan Status ∉ {Approved, Implementing}.
 - **Run downstream skills directly.** Promotion boundary is `specstudio:verify` only.
 - **Run a code-quality reviewer subagent inside the loop.** Code review is `specstudio:review`'s job downstream.

@@ -62,15 +62,15 @@ Create a task for each and complete in order:
 3. **Order tasks linearly 1..N.** Respect inferable dependencies (an AC whose precondition is established by another AC's task). No gaps, no DAG, no parallel branches in the MVP.
 4. **Author the Plan artifact** — single `spec/plans/<slug>.md` per the schema below.
 5. **Auto-create `spec/plans/`** + index `README.md` if absent. Tell the user the directory is being bootstrapped.
-6. **Auto-stage** all created files via `git add`. Report the staged paths.
+6. **Checkpoint manifest** — add all created or edited Plan paths and CLI-reported touched paths to the publication manifest.
 7. **Lint** — `specscore spec lint`. On failure, run `specscore spec lint --fix` exactly once and re-lint; on persistent failure, surface violations with rule IDs and stop.
 8. **Inline self-review** — placeholders, empty `**Verifies:**` lines, AC IDs that look misspelled vs the source Feature, task-name vs `**Verifies:**` contradictions.
 9. **Status: Draft → Under Review.**
 10. **Dispatch the baseline reviewer subagent** — see [reviewer-prompt.md](references/reviewer-prompt.md). Must return `Approved` before user review.
 11. **Dispatch additional registered reviewers** (if any) from `specscore.yaml`'s `reviewers:` extension key. AND composition — every reviewer must return `Approved`.
-12. **Emit `plan.drafted`** event after all reviewers Approved + lint passes.
+12. **Publish + emit `plan.drafted`** after all reviewers Approved + lint passes: apply [publication-policy.md](../shared/publication-policy.md) for `plan.drafted`, then emit the event with `publication_result`.
 13. **User review gate** — present the Plan with the summary of deferred ACs (if any) and explicitly ask for approval.
-14. **On user approval** — status Under Review → Approved, re-run lint, emit `plan.approved`.
+14. **On user approval** — status Under Review → Approved, re-run lint, apply publication policy for `plan.approved`, then emit `plan.approved` with `publication_result`.
 15. **Transition to `specstudio:implement`** — or, while `implement` is unshipped, hand back with the recommendation that the user implement task-by-task using a general-purpose skill.
 16. **Throughout** — watch for sidekick ideas. When an out-of-scope improvement surfaces (e.g., a Feature change), invoke `specstudio:sidekick` with a one-liner, acknowledge in one line, and return to the current checklist step immediately. Do not derail.
 
@@ -298,7 +298,8 @@ On confirmed approval:
 
 - Update `**Status:** Under Review → Approved`.
 - Re-run lint.
-- Emit `plan.approved` event.
+- Apply publication policy for `plan.approved` using a manifest that includes the status-transition edit and any CLI-reported touched paths. This runs only after explicit user approval; policy MUST NOT bypass the gate.
+- Emit `plan.approved` event with `publication_result`.
 
 ## Event Emission
 
@@ -314,9 +315,9 @@ All three carry `changed_sections`, `previous_revision`, and a factual `change_s
 
 The skill MUST NOT emit `plan.drafted` for an already-approved Plan, and MUST NOT re-emit `plan.approved` for further iteration.
 
-## Auto-Stage in Git
+## Publication in Git
 
-Every file the skill creates — bootstrapped `spec/plans/`, `spec/plans/README.md`, the Plan file — MUST be `git add`-ed to the index. The skill MUST NOT commit on the user's behalf. Report staged paths in the same response as the artifact write. If staging fails (no git repository, lock contention), surface the failure and continue without aborting the artifact write.
+Every file the skill creates or edits — bootstrapped `spec/plans/`, `spec/plans/README.md`, the Plan file, and any CLI-reported touched path — MUST be added to the checkpoint manifest. Apply [publication-policy.md](../shared/publication-policy.md) at `plan.drafted`, `plan.approved`, and `plan.updated` checkpoints. If the policy includes `stage`, stage only manifest paths. If it includes `commit` or `push`, run the shared manifest, unrelated-index, approval-gate, and branch-safety checks first. Report the resolved policy, executed actions, skipped actions, and manifest paths in the same response as the artifact write. If publication fails (no git repository, lock contention, branch refusal), surface the failure and continue without aborting the artifact write.
 
 ## Transition to Build
 
@@ -351,8 +352,8 @@ The skill MUST NOT yes-machine weak Plans. When a task is vague, an AC is uncove
 - [ ] All registered third-party reviewers returned `Approved`
 - [ ] User explicitly approved the Plan
 - [ ] `**Status:** Approved` in body metadata
-- [ ] All created files staged via `git add` (never committed by the skill)
-- [ ] `plan.drafted` + `plan.approved` events emitted
+- [ ] Created/edited paths added to the checkpoint manifest and publication policy applied with disclosure
+- [ ] `plan.drafted` + `plan.approved` events emitted with `publication_result`
 
 ## Red Flags
 
@@ -366,12 +367,15 @@ The skill MUST NOT yes-machine weak Plans. When a task is vague, an AC is uncove
 - Writing to `docs/plans/` instead of `spec/plans/`
 - Skipping the reviewer subagent or a registered third-party reviewer
 - Invoking any skill other than `specstudio:implement` on transition
+- Hard-coding stage-only handoff behavior instead of resolving publication policy for Plan events
+- Letting publication policy bypass the reviewer or user approval gates
 
 ## References
 
 - [reviewer-prompt.md](references/reviewer-prompt.md) — plan-document reviewer subagent template.
 - [philosophy.md](../shared/philosophy.md) — shared tenets.
 - [path-conventions.md](../shared/path-conventions.md) — `spec/` vs `docs/` rules.
+- [publication-policy.md](../shared/publication-policy.md) — checkpoint resolution, manifest safety, first-run preference prompt, and publication disclosure.
 - [specscore-lint-rules.md](../shared/specscore-lint-rules.md) — lint contract this skill assumes.
 - [events.md](../shared/events.md) — event payloads emitted by this skill.
 - [question-cadence.md](../shared/question-cadence.md) — when to batch vs single-question.

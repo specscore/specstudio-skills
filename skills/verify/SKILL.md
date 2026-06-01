@@ -7,7 +7,7 @@ description: |
   dispatches one built-in AI subagent per mapped AC (serial, not parallel),
   aggregates verdicts into a Markdown report opened by a grep-friendly YAML
   summary block, emits `verify.completed`, and transitions only to
-  `specstudio:recap`. Stages the report; never commits.
+  `specstudio:recap`. Applies publication policy to the report checkpoint.
   Trigger: "verify", "/verify", "verify this feature", "specstudio:verify",
   or the explicit downstream transition from `specstudio:implement`.
 aliases: [verify]
@@ -25,7 +25,7 @@ Do NOT invoke `specstudio:ideate`, `specstudio:specify`, `specstudio:plan`, `spe
   2. The Feature parsed cleanly via the `specscore` CLI's Feature parser; the ordered AC ID list is available.
   3. The report has been written to `spec/features/<feature-slug>/_verify/<sha>.md` with a fenced ` ```yaml ` summary block followed by one `## AC: <ac-slug>` body section per AC.
   4. The `_verify/README.md` index has been created (if absent) or updated with the current run's row (if present), per `## Report Format → Index README`.
-  5. Both the report and the `_verify/README.md` index have been staged via `git add` (the skill MUST NOT run `git commit`).
+  5. Both the report and the `_verify/README.md` index are in the publication manifest and the `verify.completed` publication checkpoint has been resolved, disclosed, and applied.
   6. The `verify.completed` event has been emitted exactly once.
 
 The only skill invoked after `specstudio:verify` is `specstudio:recap` (or — while `recap` is unshipped — a hand-back to the user with the report path and a recommendation to review verdicts manually).
@@ -41,7 +41,7 @@ The only skill invoked after `specstudio:verify` is `specstudio:recap` (or — w
 
 - The Feature's `**Status:**` is `Draft` or `Under Review` → print the current Status and recommend `specstudio:specify` to re-approve. Write no report. Exit non-zero. (AC: `refuses-draft-feature`)
 - The Feature exists only in the working tree (uncommitted) → instruct the user to commit the Feature first. Write no report. Exit non-zero. (AC: `refuses-uncommitted-feature`)
-- The user asks the skill to commit the report on their behalf → refuse; the skill stages, the user commits.
+- The user asks the skill to bypass publication policy, commit unrelated paths, or push without branch-policy approval → refuse.
 - The user asks the skill to invoke `ship`, `review`, or any non-`recap` skill → refuse; the only permitted downstream transition is `specstudio:recap`.
 
 ## Pre-Flight
@@ -69,8 +69,8 @@ Create a task for each and complete in order:
 6. **Tally counts.** Compute `passed_count`, `failed_count`, `unmapped_count`, `errored_count` over the full AC list. Each is a non-negative integer; their sum equals the Feature's total AC count.
 7. **Write the report.** Create `spec/features/<feature-slug>/_verify/` if absent. Write the report file to `spec/features/<feature-slug>/_verify/<sha>.md` per `## Report Format` below.
 8. **Write or update the `_verify/README.md` index.** Per `## Report Format → Index README` below. If absent, create it with one row in `## Contents`. If present, append one row for the current run, preserving prior rows. Without this step the project's `readme-exists` lint rule will fail on the newly created `_verify/` directory.
-9. **Stage both files.** Run `git add spec/features/<feature-slug>/_verify/<sha>.md spec/features/<feature-slug>/_verify/README.md`. MUST NOT run `git commit`.
-10. **Emit `verify.completed`.** Per `## Event Emission` below. Exactly once per successful run.
+9. **Publication checkpoint.** Add `spec/features/<feature-slug>/_verify/<sha>.md` and `spec/features/<feature-slug>/_verify/README.md` to the manifest. Apply [publication-policy.md](../shared/publication-policy.md) for `verify.completed`, staging only manifest paths and committing/pushing only when policy and safety allow.
+10. **Emit `verify.completed`.** Per `## Event Emission` below, including `publication_result`. Exactly once per successful run.
 11. **Transition.** Per `## Promotion Boundary` below. Only `specstudio:recap` (or hand-back when `recap` is unshipped).
 12. **Determine exit code.** Per `## Exit Semantics` below. Non-zero iff `failed_count + errored_count > 0`. Otherwise zero.
 13. **Throughout** — watch for sidekick ideas (e.g., a flaky subagent shape, a deferred AC-coverage gap surfacing during verification). When an out-of-scope improvement surfaces, invoke `specstudio:sidekick` with a one-liner, acknowledge in one line, and return to the current checklist step immediately. Do not derail.
@@ -237,9 +237,9 @@ Locate the `## Contents` table. Insert a new row at the bottom of the table (new
 
 If the table is missing entirely (e.g., README was hand-edited), the skill MUST refuse to write the row, surface the missing-table error to the user, and recommend manual repair before re-running.
 
-### Staging discipline
+### Publication discipline
 
-After writing the report and the index README, the skill MUST stage both with a single `git add spec/features/<feature-slug>/_verify/<sha>.md spec/features/<feature-slug>/_verify/README.md`. The skill MUST NOT run `git commit` — committing the staged set is the user's call. This mirrors the `ideate` / `specify` / `plan` / `implement` discipline.
+After writing the report and the index README, the skill MUST add both to the checkpoint manifest and apply [publication-policy.md](../shared/publication-policy.md) for `verify.completed`. If the allowed actions include `stage`, stage only those manifest paths. If they include `commit` or `push`, run the shared unrelated-index and branch-safety checks first. The disclosure must name the resolved policy, executed actions, skipped actions, and manifest paths.
 
 ### No-commits edge case
 
@@ -247,8 +247,8 @@ When a Feature has zero `Verifies:` trailers in the entire branch history (e.g.,
 
 - Write the report at the canonical path.
 - Mark every AC `unmapped` in both the YAML block and the body sections.
-- Stage the report via `git add`.
-- Emit `verify.completed` with `unmapped_count` equal to the Feature's total AC count and the other three counts equal to zero.
+- Apply publication policy to the report and index manifest.
+- Emit `verify.completed` with `unmapped_count` equal to the Feature's total AC count, the other three counts equal to zero, and `publication_result`.
 - Exit zero.
 
 The report itself communicates that nothing has been implemented yet; the absence of a report is not the right signal.
@@ -271,7 +271,7 @@ A pre-flight refusal (Draft Feature, uncommitted Feature) exits non-zero without
 
 ## Event Emission
 
-After the report is written and staged (and only on a successful run — pre-flight refusals do NOT emit), the skill MUST emit exactly one `verify.completed` event via the convention in [events.md](../shared/events.md). Use `specscore event emit <event.yaml>` when the CLI is available; fall back to appending the event JSONL line to `.specscore/events.jsonl`.
+After the report is written and publication policy has been applied (and only on a successful run — pre-flight refusals do NOT emit), the skill MUST emit exactly one `verify.completed` event via the convention in [events.md](../shared/events.md). Use `specscore event emit <event.yaml>` when the CLI is available; fall back to appending the event JSONL line to `.specscore/events.jsonl`.
 
 Payload shape (flat counts — NOT a nested `verdict_counts` object):
 
@@ -296,6 +296,12 @@ payload:
   failed_count: <int ≥ 0>
   unmapped_count: <int ≥ 0>
   errored_count: <int ≥ 0>
+publication_result:
+  resolved_actions: [<stage | commit | push>, ...]
+  executed_actions: [<stage | commit | push>, ...]
+  skipped_actions: [{action: <stage | commit | push>, reason: <string>}]
+  commit_sha: <git SHA> | null
+  push_target: <remote>/<branch> | null
 ```
 
 **Invariants:**
@@ -312,12 +318,12 @@ The next skill is `specstudio:recap`, and only `specstudio:recap`.
 
 ### Transition
 
-After the report is written, staged, and `verify.completed` is emitted:
+After the report is written, publication policy is applied, and `verify.completed` is emitted:
 
 - If `specstudio:recap` is shipped: offer to transition the user to `specstudio:recap`, passing the `report_path` as input.
 - If `specstudio:recap` is unshipped: hand back to the user with the report path and a recommendation to review verdicts manually:
 
-  > "Verify complete. Report staged at `spec/features/<feature-slug>/_verify/<sha>.md`. The `specstudio:recap` skill is not yet shipped — review the YAML summary block in the report for per-AC verdicts. Commit the report when you're ready."
+  > "Verify complete. Report written at `spec/features/<feature-slug>/_verify/<sha>.md` and publication policy applied. The `specstudio:recap` skill is not yet shipped — review the YAML summary block in the report for per-AC verdicts."
 
 The skill MUST NOT invoke `ideate`, `specify`, `plan`, `implement`, `review`, `ship`, `writing-plans`, `frontend-design`, or `mcp-builder` on transition. The hard gate above pins this; the transition step honors it.
 
@@ -340,11 +346,11 @@ When the subagent returns malformed responses twice in a row, the skill records 
 - [ ] Report written at `spec/features/<feature-slug>/_verify/<sha>.md` with the fenced YAML block first, then `## AC:` body sections
 - [ ] Every AC appears in the YAML block in Feature AC order with one of `{pass, fail, error, unmapped}`
 - [ ] `_verify/README.md` index created (if absent) or row-appended (if present); table preserves prior rows in their existing order
-- [ ] Both report and `_verify/README.md` staged via `git add` in the same staging set; `git commit` NEVER invoked by the skill
+- [ ] Both report and `_verify/README.md` added to the checkpoint manifest; publication policy applied with disclosure
 - [ ] `specscore spec lint` exits zero after the run (no `readme-exists` failure on the `_verify/` directory)
-- [ ] `verify.completed` event emitted exactly once; payload counts sum to the Feature's total AC count; no per-AC details in the payload
+- [ ] `verify.completed` event emitted exactly once; payload counts sum to the Feature's total AC count; no per-AC details in the payload; `publication_result` is present
 - [ ] Exit code is non-zero iff `failed_count + errored_count > 0`; otherwise zero
-- [ ] No-commits edge case (every AC `unmapped`) still produced a complete report, staged it, emitted the event, and exited zero
+- [ ] No-commits edge case (every AC `unmapped`) still produced a complete report, applied publication policy, emitted the event, and exited zero
 - [ ] On transition: only `specstudio:recap` invoked (or hand-back when unshipped); no other skill touched
 
 ## Red Flags
@@ -355,7 +361,8 @@ When the subagent returns malformed responses twice in a row, the skill records 
 - Dispatching two verifier subagents concurrently (serial only; parallelism is explicitly deferred per the source Idea's `## Not Doing`)
 - Looping the malformed-verdict retry more than once (one retry; second malformed → `error`; never a third call)
 - Allowing a justification longer than 400 characters to pass the verdict-contract check
-- Running `git commit` on the report (skill stages, user commits)
+- Hard-coding stage-only report handoff instead of resolving publication policy for `verify.completed`
+- Committing unrelated staged paths or pushing without branch-policy approval
 - Writing the report to `docs/` or to a path other than `spec/features/<feature-slug>/_verify/<sha>.md`
 - Treating `unmapped` as a non-zero-exit signal (it is informational at the verify layer; `ship` escalates it later)
 - Skipping the `verify.completed` event because "no failures" — the event fires on every successful run regardless of verdict outcomes
@@ -372,6 +379,7 @@ When the subagent returns malformed responses twice in a row, the skill records 
 - [Feature: Implement Skill](../../spec/features/skills/implement/README.md) — the upstream Feature whose `Verifies:` commit-message trailer this skill consumes.
 - [Plan: Verify Skill MVP](../../spec/plans/verify.md) — the seven-task plan this skill realizes.
 - [philosophy.md](../shared/philosophy.md) — shared tenets.
+- [publication-policy.md](../shared/publication-policy.md) — checkpoint resolution, manifest safety, first-run preference prompt, and publication disclosure.
 - [events.md](../shared/events.md) — event-envelope contract and emission transport for `verify.completed`.
 - [sidekick-capture.md](../shared/sidekick-capture.md) — sidekick-idea handling during the skill's flow.
 - [PRINCIPLES.md](../../PRINCIPLES.md) — repo-level principles (user-attention economy, batched questions, parallel work while user is idle).

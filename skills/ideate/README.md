@@ -8,6 +8,6 @@ The `specstudio:ideate` Claude Code skill — refines raw, vague concepts into l
 
 ## What it does
 
-Produces a `spec/ideas/<slug>.md` containing Problem Statement, Recommended Direction, Alternatives Considered, MVP Scope, Not Doing, Key Assumptions, and Open Questions. Hard-gated: does not invoke `specify` or any implementation skill until the Idea is lint-clean and user-approved.
+Produces a `spec/ideas/<slug>.md` containing Problem Statement, Recommended Direction, Alternatives Considered, MVP Scope, Not Doing, Key Assumptions, and Open Questions. Hard-gated: does not invoke `specify` or any implementation skill until the Idea is lint-clean and user-approved. Publication at draft, approval, and update checkpoints follows the shared publication policy.
 
 Triggers: `ideate`, `/ideate`, "refine this idea", "stress-test this".
