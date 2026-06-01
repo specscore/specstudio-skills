@@ -117,7 +117,7 @@ If you want to see the methodology applied at scale, this repo is the reference.
 
 ## Status
 
-**Version 0.0.3 — early.** The `ideate` and `specify` skills are stable enough to use on real work; the rest of the lifecycle is in progress. Expect sharp edges, breaking changes, and active iteration.
+**Version 0.0.7 — early.** The `ideate`, `specify`, `plan`, `implement`, `verify`, and `recap` skills are active enough to dogfood on real work. Expect sharp edges, breaking changes, and active iteration.
 
 ## Contributing
 

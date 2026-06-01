@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.0.7
+
+- **publication policy protocol** — producer skills now resolve shared publication policy at lifecycle events and implementation milestones instead of hard-coding stage-only handoffs.
+- **manifest-safe publication** — added shared guidance for first-run publication preferences, path manifests, unrelated-index checks, branch-safe pushes, and `publication_result` event metadata.
+- **cross-repo policy specs** — added companion Feature specs for durable publication config in `specscore` and CLI mutation/resolution helpers in `specscore-cli`.
+
 ## 0.0.6
 
 - **sidekick multi-repo destination resolution** — `specstudio:sidekick` now resolves which SpecScore-managed repo a captured seed belongs to when multiple repos are open in the workspace, with an `UNCERTAIN` escape clause when identity signals conflict.
