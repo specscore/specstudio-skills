@@ -3,7 +3,7 @@
 **Status:** Implementing
 **Date:** 2026-06-02
 **Owner:** alexander.trakhimenok
-**Promotes To:** implement-execution-topology
+**Promotes To:** implement-execution-topology, implement-execution-topology/current-branch, implement-execution-topology/worktree-per-agent
 **Supersedes:** —
 **Related Ideas:** —
 

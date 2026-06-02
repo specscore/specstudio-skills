@@ -12,6 +12,13 @@
 
 Transport-agnostic contract for how `implement` executes parallel agent work: the branch roles, the gated transitions between them, and how a topology is selected. Concrete per-scenario realization lives in sub-Features; approval cadence lives in the `approval-autonomy` layer.
 
+## Contents
+
+| Child | Description |
+|---|---|
+| [worktree-per-agent](worktree-per-agent/README.md) | Single-machine, worktree-per-agent realization of the implement-execution-topology contract: each agent commits in its own git worktree (T1), branches integrate onto a dedicated per-plan plan-primary branch via real git merge (T2), and the plan primary is promoted to the launch branch behind the human gate (T3). |
+| [current-branch](current-branch/README.md) | Explicit-opt-in topology where agents work directly in the current checkout/branch (incl. main) with no per-agent worktree. The three branch roles collapse onto the one checked-out branch; execution is serial by default; a clean-tree precondition plus a pre-run revert ref substitute for the missing worktree isolation. |
+
 ## Problem
 
 `implement` today hardwires a single shared index — every batch subagent stages into one working tree, the parent detects line-overlap conflicts and commits to the current branch, and there is exactly one push (to remote). That conflates internal integration of agent work with external publication, isolates nothing, and offers no shared vocabulary for *where* work lives, *how* parallel agents' work combines, and *where* a human must approve. As parallel — and eventually multi-machine — agents arrive, downstream concerns (approval autonomy, verify, recap, conflict handling) need stable terms to build on. This Feature establishes the transport-agnostic contract; concrete topologies and approval cadence layer on top.
