@@ -139,7 +139,7 @@ Each REQ has ≥1 AC in `Given / When / Then` form. ACs may be inline under each
 
 …
 
-## Outstanding Questions
+## Open Questions
 
 - <Open question that doesn't block approval but should be tracked>
 

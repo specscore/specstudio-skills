@@ -49,7 +49,8 @@ The rules below are SpecStudio's **expectation** of canonical SpecScore lint beh
 | F-004 | Each acceptance criterion uses `Given / When / Then` format | error |
 | F-005 | `**Status:**` ∈ {`Draft`, `Under Review`, `Approved`, `Implementing`, `Stable`, `Deprecated`} | error |
 | F-006 | If `**Supersedes:**` references another Feature, that Feature exists and has `**Status:** Deprecated` | error |
-| F-007 | Required sections present per the SpecScore Feature spec (Summary, Problem, Behavior, Acceptance Criteria, Outstanding Questions) | error |
+| F-007 | Required sections present per the SpecScore Feature spec (Summary, Problem, Behavior, Acceptance Criteria, Open Questions) | error |
+| oq-section | The canonical questions heading is `## Open Questions`; the legacy `## Outstanding Questions` is rejected and migrated by `specscore spec lint --fix` | error |
 
 ## Plan-Specific Rules (`# Plan: …`)
 

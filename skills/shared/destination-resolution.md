@@ -99,4 +99,4 @@ When invoking this prompt:
    > Your previous response was unparseable; reply EXACTLY in `<repo>; <reason>` ≤120 chars, where `<repo>` is one of: `<comma-separated-candidate-slugs>`.
 4. **After a second malformed/`UNCERTAIN` response**, fall through to the calling skill's user-facing ask-without-pre-fill prompt — do NOT retry the agent further. The agent has had its two chances; the user picks next.
 
-The prompt wording above may be iterated against captured-seed replay tests per the Feature's [Outstanding Questions](../../spec/features/sidekick-capture/destination-resolution/README.md#outstanding-questions). The four contract sections (a)–(d) and their ordering are stable; wording inside each is iterable.
+The prompt wording above may be iterated against captured-seed replay tests per the Feature's [Open Questions](../../spec/features/sidekick-capture/destination-resolution/README.md#open-questions). The four contract sections (a)–(d) and their ordering are stable; wording inside each is iterable.

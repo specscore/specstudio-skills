@@ -40,7 +40,7 @@ See [philosophy.md](../shared/philosophy.md). Key tenets here: *simplicity is th
 
 Artifacts land at `spec/ideas/<slug>.md`. See [path-conventions.md](../shared/path-conventions.md). Never use `docs/ideas/`.
 
-If `spec/ideas/` does not exist when the skill is invoked, **bootstrap it** before writing the first artifact: create the directory and a lint-clean `spec/ideas/README.md` index (`type: index`, empty Contents table, `Outstanding Questions: None at this time.`). Tell the user explicitly that you bootstrapped it. Never silent.
+If `spec/ideas/` does not exist when the skill is invoked, **bootstrap it** before writing the first artifact: create the directory and a lint-clean `spec/ideas/README.md` index (`type: index`, empty Contents table, `Open Questions: None at this time.`). Tell the user explicitly that you bootstrapped it. Never silent.
 
 ## Checklist
 
@@ -110,7 +110,7 @@ After the user reacts to Phase 1, shift to convergent mode. Cadence becomes **si
 Before invoking the CLI or writing the file directly, check that `spec/ideas/` exists. If not:
 
 1. Create the directory.
-2. Create `spec/ideas/README.md` as a lint-clean Index artifact (title `# Ideas Index`, `**Status:** Stable`, empty Contents table, `Outstanding Questions: None at this time.`, adherence footer). The CLI will append to this index when it scaffolds the artifact; the fallback path appends manually.
+2. Create `spec/ideas/README.md` as a lint-clean Index artifact (title `# Ideas Index`, `**Status:** Stable`, empty Contents table, `Open Questions: None at this time.`, adherence footer). The CLI will append to this index when it scaffolds the artifact; the fallback path appends manually.
 3. Tell the user, e.g., *"Bootstrapped `spec/ideas/` and `spec/ideas/README.md` (this project didn't have an ideas tree yet)."*
 
 This step MUST NOT happen silently.
@@ -232,7 +232,7 @@ Write to `spec/ideas/<slug>.md` using **exactly this schema**. The schema follow
 - **Existing Features affected:** <list or "none">
 - **Dependencies:** <other Ideas or in-flight work>
 
-## Outstanding Questions
+## Open Questions
 - <Question that needs answering before promotion to Feature(s)>
 
 ---

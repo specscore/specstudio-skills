@@ -302,7 +302,7 @@ If the back-link write fails (filesystem error, parse error, concurrent modifica
 1. MUST NOT roll back the seed write.
 2. MUST proceed with event emission as if the back-link write had succeeded.
 3. MUST report the back-link write failure to the caller as a warning, e.g., `Warning: back-link write to <source-path> failed: <error>; seed and event are recorded.`
-4. MUST exit 0 (success). The seed and event are the load-bearing artifacts; the back-link is a discoverability convenience that a future `specscore spec lint --fix` rule will reconcile (deferred per the Feature's Outstanding Questions).
+4. MUST exit 0 (success). The seed and event are the load-bearing artifacts; the back-link is a discoverability convenience that a future `specscore spec lint --fix` rule will reconcile (deferred per the Feature's Open Questions).
 
 ## Event emission (REQ `emits-captured-event`, REQ `event-payload-schema`)
 

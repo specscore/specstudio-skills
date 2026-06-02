@@ -23,7 +23,7 @@ Agent tool (subagent_type: general-purpose):
     | Category | What to Look For |
     |----------|------------------|
     | Completeness | TBD, TODO, placeholders, incomplete sections, empty `**Verifies:**` lines |
-    | Schema | Title `# Plan: <name>`; body metadata (`**Status:**`, `**Source Feature:**`, `**Date:**`, `**Owner:**`, `**Supersedes:**`) immediately after title; `## Tasks` with `### Task N:` blocks numbered 1..N with no gaps; `## Outstanding Questions` present; adherence footer present |
+    | Schema | Title `# Plan: <name>`; body metadata (`**Status:**`, `**Source Feature:**`, `**Date:**`, `**Owner:**`, `**Supersedes:**`) immediately after title; `## Tasks` with `### Task N:` blocks numbered 1..N with no gaps; `## Open Questions` present; adherence footer present |
     | Source Feature | `**Source Feature:**` resolves to a real Feature at `spec/features/<feature-slug>/README.md` with `**Status:**` in `{Approved, Implementing, Stable}` |
     | AC coverage | Every AC in the source Feature appears in at least one task's `**Verifies:**` line OR in `## Deferred AC Coverage` with a one-sentence reason |
     | AC reference validity | Every `<feature-slug>#ac:<ac-slug>` reference resolves to an actual AC in the source Feature |

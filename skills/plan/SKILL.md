@@ -123,7 +123,7 @@ spec/plans/
 
 - <feature-slug>#ac:<ac-slug> — <one-sentence reason that specifies why and when>
 
-## Outstanding Questions
+## Open Questions
 
 - <Open question that doesn't block approval but should be tracked>
 
@@ -166,7 +166,7 @@ spec/plans/
 
 …
 
-## Outstanding Questions
+## Open Questions
 
 - <Open question that doesn't block approval but should be tracked>
 
