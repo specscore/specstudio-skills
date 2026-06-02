@@ -1,6 +1,6 @@
 # Plan: Reviewer Gates MVP
 
-**Status:** Completed
+**Status:** Implementing
 **Source Feature:** reviewer-gates
 **Date:** 2026-05-22
 **Owner:** alex
@@ -84,6 +84,14 @@ Edit four files: (1) repo-root `README.md` — add at least one link whose href 
 The grade increment added by the grade-as-verdict-currency revision (see the Feature's `### Grade and threshold` topic and `spec/research/reviewer-gates-grade-design.md`). It is a distinct, later implementation pass and is **not** part of the original Batches 1–4 — it begins only after the binary gate (Tasks 1–7) is shipped. Scope: (a) extend the gate runner (Task 2) to compute an A–F grade from the worst-wins union of `Blocker` findings across reviewers and lenses, mapping count→band (`C`=1, `D`=2–3, `F`=4+) and zero-Blocker→pass band (`A`/`B` by within-band judgment) per `grade-band-mapping` and `grade-aggregation`; (b) resolve the Approve threshold per `threshold-config` (per-stage `gates.<stage>.threshold` → top-level `grade.threshold` → default `B`) and validate it at load time per Task 1's loader, deriving the verdict `Approved` iff `grade ≥ threshold` per `threshold-derived-verdict`; (c) author the multi-role reviewer prompt (BA/dev/QA lenses, per-lens sub-assessment, within-band letter, and the BA problem→requirements traceability `Blocker` category) per `multi-role-reviewer`. Test via fixtures: blocker-count→grade mapping, default-threshold migration parity, threshold resolution order, invalid-threshold refusal, lenient-threshold release, worst-wins union, and a mocked multi-role reviewer that emits the BA traceability Blocker. The judgment-quality portion of `ba-lens-problem-traceability-blocker` is validated at the assumption layer, not as a deterministic fixture.
 
 Implementation status (done): the protocol/prose changes are complete — `skills/shared/reviewer-gates/loader.md` (Step 2.5 threshold resolution + validation), `skills/shared/reviewer-gates/runner.md` (Step 2.7 threshold-aware halt, Step 2.8 grade computation + grade-derived verdict), and `skills/specify/references/reviewer-prompt.md` (multi-role BA/dev/QA lenses, within-band letter, problem-traceability Blocker). Rehearse scenario stubs for all eight grade ACs are authored at `spec/features/reviewer-gates/_tests/<ac-slug>.md` (`**Status:** pending`, with Given/When/Then steps); executing them against live fixtures is downstream of this plan.
+
+### Task 9: Event-keyed gates revision
+
+**Verifies:** reviewer-gates#ac:legacy-command-key-rejected, reviewer-gates#ac:deterministic-verdict-from-exit, reviewer-gates#ac:noop-always-approves, reviewer-gates#ac:pre-commit-gate-fires-per-occurrence
+**Status:** pending
+**Depends-On:** 1, 2
+
+Implements the event-keyed revision of the contract added after the original MVP shipped: migrate gate keys from command names to events (`gates.feature.approved`, plus the gate-point events `implementation.pre_commit` / `implementation.pre_push`), reject legacy command-keyed gates with a migration error, and add the `deterministic` (tool-backed; verdict derived from exit code, diagnostics captured as `Blocker`s) and `noop` (always-approve placeholder) reviewer types in the loader/validator (Task 1) and the gate runner (Task 2). Register the gate-point events `implementation.pre_commit` / `implementation.pre_push` in the canonical `skills/shared/events.md` catalog (currently only lifecycle events are listed). Evaluate multi-occurrence gate-point events independently per occurrence (no single-shot caching). Test via fixtures: legacy-command-key rejection, deterministic exit-code→verdict mapping, noop always-approves, and per-occurrence multi-fire of `implementation.pre_commit`. Wiring an actual `implement` run to *fire* these gate-points is a downstream Feature (the implement-autonomy layer), not this task.
 
 ## Open Questions
 

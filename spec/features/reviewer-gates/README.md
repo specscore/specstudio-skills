@@ -7,11 +7,11 @@
 **Owner:** alex
 **Source Ideas:** reviewer-gates
 **Supersedes:** —
-**Grade:** A
+**Grade:** B
 
 ## Summary
 
-Defines the canonical reviewer-gates contract: per-stage reviewer lists scoped under a `gates:` block in `specscore.yaml`, with a `type:` discriminator and type-specific fields per reviewer entry. Pins the schema, dispatch semantics, and verdict contract for the MVP type set (`ai`, `human`), and wires `specstudio:specify` as the first consumer — replacing its built-in reviewer dispatch and User Review Gate with the new typed-gate model. Carves the Reviewer parts of [`third-party-integration`](../third-party-integration/README.md) out into this Feature.
+Defines the canonical reviewer-gates contract: **event-keyed** reviewer lists scoped under a `gates:` block in `specscore.yaml`, with a `type:` discriminator and type-specific fields per reviewer entry. Gates are keyed by the **event/checkpoint they guard** (`gates.<event>`) — both artifact-lifecycle events (e.g., `feature.approved`) and pre-action gate-point events that may fire repeatedly within a run (e.g., `implementation.pre_commit`, `implementation.pre_push`). Pins the schema, dispatch semantics, and verdict contract for the type set (`ai`, `human`, `deterministic`, `noop`), and wires `specstudio:specify` as the first consumer (on `gates.feature.approved`) — replacing its built-in reviewer dispatch and User Review Gate with the new typed-gate model. Carves the Reviewer parts of [`third-party-integration`](../third-party-integration/README.md) out into this Feature.
 
 The gate's verdict currency is an A–F **grade**: per-reviewer `Blocker`/`Advisory` findings are aggregated into a grade, and a gate releases iff `grade ≥ threshold` (configurable, default `B`). Both producer-exit gates and the manual [`score-command`](../score-command/README.md) consume this same grade, so verdict parity is structural. The grade model is designed so the **default threshold reproduces today's binary behavior exactly** (see [the grade design doc](../../research/reviewer-gates-grade-design.md)).
 
@@ -27,7 +27,7 @@ The MVP shape pinned in [the source Idea](../../ideas/reviewer-gates.md) — a t
 
 #### REQ: gates-block-location
 
-`specscore.yaml` MUST support a top-level `gates:` key. Each child key under `gates:` MUST match a SpecStudio skill's bare name (e.g., `specify`, `plan`, `implement`) — plugin-namespace prefixes such as `specstudio:specify` are NOT allowed in MVP (see `## Not Doing`). The block is preserved across SpecScore tooling reads/writes via the [SpecScore Repo Config Feature](https://github.com/specscore/specscore/blob/main/spec/features/repo-config/README.md)'s `unknown-fields-preserved` requirement; no new file convention or dotfile is introduced.
+`specscore.yaml` MUST support a top-level `gates:` key. Each child key under `gates:` MUST be a **gate-point event identifier** — either a canonical artifact-lifecycle event from [`events.md`](../../../skills/shared/events.md) that the gate guards (e.g., `feature.approved`, `idea.approved`, `plan.approved`) or a canonical pre-action gate-point event (e.g., `implementation.pre_commit`, `implementation.pre_push`; see `gate-point-events-and-multi-fire`). A bare skill/command name (e.g., `specify`) is NOT a valid gate key and MUST be rejected per `migration-to-event-keys`. The block is preserved across SpecScore tooling reads/writes via the [SpecScore Repo Config Feature](https://github.com/specscore/specscore/blob/main/spec/features/repo-config/README.md)'s `unknown-fields-preserved` requirement; no new file convention or dotfile is introduced.
 
 #### REQ: per-gate-shape
 
@@ -41,7 +41,7 @@ Every reviewer entry MUST declare `name:` (string, unique within the gate's `rev
 
 #### REQ: mvp-type-set
 
-The MVP type set is exactly `{ai, human}`. Any other `type:` value MUST be rejected at consumer load time with an error pointing at this Feature. Extension to additional types (e.g., `lint`, `security`, `ux`, `peer-review-bot`, `third-party-ci`) is explicitly deferred to additive revisions of this Feature; consumers MUST NOT silently treat unknown types as `ai`.
+The type set is exactly `{ai, human, deterministic, noop}`. Any other `type:` value MUST be rejected at consumer load time with an error pointing at this Feature; consumers MUST NOT silently treat unknown types as `ai`. `ai` and `human` are defined in `ai-entry-shape` / `human-entry-shape`; `deterministic` and `noop` in `deterministic-entry-shape` / `noop-entry-shape`. Further specialized types (e.g., `ux`, `peer-review-bot`, `third-party-ci`) remain deferred to additive revisions — a tool-backed check (lint, security scanner) is expressed as `type: deterministic` with a `run:` command, not as a bespoke type.
 
 #### REQ: ai-entry-shape
 
@@ -50,6 +50,22 @@ The MVP type set is exactly `{ai, human}`. Any other `type:` value MUST be rejec
 #### REQ: human-entry-shape
 
 `type: human` entries MUST NOT declare a `prompt:` field — humans have no programmatic prompt. They MAY declare `min_approvers:` (integer ≥ 1); MVP pins `min_approvers: 1` — values > 1 MUST be rejected at consumer load time with an error pointing at this Feature (see `## Not Doing`). The human's verdict is collected from the same explicit approval-phrase recognizer used by `specstudio:ideate` and `specstudio:specify` for user-approval gates (the recognizer that accepts `approve` / `approved` / `accept` / `accepted` / `lgtm` plus direct semantic equivalents in the user's language as `Approved`, treats vague positive signals as ambiguous, and treats explicit change requests as `Issues Found`).
+
+#### REQ: deterministic-entry-shape
+
+`type: deterministic` entries run a repo-local tool (linter, security scanner, conflict check, etc.) rather than an LLM or a human. They MUST declare `run:` (string — a command resolvable in the repo, e.g. a script path or Make target; network commands are forbidden) and MAY declare `description:`. They MUST NOT declare `prompt:` or `model:`. The verdict MUST be derived deterministically: exit code zero maps to `Approved`; a non-zero exit maps to `Issues Found`, with the tool's diagnostic output captured as `Blocker` finding(s). (A configurable non-exit-code success predicate is out of MVP scope.) Like every reviewer, a `deterministic` entry MUST NOT write to `spec/` artifacts (it is a read-only check per `verdict-contract`); a tool that mutates artifacts is a Producer, not a reviewer.
+
+#### REQ: noop-entry-shape
+
+`type: noop` entries dispatch nothing and always return `Approved` with no findings. They are the explicit auto-approve placeholder that lets an event's gate be configured as "no review at this checkpoint" *without removing the gate key* — so autonomy at a checkpoint is expressed as gate configuration (a `noop` where a `human` would otherwise sit), not as a separate mechanism. A `noop` entry MUST NOT declare `prompt:`, `model:`, or `run:`; it MAY declare `description:` (e.g., the rationale for auto-approving this checkpoint).
+
+#### REQ: gate-point-events-and-multi-fire
+
+Gate keys MAY be **pre-action gate-point events** that occur at execution checkpoints rather than at artifact-lifecycle transitions. The MVP gate-point events are `implementation.pre_commit` (evaluated before each commit a producer makes during an `implement` run) and `implementation.pre_push` (evaluated before a publish/promote). Gate-point events MUST be registered in the canonical [`events.md`](../../../skills/shared/events.md) catalog alongside lifecycle events. A gate keyed on an event that occurs multiple times in one run (e.g., `implementation.pre_commit` firing per commit/batch) MUST be evaluated **independently at each occurrence** — each firing dispatches the gate's reviewers and yields its own verdict; there is no single-shot-per-run assumption. A gate keyed on a once-per-artifact lifecycle event (e.g., `feature.approved`) fires once.
+
+#### REQ: migration-to-event-keys
+
+This revision replaces command/skill-keyed gates (`gates.<skill>`, e.g. `gates.specify`) with event-keyed gates (`gates.<event>`) as a **clean break — no back-compat window**. A consumer that encounters a gate key which is a bare skill/command name rather than a registered event identifier MUST reject it at load time with an error pointing at this Feature and naming the event key to migrate to (e.g., `gates.specify` → `gates.feature.approved`). The repo's own `specscore.yaml` MUST be migrated as part of this Feature's implementation so that `gates.specify` becomes `gates.feature.approved`.
 
 #### REQ: no-untyped-entry
 
@@ -103,7 +119,7 @@ A gate's release verdict MUST be derived as `Approved` iff `grade ≥ threshold`
 
 #### REQ: threshold-config
 
-The Approve threshold MUST be resolvable from `specscore.yaml` in this order: (1) a per-stage `gates.<stage>.threshold` value; (2) a top-level `grade.threshold` value; (3) the built-in default `B` when neither is present. A `threshold` value MUST be one of the whole letters `A`, `B`, `C`, `D`, `F`; any other value (including `E`, `+`/`-` variants, or non-letters) MUST be rejected at consumer load time with an error pointing at this Feature. The `gates.<stage>.threshold` and top-level `grade.threshold` keys are additive to the existing schema and MUST be preserved across tooling reads/writes per `gates-block-location`'s preservation guarantee.
+The Approve threshold MUST be resolvable from `specscore.yaml` in this order: (1) a per-stage `gates.<event>.threshold` value; (2) a top-level `grade.threshold` value; (3) the built-in default `B` when neither is present. A `threshold` value MUST be one of the whole letters `A`, `B`, `C`, `D`, `F`; any other value (including `E`, `+`/`-` variants, or non-letters) MUST be rejected at consumer load time with an error pointing at this Feature. The `gates.<event>.threshold` and top-level `grade.threshold` keys are additive to the existing schema and MUST be preserved across tooling reads/writes per `gates-block-location`'s preservation guarantee.
 
 #### REQ: grade-aggregation
 
@@ -113,7 +129,7 @@ When a gate has multiple reviewers, AND when a single multi-role reviewer report
 
 The **recommended default reviewer shape** for a stage is **one `type: ai` reviewer that evaluates the artifact through multiple lenses** — at minimum Business-Analyst (BA), Developer, and QA. A reviewer that takes this multi-role shape MUST, in addition to the `verdict-contract` findings list, emit a per-lens sub-assessment naming what each lens checked AND exactly **one** within-band letter representing its overall pass-band judgment (one letter for the reviewer, not one per lens — lenses contribute to the `Blocker` union per `grade-aggregation`). When a multi-role reviewer is used, its **BA lens MUST treat "the requirements do not demonstrably address the artifact's stated `## Problem`" as a `Blocker` category**, closing the problem→requirements traceability gap. The lens set is fixed in MVP — per-stage lens configuration is out of scope (see `## Not Doing`).
 
-This shape is the recommended default, not a constraint on every `type: ai` entry: a findings-only prompt (such as the current baseline at `skills/specify/references/reviewer-prompt.md`) remains valid per `verdict-contract` and contributes the default `B` in the pass band. Upgrading the baseline prompt to the multi-role shape is part of the grade increment (see the [Plan](../../plans/reviewer-gates.md)'s grade-increment task). A multi-reviewer **panel** (separate `type: ai` entries per role) remains available by adding entries to `gates.<stage>.reviewers`, and the `consilium` skill remains the heavyweight multi-role escape hatch. This REQ governs reviewer-prompt content and output shape; it does not change the entry schema in `ai-entry-shape`.
+This shape is the recommended default, not a constraint on every `type: ai` entry: a findings-only prompt (such as the current baseline at `skills/specify/references/reviewer-prompt.md`) remains valid per `verdict-contract` and contributes the default `B` in the pass band. Upgrading the baseline prompt to the multi-role shape is part of the grade increment (see the [Plan](../../plans/reviewer-gates.md)'s grade-increment task). A multi-reviewer **panel** (separate `type: ai` entries per role) remains available by adding entries to `gates.<event>.reviewers`, and the `consilium` skill remains the heavyweight multi-role escape hatch. This REQ governs reviewer-prompt content and output shape; it does not change the entry schema in `ai-entry-shape`.
 
 ### Recording the grade
 
@@ -130,15 +146,15 @@ The gate runner itself writes nothing — reviewers are read-only per `verdict-c
 
 #### REQ: specify-loads-gate
 
-`specstudio:specify` MUST resolve its reviewer list exclusively from `gates.specify.reviewers` in `specscore.yaml`. The skill MUST NOT carry a hardcoded baseline reviewer. The existing baseline-reviewer prompt at `skills/specify/references/reviewer-prompt.md` MUST be referenced from a `gates.specify.reviewers` entry of `type: ai` with that file as the entry's `prompt:` value — making the baseline an opt-in registry entry like any other, not a hidden default.
+`specstudio:specify` MUST resolve its reviewer list exclusively from `gates.feature.approved.reviewers` in `specscore.yaml`. The skill MUST NOT carry a hardcoded baseline reviewer. The existing baseline-reviewer prompt at `skills/specify/references/reviewer-prompt.md` MUST be referenced from a `gates.feature.approved.reviewers` entry of `type: ai` with that file as the entry's `prompt:` value — making the baseline an opt-in registry entry like any other, not a hidden default.
 
 #### REQ: specify-no-separate-user-gate
 
-The distinct "User Review Gate" step in `specstudio:specify` MUST be removed. The user's approval is collected through a `type: human` entry in `gates.specify.reviewers` exactly like every other reviewer — dispatched serially per `dispatch-serial`, contributing its verdict to AND-composition per `and-composition`. The five REQs in the existing `specify` Feature listed under `specify-feature-revision` are the structural manifestation of this collapse.
+The distinct "User Review Gate" step in `specstudio:specify` MUST be removed. The user's approval is collected through a `type: human` entry in `gates.feature.approved.reviewers` exactly like every other reviewer — dispatched serially per `dispatch-serial`, contributing its verdict to AND-composition per `and-composition`. The five REQs in the existing `specify` Feature listed under `specify-feature-revision` are the structural manifestation of this collapse.
 
 #### REQ: missing-gates-block-refuses
 
-When `specscore.yaml` has no top-level `gates:` key, no `gates.specify` sub-key, or `gates.specify.reviewers` is an empty list (`[]`), `specstudio:specify` MUST refuse to run with a clear error pointing at this Feature and recommending the canonical minimal gate configuration (at minimum one `type: human` entry). The skill MUST NOT silently fall back to any prior built-in baseline reviewer and MUST NOT silently fall back to a User Review Gate.
+When `specscore.yaml` has no top-level `gates:` key, no `gates.feature.approved` sub-key, or `gates.feature.approved.reviewers` is an empty list (`[]`), `specstudio:specify` MUST refuse to run with a clear error pointing at this Feature and recommending the canonical minimal gate configuration (at minimum one `type: human` entry). The skill MUST NOT silently fall back to any prior built-in baseline reviewer and MUST NOT silently fall back to a User Review Gate.
 
 ### Carve-out and cleanup
 
@@ -148,7 +164,7 @@ The [`third-party-integration`](../third-party-integration/README.md) Feature MU
 
 #### REQ: specify-feature-revision
 
-The [`specify`](../skills/specify/README.md) Feature MUST be revised in place to: (a) remove the REQs `reviewer-subagent-required`, `reviewer-baseline-blockers`, `reviewer-extension-hook`, `reviewer-composition`, and `user-approval-required`; (b) remove or replace the dependent ACs — at minimum `reviewer-then-user` MUST be replaced by a single AC asserting `gates.specify` consumption; (c) the `### Reviewer subagent gate` and `### User Review Gate` topic sections MUST be collapsed into a single `### Reviewer gate` topic that delegates to this Feature via a link; (d) all other REQs and ACs in `specify` remain unchanged.
+The [`specify`](../skills/specify/README.md) Feature MUST be revised in place to: (a) remove the REQs `reviewer-subagent-required`, `reviewer-baseline-blockers`, `reviewer-extension-hook`, `reviewer-composition`, and `user-approval-required`; (b) remove or replace the dependent ACs — at minimum `reviewer-then-user` MUST be replaced by a single AC asserting `gates.feature.approved` consumption; (c) the `### Reviewer subagent gate` and `### User Review Gate` topic sections MUST be collapsed into a single `### Reviewer gate` topic that delegates to this Feature via a link; (d) all other REQs and ACs in `specify` remain unchanged.
 
 #### REQ: review-feature-archival
 
@@ -167,7 +183,7 @@ The skill `skills/specify/SKILL.md`, the Feature `spec/features/skills/specify/R
 ## Architecture
 
 - **Schema owner.** This Feature owns the canonical `gates:` block schema in `specscore.yaml`. The SpecScore Repo Config Feature's `unknown-fields-preserved` requirement is the load-bearing dependency; no upstream change is required.
-- **Consumer (MVP).** `specstudio:specify` — reads `gates.specify.reviewers`, validates each entry's shape per `reviewer-entry-required-fields` / `mvp-type-set` / `ai-entry-shape` / `human-entry-shape` / `no-untyped-entry`, dispatches entries serially per `dispatch-serial`, aggregates verdicts under `and-composition`, and re-runs per `rerun-policy`.
+- **Consumer (MVP).** `specstudio:specify` — reads `gates.feature.approved.reviewers`, validates each entry's shape per `reviewer-entry-required-fields` / `mvp-type-set` / `ai-entry-shape` / `human-entry-shape` / `no-untyped-entry`, dispatches entries serially per `dispatch-serial`, aggregates verdicts under `and-composition`, and re-runs per `rerun-policy`.
 - **Future consumers (out of MVP scope).** `specstudio:plan`, `specstudio:implement`, `specstudio:verify`, `specstudio:recap`. Each will be a separate follow-on Feature; this contract is designed consumer-agnostic so future wiring needs only schema reads, not contract changes.
 - **Reviewer dispatch surfaces.** `type: ai` dispatches via the consumer skill's Agent tool with the prompt file as the system prompt. `type: human` dispatches via the consumer skill's existing user-prompt + approval-phrase recognizer.
 - **Verdict aggregation.** Stateless per-gate. Two-phase, no early-halt (`and-composition`): all `type: ai` reviewers run → exact `Blocker` union → A–F grade (`grade-aggregation`, `grade-band-mapping`); the `type: human` phase runs only if the automated grade ≥ threshold. The gate releases iff the final `grade ≥ threshold` (`threshold-derived-verdict`). At the default threshold `B` this is identical to "release iff zero `Blocker`s." No persisted state between gate runs; rerun discipline is captured in `rerun-policy`.
@@ -178,7 +194,7 @@ The skill `skills/specify/SKILL.md`, the Feature `spec/features/skills/specify/R
 | Feature | Relationship |
 |---|---|
 | [Third-Party Integration](../third-party-integration/README.md) | This Feature carves the Reviewer shape out of `third-party-integration`. Per `third-party-integration-revision`, the Reviewer REQs there are removed; the Producer and Capability shapes remain. |
-| [Specify Skill](../skills/specify/README.md) | This Feature's MVP consumer. Per `specify-loads-gate`, `specify-no-separate-user-gate`, and `specify-feature-revision`, the existing Reviewer-subagent and User-Review-Gate REQs in `specify` are replaced by `gates.specify` consumption. |
+| [Specify Skill](../skills/specify/README.md) | This Feature's MVP consumer. Per `specify-loads-gate`, `specify-no-separate-user-gate`, and `specify-feature-revision`, the existing Reviewer-subagent and User-Review-Gate REQs in `specify` are replaced by `gates.feature.approved` consumption. |
 | [Plan Skill](../skills/plan/README.md) | Not wired in MVP. The existing reviewer-subagent REQs in `plan` remain until a follow-on Feature wires `plan` to consume `gates.plan`. Out of this Feature's scope. |
 | [Review Skill (archived by this Feature)](../skills/review/README.md) | Per `review-feature-archival`, the standalone `review` pipeline step is archived in favor of stage-internal reviewer gates. |
 | [Score Command](../score-command/README.md) | Consumes this layer's grade + threshold as the manual `/score` surface. The grade is single-sourced here so manual `/score` and the producer-exit gates return identical verdicts (verdict parity). `/score`'s `--save` / `--badge` flags layer on top and are owned there. |
@@ -190,49 +206,73 @@ ACs are grouped here with explicit REQ back-references, mirroring sibling Featur
 
 ### AC: gates-block-preserved (verifies REQ:gates-block-location, REQ:per-gate-shape)
 
-**Given** a `specscore.yaml` containing a top-level `gates:` block with a child key `specify:` whose value is an object containing a `reviewers:` list of two entries in a specific order,
+**Given** a `specscore.yaml` containing a top-level `gates:` block with a child key `feature.approved:` (an event identifier) whose value is an object containing a `reviewers:` list of two entries in a specific order,
 **When** SpecScore tooling reads and re-writes the file (e.g., `specscore` CLI commands that touch the config),
-**Then** the `gates:` block MUST be preserved verbatim on rewrite (per `unknown-fields-preserved`), and consumers MUST be able to resolve `gates.specify.reviewers` to the original ordered list of entries in the original order.
+**Then** the `gates:` block MUST be preserved verbatim on rewrite (per `unknown-fields-preserved`), and consumers MUST be able to resolve `gates.feature.approved.reviewers` to the original ordered list of entries in the original order.
 
 ### AC: untyped-entry-refused (verifies REQ:no-untyped-entry, REQ:reviewer-entry-required-fields)
 
-**Given** a `gates.specify.reviewers` list containing an entry with `name:` but no `type:` field,
+**Given** a `gates.feature.approved.reviewers` list containing an entry with `name:` but no `type:` field,
 **When** `specstudio:specify` attempts to load the gate,
 **Then** the skill MUST refuse to run with an error citing `no-untyped-entry` and pointing at this Feature, MUST NOT dispatch any reviewer in the gate, and MUST exit non-zero.
 
 ### AC: unknown-type-refused (verifies REQ:mvp-type-set)
 
-**Given** a `gates.specify.reviewers` entry with `type: security` (a type outside the MVP set `{ai, human}`),
+**Given** a `gates.feature.approved.reviewers` entry with `type: peer-review-bot` (a type outside the set `{ai, human, deterministic, noop}`),
 **When** `specstudio:specify` attempts to load the gate,
 **Then** the skill MUST refuse to run with an error citing `mvp-type-set` and pointing at this Feature, MUST NOT dispatch any reviewer, and MUST exit non-zero.
 
+### AC: legacy-command-key-rejected (verifies REQ:migration-to-event-keys, REQ:gates-block-location)
+
+**Given** a `specscore.yaml` whose `gates:` block uses the legacy command-keyed form `gates.specify` (a bare skill name) rather than an event key,
+**When** a consumer loads the gate,
+**Then** it MUST reject the key with an error pointing at this Feature and naming the event key to migrate to (`gates.feature.approved`), MUST NOT dispatch any reviewer, and MUST exit non-zero.
+
+### AC: deterministic-verdict-from-exit (verifies REQ:deterministic-entry-shape)
+
+**Given** a gate `reviewers:` list with a `type: deterministic` entry whose `run:` command exits non-zero,
+**When** the gate is evaluated,
+**Then** that reviewer's verdict MUST be `Issues Found` with the command's diagnostic output captured as at least one `Blocker` finding, and the gate MUST NOT release at the default threshold `B`; and given the same command exits zero, that reviewer MUST contribute `Approved` with no findings.
+
+### AC: noop-always-approves (verifies REQ:noop-entry-shape)
+
+**Given** a gate `reviewers:` list containing a `type: noop` entry,
+**When** the gate is evaluated,
+**Then** the `noop` entry MUST return `Approved` with no findings, MUST dispatch nothing (no subagent, no command, no human prompt), and MUST NOT contribute any `Blocker` to the grade.
+
+### AC: pre-commit-gate-fires-per-occurrence (verifies REQ:gate-point-events-and-multi-fire)
+
+**Given** a gate keyed on a multi-occurrence gate-point event (`implementation.pre_commit`) and a run in which that event occurs three times (simulated via the gate-runner harness),
+**When** the runner processes the run,
+**Then** the gate MUST be evaluated three times — once per occurrence — each evaluation dispatching the gate's reviewers and producing its own independent verdict, with no single-shot-per-run caching. (Wiring an actual `implement` run to fire this event is a follow-on Feature; this AC fixes the runner's per-occurrence contract.)
+
 ### AC: ai-entry-shape-violations-refused (verifies REQ:ai-entry-shape)
 
-**Given** a `gates.specify.reviewers` entry of `type: ai` in any of the following invalid shapes — (a) missing the `prompt:` field, (b) `prompt:` resolves to a path outside the repo working tree, (c) `prompt:` resolves to a file inside the repo whose contents contain no documented blocker/advisory taxonomy section,
+**Given** a `gates.feature.approved.reviewers` entry of `type: ai` in any of the following invalid shapes — (a) missing the `prompt:` field, (b) `prompt:` resolves to a path outside the repo working tree, (c) `prompt:` resolves to a file inside the repo whose contents contain no documented blocker/advisory taxonomy section,
 **When** `specstudio:specify` attempts to load the gate,
 **Then** the skill MUST refuse to run with an error citing `ai-entry-shape` and pointing at this Feature, MUST NOT dispatch the entry, and MUST exit non-zero.
 
 ### AC: human-entry-min-approvers-cap (verifies REQ:human-entry-shape)
 
-**Given** a `gates.specify.reviewers` entry of `type: human` with `min_approvers: 2`,
+**Given** a `gates.feature.approved.reviewers` entry of `type: human` with `min_approvers: 2`,
 **When** `specstudio:specify` attempts to load the gate,
 **Then** the skill MUST refuse to run with an error citing `human-entry-shape`'s MVP `min_approvers: 1` cap and pointing at this Feature, MUST NOT dispatch the human entry, and MUST exit non-zero.
 
 ### AC: human-entry-rejects-prompt (verifies REQ:human-entry-shape)
 
-**Given** a `gates.specify.reviewers` entry of `type: human` that declares a `prompt:` field,
+**Given** a `gates.feature.approved.reviewers` entry of `type: human` that declares a `prompt:` field,
 **When** `specstudio:specify` attempts to load the gate,
 **Then** the skill MUST refuse to run with an error citing `human-entry-shape`'s prohibition on `prompt:` for human entries, MUST NOT dispatch the entry, and MUST exit non-zero.
 
 ### AC: serial-dispatch-observed (verifies REQ:dispatch-serial)
 
-**Given** a `gates.specify.reviewers` list with three entries (two `ai` plus one `human`) and instrumentation that records dispatch start/end timestamps per entry,
+**Given** a `gates.feature.approved.reviewers` list with three entries (two `ai` plus one `human`) where both `ai` reviewers return `Approved` (so the human phase runs per `and-composition`), and instrumentation that records dispatch start/end timestamps per entry,
 **When** `specstudio:specify` runs through the gate,
 **Then** at no point during the run are two reviewer dispatches concurrently in flight, and the recorded dispatch start order matches the list order exactly.
 
 ### AC: and-composition-blocks-on-any-issues-found (verifies REQ:and-composition, REQ:verdict-contract)
 
-**Given** a `gates.specify.reviewers` list with two `ai` entries followed by one `human` entry, where the first `ai` entry returns `Approved` and the second `ai` entry returns `Issues Found` with one `Blocker` finding,
+**Given** a `gates.feature.approved.reviewers` list with two `ai` entries followed by one `human` entry, where the first `ai` entry returns `Approved` and the second `ai` entry returns `Issues Found` with one `Blocker` finding,
 **When** `specstudio:specify` runs through the gate,
 **Then** both `ai` entries MUST be dispatched (the gate does NOT early-halt), the automated grade MUST be `C` (one `Blocker`), the gate MUST NOT release, the skill MUST surface the `Blocker` finding to the user, the `human` entry MUST NOT be dispatched (the automated grade `C` is below the default threshold `B`, so the human phase is skipped), and the skill MUST NOT emit `feature.approved`.
 
@@ -244,13 +284,13 @@ ACs are grouped here with explicit REQ back-references, mirroring sibling Featur
 
 ### AC: specify-loads-gate-not-builtin (verifies REQ:specify-loads-gate)
 
-**Given** a `gates.specify.reviewers` list whose first entry is `type: ai` with `prompt: skills/specify/references/reviewer-prompt.md` (the prior baseline path) and whose second entry is `type: human`,
+**Given** a `gates.feature.approved.reviewers` list whose first entry is `type: ai` with `prompt: skills/specify/references/reviewer-prompt.md` (the prior baseline path) and whose second entry is `type: human`,
 **When** `specstudio:specify` runs and successfully passes the gate,
 **Then** the skill MUST have dispatched exactly the two listed entries in list order, MUST NOT have additionally dispatched any reviewer hardcoded inside the skill's own logic, and the resulting verdict-aggregation MUST be composed from the registry entries alone.
 
 ### AC: missing-gates-block-refuses-with-error (verifies REQ:missing-gates-block-refuses)
 
-**Given** a `specscore.yaml` in any of the following states — (a) no top-level `gates:` key, (b) `gates:` present but no `gates.specify` sub-key, (c) `gates.specify.reviewers: []`,
+**Given** a `specscore.yaml` in any of the following states — (a) no top-level `gates:` key, (b) `gates:` present but no `gates.feature.approved` sub-key, (c) `gates.feature.approved.reviewers: []`,
 **When** `specstudio:specify` is invoked,
 **Then** the skill MUST refuse to run, MUST print an error pointing at this Feature and recommending a minimal configuration (at minimum one `type: human` entry), MUST NOT dispatch any reviewer, MUST NOT write or modify any artifact, and MUST exit non-zero.
 
@@ -264,7 +304,7 @@ ACs are grouped here with explicit REQ back-references, mirroring sibling Featur
 
 **Given** this Feature is approved and its implementation has run,
 **When** a downstream consumer reads `spec/features/skills/specify/README.md`,
-**Then** the file MUST NOT contain any of the five removed REQ slugs (`reviewer-subagent-required`, `reviewer-baseline-blockers`, `reviewer-extension-hook`, `reviewer-composition`, `user-approval-required`), MUST contain a single `### Reviewer gate` topic that delegates to this Feature via a link, MUST contain a replacement AC that asserts `gates.specify` consumption, and MUST pass `specscore spec lint`.
+**Then** the file MUST NOT contain any of the five removed REQ slugs (`reviewer-subagent-required`, `reviewer-baseline-blockers`, `reviewer-extension-hook`, `reviewer-composition`, `user-approval-required`), MUST contain a single `### Reviewer gate` topic that delegates to this Feature via a link, MUST contain a replacement AC that asserts `gates.feature.approved` consumption, and MUST pass `specscore spec lint`.
 
 ### AC: review-feature-archived (verifies REQ:review-feature-archival)
 
@@ -292,25 +332,25 @@ ACs are grouped here with explicit REQ back-references, mirroring sibling Featur
 
 ### AC: threshold-default-reproduces-today (verifies REQ:threshold-config, REQ:threshold-derived-verdict, REQ:grade-aggregation)
 
-**Given** a repo with no `gates.<stage>.threshold` and no top-level `grade.threshold`, using the existing reviewer prompt,
+**Given** a repo with no `gates.<event>.threshold` and no top-level `grade.threshold`, using the existing reviewer prompt,
 **When** a gate runs on an artifact whose aggregated findings contain zero `Blocker`s, and separately on an artifact with one or more `Blocker`s,
 **Then** the default threshold `B` MUST be applied, the zero-`Blocker` artifact MUST release (`Approved`), and the `Blocker`-bearing artifact MUST NOT release (`Issues Found`) — identical to the pre-grade `and-composition` behavior.
 
 ### AC: threshold-resolution-order (verifies REQ:threshold-config)
 
-**Given** a `specscore.yaml` with top-level `grade.threshold: C` and `gates.specify.threshold: B`,
+**Given** a `specscore.yaml` with top-level `grade.threshold: C` and `gates.feature.approved.threshold: B`,
 **When** a consumer resolves the threshold for the `specify` stage and for a second stage that declares no per-stage `threshold`,
 **Then** the `specify` stage MUST resolve to `B` (per-stage overrides top-level), the second stage MUST resolve to `C` (top-level default), and a repo with neither key MUST resolve to `B` (built-in default).
 
 ### AC: invalid-threshold-refused (verifies REQ:threshold-config)
 
-**Given** a `gates.specify.threshold: E` (a value outside the allowed set `{A, B, C, D, F}`),
+**Given** a `gates.feature.approved.threshold: E` (a value outside the allowed set `{A, B, C, D, F}`),
 **When** `specstudio:specify` attempts to load the gate,
 **Then** the skill MUST refuse to run with an error citing `threshold-config` and pointing at this Feature, MUST NOT dispatch any reviewer, and MUST exit non-zero.
 
 ### AC: lenient-threshold-tolerates-blocker (verifies REQ:threshold-derived-verdict)
 
-**Given** `gates.specify.threshold: C` and an artifact whose aggregated findings contain exactly one `Blocker` (grade `C`),
+**Given** `gates.feature.approved.threshold: C` and an artifact whose aggregated findings contain exactly one `Blocker` (grade `C`),
 **When** the gate computes the verdict,
 **Then** the gate MUST release (`Approved`) because `C ≥ C`; and the same artifact under the default threshold `B` MUST NOT release.
 
@@ -348,14 +388,14 @@ Rehearse stubs for each AC are scaffolded at `_tests/<ac-slug>.md` with `**Statu
 
 Inherited from the source Idea and pinned here:
 
-- **Reviewer types beyond `ai` and `human`** — `lint`, `security`, `ux`, `peer-review-bot`, `third-party-ci`, etc. are deferred. The MVP type set rejects unknown values; future additive revisions of this Feature add types one at a time as real consumers ship.
+- **Reviewer types beyond `ai`, `human`, `deterministic`, `noop`** — bespoke types like `ux`, `peer-review-bot`, `third-party-ci` are deferred. Tool-backed checks (lint, security scanners) are NOT new types — they are `type: deterministic` with a `run:` command. The type set rejects unknown values; future additive revisions add types one at a time as real consumers ship.
 - **`min_approvers > 1` for `type: human`** — pinned to 1 in MVP. Multi-approver workflows are deferred until a real need surfaces.
 - **Wiring `plan`, `implement`, `verify`, `recap` into `gates`** — each is a separate follow-on Feature with its own status-transition and event-emission specifics.
 - **Auto-skip rule** — a `type: human` reviewer auto-passed when preceding `ai` reviewers all return `Approved` is explicitly out of scope. Deferred until at least one gate runs in real dogfood and we have signal on false-positive risk.
 - **Parallel reviewer dispatch** — MVP is serial, mirroring `verify`'s MVP discipline. Parallelism lands in a follow-on Idea once typical reviewer counts and token-burst behavior are observed.
 - **Skill-discovery for reviewer entries** — the `future-review-skill-could-discover-available-claude-code` seed is separable; the entry shape can grow a `skill:` field additively later.
 - **Reviewer prompt-pack publishing / cross-repo prompt distribution** — prompts stay repo-local for MVP.
-- **Plugin-namespace prefixes in gate keys** — `gates.specstudio:specify` is not allowed in MVP; only bare skill names (`gates.specify`). Revisit when multiple plugins ship skills with colliding bare names.
+- **Non-catalog gate-point events** — gate keys MUST be registered events (lifecycle or the MVP gate-points `implementation.pre_commit`/`pre_push`). Inventing arbitrary gate-point identifiers, and wiring gate-points for stages other than `implement` (e.g., a `plan.pre_commit`), are deferred to the follow-on Features that wire those consumers.
 - **`gates:` configuration validation as a `specscore` CLI lint rule** — schema lint of `gates:` entries is deferred. Consumers (MVP: `specstudio:specify`) own load-time validation. A future `specscore config validate` (or a lint rule) MAY subsume.
 - **Promotion of the schema into the `specscore` repo** — the `gates:` schema lives in this Feature in `specstudio-skills` for MVP. Promoting to the canonical SpecScore Repo Config Feature happens once a second consumer ships.
 - **`+`/`-` letter grades** — whole letters `A`–`F` only in MVP; half-step precision (`B+`, `B-`) and the comparison rules it needs are deferred.
