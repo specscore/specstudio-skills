@@ -8,6 +8,7 @@ Pre-spec one-pagers for SpecStudio. Each Idea is the output of `specstudio:ideat
 
 | Idea | Status | Date | Owner | Promotes To |
 |------|--------|------|-------|-------------|
+| [autostage-lint-fix-modified-files](autostage-lint-fix-modified-files.md) | Implementing | 2026-06-02 | alexander.trakhimenok | skills/lint-fix-staging |
 | [configurable-change-publication-policy](configurable-change-publication-policy.md) | Implementing | 2026-05-31 | alex | change-publication-policy |
 | [flexible-lifecycle-flows](flexible-lifecycle-flows.md) | Implementing | 2026-05-25 | alexander.trakhimenok | flexible-lifecycle-flows |
 | [idea-skills-destination-resolution](idea-skills-destination-resolution.md) | Specified | 2026-05-20 | alexandertrakhimenok | sidekick-capture/destination-resolution |
