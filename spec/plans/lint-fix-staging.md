@@ -1,6 +1,6 @@
 # Plan: Stage lint --fix changes from the CLI fixed-files report
 
-**Status:** Approved
+**Status:** Completed
 **Source Feature:** skills/lint-fix-staging
 **Date:** 2026-06-02
 **Owner:** alex
