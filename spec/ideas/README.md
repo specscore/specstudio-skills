@@ -8,10 +8,12 @@ Pre-spec one-pagers for SpecStudio. Each Idea is the output of `specstudio:ideat
 
 | Idea | Status | Date | Owner | Promotes To |
 |------|--------|------|-------|-------------|
+| [approval-autonomy](approval-autonomy.md) | Draft | 2026-06-02 | alexander.trakhimenok | — |
 | [autostage-lint-fix-modified-files](autostage-lint-fix-modified-files.md) | Implementing | 2026-06-02 | alexander.trakhimenok | skills/lint-fix-staging |
 | [configurable-change-publication-policy](configurable-change-publication-policy.md) | Implementing | 2026-05-31 | alex | change-publication-policy |
 | [flexible-lifecycle-flows](flexible-lifecycle-flows.md) | Implementing | 2026-05-25 | alexander.trakhimenok | flexible-lifecycle-flows |
 | [idea-skills-destination-resolution](idea-skills-destination-resolution.md) | Specified | 2026-05-20 | alexandertrakhimenok | sidekick-capture/destination-resolution |
+| [implement-execution-topology](implement-execution-topology.md) | Implementing | 2026-06-02 | alexander.trakhimenok | implement-execution-topology |
 | [manual-review-and-score-commands](manual-review-and-score-commands.md) | Implementing | 2026-05-28 | alex | score-command |
 | [retrofit-evaluation-skill](retrofit-evaluation-skill.md) | Draft | 2026-05-22 | alex | — |
 | [retrofit-skill](retrofit-skill.md) | Draft | 2026-05-22 | alex | — |
