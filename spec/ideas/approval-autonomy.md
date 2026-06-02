@@ -1,6 +1,6 @@
 # Idea: Approval Autonomy for implement & plan (Commit-Autonomous, Push-Gated)
 
-**Status:** Draft
+**Status:** Approved
 **Date:** 2026-06-02
 **Owner:** alexander.trakhimenok
 **Promotes To:** —
