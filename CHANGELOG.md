@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.0.8
+
+- **reviewer-gates event-keyed revision** — gate keys migrate from command/skill names to events (`gates.feature.approved`); legacy command-keyed gates are rejected with a migration error. Adds `deterministic` (verdict from a `run:` command's exit code) and `noop` (always-approve placeholder) reviewer types, and registers the multi-fire gate-point events `implementation.pre_commit` / `implementation.pre_push`.
+- **per-branch gate masks** — a reviewer entry may carry an optional `when: "branch =~ <anchored-regex>"` condition; the entry participates in the gate only when the current branch matches, keeping per-branch autonomy in the gates layer.
+- **implement-autonomy layer** — `specstudio:implement` now fires the `implementation.pre_commit` / `implementation.pre_push` gates at its checkpoints, so per-batch approval is gate-config-driven (a `noop`/`deterministic`-only gate commits autonomously; a `type: human` reviewer is the human checkpoint) rather than a hardcoded step.
+- **autonomy execution knobs** — adds the top-level `autonomy:` config namespace with `autonomy.implement.commit_cadence` (`task`/`batch`/`plan`, default `batch`, scope-ladder resolved), anomaly-halts (sibling conflict / BLOCKED subagent / unresolved-after-`--fix` lint / source-Feature drift) that fire regardless of gate config, explicit `continue` re-arm scoped to the run, a cumulative review fed to a `type: human` push reviewer, and an explicit push branch-safety floor autonomy cannot bypass.
+- **current-branch topology reconciled (Option B)** — `protected-branch-commit-confirmation` no longer requires a commit-time prompt onto a protected branch; the checkpoint relocates to promote/push.
+
 ## 0.0.7
 
 - **publication policy protocol** — producer skills now resolve shared publication policy at lifecycle events and implementation milestones instead of hard-coding stage-only handoffs.
