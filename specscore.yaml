@@ -15,3 +15,14 @@ gates:
         description: Baseline SpecScore Feature reviewer — enforces six blocker categories
       - name: user-approval
         type: human
+
+# ship: deploy delegation for specstudio:ship (optional).
+# When `delegate` is set, ship dispatches it once after its gates pass; when
+# absent (as here), ship runs the gates and hands back without deploying.
+# The block recognizes ONLY delegate.skill + delegate.args — no sequencing/
+# retry/rollback/canary/flag-flip/scheduling fields (see the ship Feature's
+# bars-execution-and-orchestration AC).
+# ship:
+#   delegate:
+#     skill: gh-deploy
+#     args: "production"

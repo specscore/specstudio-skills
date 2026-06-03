@@ -57,9 +57,10 @@ Create a task for each and complete in order:
 1. **Pre-flight input + status** (Pre-Flight steps 1–2): resolve the single-Feature input, then the status guard. Refusals exit immediately; do not proceed.
 2. **Pre-flight machine gates** (Pre-Flight steps 3–4): verify-green, then recap-no-contradiction. Both are hard gates; any refusal exits immediately.
 3. **Reviewer gate** (`## Reviewer Gate`): fire `ship.pre_dispatch`, load and run `gates.ship.pre_dispatch` reviewers (AND-composed). Halt on `Issues Found`; proceed only on release.
+4. **Deploy dispatch** (`## Deploy Dispatch`): if `ship.delegate` is configured, dispatch it once; otherwise hand back. Act on the delegate's outcome only.
 
-<!-- Subsequent checklist steps (deploy dispatch, lifecycle transition, event
-emission) are added by later tasks in the ship plan. -->
+<!-- Subsequent checklist steps (lifecycle transition, event emission) are added
+by later tasks in the ship plan. -->
 
 ## Reviewer Gate
 
@@ -68,6 +69,27 @@ After every pre-flight gate passes, ship fires the `ship.pre_dispatch` gate-poin
 1. **Fire and load.** Fire `ship.pre_dispatch` (single-fire per run; see [events.md](../shared/events.md)). Load and validate `gates.ship.pre_dispatch.reviewers` via the loader with event key `ship.pre_dispatch`. If the gate is unconfigured or invalid, the loader refuses per its contract — surface its error verbatim and halt; do not dispatch a delegate, do not transition status.
 2. **Run.** Dispatch the validated reviewer list via the runner: serial, in declared list order, AND-composed. The gate releases only when **every** entry returns `Approved`. A `type: human` entry is the operator's go/no-go. Ship introduces **no new reviewer type** — it uses only the types reviewer-gates already defines (`ai`, `human`, and the broader `deterministic` / `auto-approve`).
 3. **Outcome.** On release (`Approved`), proceed to deploy dispatch. On `Issues Found`, halt: surface the failing reviewer's `Blocker` findings, dispatch no delegate, and transition no status. (AC: `gate-releases-only-on-all-approved`)
+
+## Deploy Dispatch
+
+When the reviewer gate releases, ship hands the deploy to a project-configured delegate. Ship dispatches **once** and reacts to a single outcome — it never sequences, retries, or orchestrates.
+
+### Config schema (`ship:` in `specscore.yaml`)
+
+```yaml
+ship:
+  delegate:
+    skill: <skill-name>     # the deploy skill ship invokes (e.g. gh-deploy)
+    args: <string>          # opaque args handed to the delegate verbatim
+```
+
+`delegate.skill` and `delegate.args` are the **only** recognized fields. Ship MUST NOT honor — and the `ship:` schema MUST NOT grow — any field expressing sequencing, retry, rollback, canary, feature-flag, or scheduling behavior; those belong to the delegate, never to ship (the boundary the `bars-execution-and-orchestration` AC enforces).
+
+### Dispatch behavior
+
+1. **Configured delegate → single dispatch.** When `ship.delegate` is present, invoke the named delegate skill **exactly once**, passing `delegate.args`. Ship does not sequence multiple delegates and does not retry. (AC: `dispatches-single-configured-delegate`)
+2. **No delegate → hand back.** When `ship.delegate` is absent, summarize the gate results, state explicitly that no deploy delegate is configured, transition no status, emit no `ship.completed`, and exit without attempting a deploy. Ship never guesses how to deploy. (AC: `hands-back-when-no-delegate`)
+3. **Explicit success only.** Treat **only** the delegate's explicit success signal as success. On delegate failure, an ambiguous result, or no clear success signal, leave the Feature in `Implementing`, do not retry, surface the delegate's outcome verbatim, and emit no `ship.completed`. (AC: `no-transition-on-delegate-failure`)
 
 ## References
 
