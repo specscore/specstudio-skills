@@ -202,6 +202,36 @@ payload:
 
 **Consumer:** A downstream orchestrator's task-prioritization reader surfaces `consilium-review` tasks with `needs-human-review` verdicts at the top of its prioritization report. Phase 2 auto-promote (future Feature) will subscribe to `verdict: should-implement` events.
 
+## Gate-Point Events (pre-action checkpoints)
+
+Gate-point events fire at **execution checkpoints** rather than at artifact-lifecycle transitions. Unlike the once-per-artifact lifecycle events above, a gate-point event MAY fire **multiple times within a single run**. They exist so that a [reviewer gate](../../spec/features/reviewer-gates/README.md) can be keyed on a pre-action checkpoint (`gates.implementation.pre_commit`, `gates.implementation.pre_push`) and evaluated independently at each occurrence per [reviewer-gates#req:gate-point-events-and-multi-fire](../../spec/features/reviewer-gates/README.md#req-gate-point-events-and-multi-fire).
+
+These are the MVP gate-point events. Inventing arbitrary gate-point identifiers (or gate-points for stages other than `implement`) is out of scope; the consumers that actually *fire* these checkpoints (the implement-autonomy layer) are downstream Features.
+
+### `implementation.pre_commit`
+A pre-action gate-point evaluated **before each commit** a producer makes during an `implement` run. It MAY fire multiple times in one run — once per commit/batch — and each occurrence is an independent gate evaluation (no single-shot-per-run caching). Used as a reviewer-gate key (`gates.implementation.pre_commit`).
+
+```yaml
+event: implementation.pre_commit
+version: 1
+payload:
+  occurrence: <int>          # 1-based index of this occurrence within the run
+  run_id: <string>           # stable identifier for the enclosing implement run
+```
+
+### `implementation.pre_push`
+A pre-action gate-point evaluated **before a publish/promote** (push) during an `implement` run. Used as a reviewer-gate key (`gates.implementation.pre_push`).
+
+```yaml
+event: implementation.pre_push
+version: 1
+payload:
+  occurrence: <int>          # 1-based index of this occurrence within the run
+  run_id: <string>           # stable identifier for the enclosing implement run
+```
+
+**Consumer:** a [reviewer gate](../../spec/features/reviewer-gates/README.md) keyed on the event evaluates the gate's reviewers at each occurrence. Wiring an actual `implement` run to *fire* these events is a downstream Feature (the implement-autonomy layer), not the reviewer-gates contract itself.
+
 ## Events Emitted by Transition Menus
 
 ### `lifecycle.phase-skipped`
@@ -314,6 +344,8 @@ Skills MUST NOT introduce additional configurable milestone names without adding
 | `plan.drafted` | `specstudio:plan` | Reviewer-approved, lint-clean Plan write |
 | `plan.approved` | `specstudio:plan` | User approves the written Plan (exactly once) |
 | `plan.updated` | `specstudio:plan`, `specstudio:implement` | Every successful lint pass after an approved Plan is edited, including implementation status updates |
+| `implementation.pre_commit` | gate-point (implement-autonomy layer) | Pre-action checkpoint before each commit during an `implement` run (multi-fire; per-occurrence gate evaluation) |
+| `implementation.pre_push` | gate-point (implement-autonomy layer) | Pre-action checkpoint before a publish/promote during an `implement` run |
 | `implement.batch-started` | `specstudio:implement` | A Plan-sourced implementation batch dispatches |
 | `implement.batch-completed` | `specstudio:implement` | A Plan-sourced implementation batch reaches its publication checkpoint after user approval |
 | `verify.completed` | `specstudio:verify` | Verify report and index are written successfully |

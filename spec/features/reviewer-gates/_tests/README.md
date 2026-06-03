@@ -11,6 +11,10 @@ All scenarios are scaffolded with `**Status:** pending`; their concrete Given/Wh
 | [gates-block-preserved.md](gates-block-preserved.md) | `reviewer-gates#ac:gates-block-preserved` |
 | [untyped-entry-refused.md](untyped-entry-refused.md) | `reviewer-gates#ac:untyped-entry-refused` |
 | [unknown-type-refused.md](unknown-type-refused.md) | `reviewer-gates#ac:unknown-type-refused` |
+| [legacy-command-key-rejected.md](legacy-command-key-rejected.md) | `reviewer-gates#ac:legacy-command-key-rejected` |
+| [deterministic-verdict-from-exit.md](deterministic-verdict-from-exit.md) | `reviewer-gates#ac:deterministic-verdict-from-exit` |
+| [noop-always-approves.md](noop-always-approves.md) | `reviewer-gates#ac:noop-always-approves` |
+| [pre-commit-gate-fires-per-occurrence.md](pre-commit-gate-fires-per-occurrence.md) | `reviewer-gates#ac:pre-commit-gate-fires-per-occurrence` |
 | [ai-entry-shape-violations-refused.md](ai-entry-shape-violations-refused.md) | `reviewer-gates#ac:ai-entry-shape-violations-refused` |
 | [human-entry-min-approvers-cap.md](human-entry-min-approvers-cap.md) | `reviewer-gates#ac:human-entry-min-approvers-cap` |
 | [human-entry-rejects-prompt.md](human-entry-rejects-prompt.md) | `reviewer-gates#ac:human-entry-rejects-prompt` |

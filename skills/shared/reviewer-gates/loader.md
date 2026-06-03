@@ -21,13 +21,13 @@ There is no auto-repair, no silent fallback to a built-in baseline reviewer, and
 
 | Input | Source | Required |
 |---|---|---|
-| `<skill>` | The bare skill name of the calling consumer (e.g., `specify`). The plugin-namespace form `specstudio:specify` is NOT used here — `reviewer-gates` REQ `gates-block-location` forbids it in MVP. | Yes |
+| `<event>` | The **gate-point event identifier** the consumer guards — either a canonical artifact-lifecycle event from [`events.md`](../events.md) (e.g., `feature.approved`, `idea.approved`, `plan.approved`) or a canonical pre-action gate-point event (e.g., `implementation.pre_commit`, `implementation.pre_push`). This is the key under `gates:`. A bare skill/command name (e.g., `specify`) is NOT a valid `<event>` and is rejected per [reviewer-gates#req:migration-to-event-keys](../../../spec/features/reviewer-gates/README.md#req-migration-to-event-keys) (see Step 1.5). For example, `specstudio:specify` passes `<event> = feature.approved`. | Yes |
 | `specscore.yaml` | Repo-root file. Read verbatim; preserve key order. | Yes |
 | Repo working tree | Used to resolve `prompt:` file paths declared by `type: ai` entries. | Yes |
 
 ## Output
 
-On success: an ordered list of reviewer entries, each carrying the fields declared in `specscore.yaml` plus the resolved prompt-file path (for `type: ai`) and effective `min_approvers` value (for `type: human`, always `1` in MVP), **plus the resolved Approve threshold** (a whole letter `A`–`F`, default `B`; see Step 2.5). The list order is exactly the order entries appear under `gates.<skill>.reviewers` — entry order is the dispatch order per [reviewer-gates#req:dispatch-serial](../../../spec/features/reviewer-gates/README.md#req-dispatch-serial).
+On success: an ordered list of reviewer entries, each carrying the fields declared in `specscore.yaml` plus the resolved prompt-file path (for `type: ai`) and effective `min_approvers` value (for `type: human`, always `1` in MVP), **plus the resolved Approve threshold** (a whole letter `A`–`F`, default `B`; see Step 2.5). The list order is exactly the order entries appear under `gates.<event>.reviewers` — entry order is the dispatch order per [reviewer-gates#req:dispatch-serial](../../../spec/features/reviewer-gates/README.md#req-dispatch-serial).
 
 On failure: no output; the consuming skill halts with the error described above.
 
@@ -41,25 +41,35 @@ Read the repo-root `specscore.yaml`. Preserve the file's key order in your worki
 
 If `specscore.yaml` does not exist or cannot be parsed as YAML, refuse with:
 
-> Error: cannot read `specscore.yaml` at repo root. The `<skill>` skill requires a `gates.<skill>` configuration. See https://github.com/specscore/specstudio-skills/blob/main/spec/features/reviewer-gates/README.md for the canonical schema.
+> Error: cannot read `specscore.yaml` at repo root. The `<skill>` skill requires a `gates.<event>` configuration. See https://github.com/specscore/specstudio-skills/blob/main/spec/features/reviewer-gates/README.md for the canonical schema.
 
-### Step 2 — Resolve `gates.<skill>.reviewers`
+### Step 1.5 — Reject legacy command-keyed gate keys
 
-Resolve the path `gates.<skill>.reviewers` against the parsed config. Three failure modes — all of which refuse per [reviewer-gates#req:missing-gates-block-refuses](../../../spec/features/reviewer-gates/README.md#req-missing-gates-block-refuses) and verify [reviewer-gates#ac:missing-gates-block-refuses-with-error](../../../spec/features/reviewer-gates/README.md#ac-missing-gates-block-refuses-with-error):
+This revision replaces command/skill-keyed gates (`gates.<skill>`, e.g. `gates.specify`) with **event-keyed** gates (`gates.<event>`) as a clean break — there is no back-compat window (per [reviewer-gates#req:migration-to-event-keys](../../../spec/features/reviewer-gates/README.md#req-migration-to-event-keys)).
+
+Before resolving the gate, inspect every child key under the top-level `gates:` block. Each child key MUST be a registered gate-point event identifier — either a canonical artifact-lifecycle event from [`events.md`](../events.md) (e.g., `feature.approved`, `idea.approved`, `plan.approved`) or a canonical pre-action gate-point event (`implementation.pre_commit`, `implementation.pre_push`; see [reviewer-gates#req:gate-point-events-and-multi-fire](../../../spec/features/reviewer-gates/README.md#req-gate-point-events-and-multi-fire)). A child key that is a bare skill/command name (a name with no `.` segment that matches a known skill/command, e.g. `specify`, `plan`, `implement`) rather than a registered event identifier MUST be rejected. The loader MUST refuse, dispatch nothing, and halt — citing [reviewer-gates#req:migration-to-event-keys](../../../spec/features/reviewer-gates/README.md#req-migration-to-event-keys) and naming the event key to migrate to (verifies [reviewer-gates#ac:legacy-command-key-rejected](../../../spec/features/reviewer-gates/README.md#ac-legacy-command-key-rejected)):
+
+> Error: gate key `gates.<key>` in `specscore.yaml` is a legacy command/skill-keyed gate. Gate keys are now **event-keyed** — there is no back-compat window (per [reviewer-gates#req:migration-to-event-keys](../../../spec/features/reviewer-gates/README.md#req-migration-to-event-keys)). Migrate `gates.specify` to `gates.feature.approved`. See https://github.com/specscore/specstudio-skills/blob/main/spec/features/reviewer-gates/README.md for the canonical event keys.
+
+The mapping for the MVP consumer is `gates.specify` → `gates.feature.approved`. Halt here before Step 2 — do NOT dispatch any reviewer, and do NOT fall back to resolving the legacy key.
+
+### Step 2 — Resolve `gates.<event>.reviewers`
+
+Resolve the path `gates.<event>.reviewers` against the parsed config. Three failure modes — all of which refuse per [reviewer-gates#req:missing-gates-block-refuses](../../../spec/features/reviewer-gates/README.md#req-missing-gates-block-refuses) and verify [reviewer-gates#ac:missing-gates-block-refuses-with-error](../../../spec/features/reviewer-gates/README.md#ac-missing-gates-block-refuses-with-error):
 
 | State | Refusal trigger |
 |---|---|
 | (a) no top-level `gates:` key | refuse |
-| (b) `gates:` present but no `gates.<skill>` sub-key | refuse |
-| (c) `gates.<skill>.reviewers` is an empty list (`[]`) | refuse |
+| (b) `gates:` present but no `gates.<event>` sub-key | refuse |
+| (c) `gates.<event>.reviewers` is an empty list (`[]`) | refuse |
 
 In any of these three cases emit:
 
-> Error: `gates.<skill>.reviewers` is missing or empty in `specscore.yaml`. The `<skill>` skill MUST NOT run without a configured reviewer gate (per [reviewer-gates#req:missing-gates-block-refuses](../../../spec/features/reviewer-gates/README.md#req-missing-gates-block-refuses)). Add at minimum one `type: human` entry — see https://github.com/specscore/specstudio-skills/blob/main/spec/features/reviewer-gates/README.md for the canonical schema. Recommended minimal configuration:
+> Error: `gates.<event>.reviewers` is missing or empty in `specscore.yaml`. The `<skill>` skill MUST NOT run without a configured reviewer gate (per [reviewer-gates#req:missing-gates-block-refuses](../../../spec/features/reviewer-gates/README.md#req-missing-gates-block-refuses)). Add at minimum one `type: human` entry — see https://github.com/specscore/specstudio-skills/blob/main/spec/features/reviewer-gates/README.md for the canonical schema. Recommended minimal configuration:
 >
 > ```yaml
 > gates:
->   <skill>:
+>   <event>:
 >     reviewers:
 >       - name: human-approval
 >         type: human
@@ -67,13 +77,13 @@ In any of these three cases emit:
 
 Halt. Do not dispatch. Do not fall back to any built-in baseline reviewer; do not fall back to any prior "User Review Gate" path.
 
-If `gates.<skill>.reviewers` resolves to a non-list value (e.g., a string, a mapping), refuse with the same minimal-configuration message and an additional sentence: `the value MUST be a YAML list of reviewer-entry objects`.
+If `gates.<event>.reviewers` resolves to a non-list value (e.g., a string, a mapping), refuse with the same minimal-configuration message and an additional sentence: `the value MUST be a YAML list of reviewer-entry objects`.
 
 ### Step 2.5 — Resolve the Approve threshold
 
 Resolve the gate's Approve threshold per [reviewer-gates#req:threshold-config](../../../spec/features/reviewer-gates/README.md#req-threshold-config). Resolution order (first present wins):
 
-1. `gates.<skill>.threshold` (per-stage), if present.
+1. `gates.<event>.threshold` (per-stage), if present.
 2. else the top-level `grade.threshold`, if present.
 3. else the built-in default `B`.
 
@@ -89,25 +99,25 @@ Iterate the `reviewers` list in declared order. For each entry, apply Steps 3a�
 
 After validating every entry, also confirm that all `name:` values are unique within this gate's `reviewers:` list (case-sensitive string comparison). Duplicate names refuse per [reviewer-gates#req:reviewer-entry-required-fields](../../../spec/features/reviewer-gates/README.md#req-reviewer-entry-required-fields) with:
 
-> Error: duplicate reviewer `name:` `<value>` in `gates.<skill>.reviewers`. Names MUST be unique within a gate (per [reviewer-gates#req:reviewer-entry-required-fields](../../../spec/features/reviewer-gates/README.md#req-reviewer-entry-required-fields)). See https://github.com/specscore/specstudio-skills/blob/main/spec/features/reviewer-gates/README.md.
+> Error: duplicate reviewer `name:` `<value>` in `gates.<event>.reviewers`. Names MUST be unique within a gate (per [reviewer-gates#req:reviewer-entry-required-fields](../../../spec/features/reviewer-gates/README.md#req-reviewer-entry-required-fields)). See https://github.com/specscore/specstudio-skills/blob/main/spec/features/reviewer-gates/README.md.
 
 #### Step 3a — `name:` required
 
 Every entry MUST declare `name:` as a non-empty string. The value MUST be lowercase plus hyphens only (regex check: `^[a-z][a-z0-9-]*$`). On any violation refuse with:
 
-> Error: reviewer entry at index `<i>` in `gates.<skill>.reviewers` is missing or has an invalid `name:` (required: lowercase + hyphens). Per [reviewer-gates#req:reviewer-entry-required-fields](../../../spec/features/reviewer-gates/README.md#req-reviewer-entry-required-fields). See https://github.com/specscore/specstudio-skills/blob/main/spec/features/reviewer-gates/README.md.
+> Error: reviewer entry at index `<i>` in `gates.<event>.reviewers` is missing or has an invalid `name:` (required: lowercase + hyphens). Per [reviewer-gates#req:reviewer-entry-required-fields](../../../spec/features/reviewer-gates/README.md#req-reviewer-entry-required-fields). See https://github.com/specscore/specstudio-skills/blob/main/spec/features/reviewer-gates/README.md.
 
 #### Step 3b — `type:` required and recognized
 
-Every entry MUST declare an explicit `type:` field. There is no implicit default. The value MUST be exactly one of the MVP type set `{ai, human}`.
+Every entry MUST declare an explicit `type:` field. There is no implicit default. The value MUST be exactly one of the MVP type set `{ai, human, deterministic, noop}`.
 
 - If `type:` is absent, refuse — citing [reviewer-gates#req:no-untyped-entry](../../../spec/features/reviewer-gates/README.md#req-no-untyped-entry) (verifies [reviewer-gates#ac:untyped-entry-refused](../../../spec/features/reviewer-gates/README.md#ac-untyped-entry-refused)):
 
-  > Error: reviewer entry `<name>` in `gates.<skill>.reviewers` has no `type:` field. There is no implicit default — entries MUST declare `type: ai` or `type: human` (per [reviewer-gates#req:no-untyped-entry](../../../spec/features/reviewer-gates/README.md#req-no-untyped-entry)). If this entry was migrated from a legacy flat `reviewers:` registry, add `type: ai` and a `prompt:` path explicitly. See https://github.com/specscore/specstudio-skills/blob/main/spec/features/reviewer-gates/README.md.
+  > Error: reviewer entry `<name>` in `gates.<event>.reviewers` has no `type:` field. There is no implicit default — entries MUST declare one of `type: ai`, `type: human`, `type: deterministic`, or `type: noop` (per [reviewer-gates#req:no-untyped-entry](../../../spec/features/reviewer-gates/README.md#req-no-untyped-entry)). If this entry was migrated from a legacy flat `reviewers:` registry, add `type: ai` and a `prompt:` path explicitly. See https://github.com/specscore/specstudio-skills/blob/main/spec/features/reviewer-gates/README.md.
 
-- If `type:` is present but not in `{ai, human}`, refuse — citing [reviewer-gates#req:mvp-type-set](../../../spec/features/reviewer-gates/README.md#req-mvp-type-set) (verifies [reviewer-gates#ac:unknown-type-refused](../../../spec/features/reviewer-gates/README.md#ac-unknown-type-refused)):
+- If `type:` is present but not in `{ai, human, deterministic, noop}`, refuse — citing [reviewer-gates#req:mvp-type-set](../../../spec/features/reviewer-gates/README.md#req-mvp-type-set) (verifies [reviewer-gates#ac:unknown-type-refused](../../../spec/features/reviewer-gates/README.md#ac-unknown-type-refused)):
 
-  > Error: reviewer entry `<name>` declares `type: <value>`, which is outside the MVP type set `{ai, human}` (per [reviewer-gates#req:mvp-type-set](../../../spec/features/reviewer-gates/README.md#req-mvp-type-set)). Unknown types MUST NOT be treated as `ai`. Extension to additional types (`lint`, `security`, `ux`, etc.) is deferred — see https://github.com/specscore/specstudio-skills/blob/main/spec/features/reviewer-gates/README.md.
+  > Error: reviewer entry `<name>` declares `type: <value>`, which is outside the MVP type set `{ai, human, deterministic, noop}` (per [reviewer-gates#req:mvp-type-set](../../../spec/features/reviewer-gates/README.md#req-mvp-type-set)). Unknown types MUST NOT be treated as `ai`. A tool-backed check (lint, security scanner) is expressed as `type: deterministic` with a `run:` command, not as a bespoke type; further specialized types (`ux`, `peer-review-bot`, etc.) are deferred — see https://github.com/specscore/specstudio-skills/blob/main/spec/features/reviewer-gates/README.md.
 
 #### Step 3c — If `type: ai`, validate the `ai` entry shape
 
@@ -148,14 +158,42 @@ These checks verify [reviewer-gates#req:human-entry-shape](../../../spec/feature
 
 **3d.iii — Optional `human` fields.** `description:` (string ≤ 200 chars) MAY be present. Unknown extra keys on a `type: human` entry are NOT permitted in MVP — refuse with a message listing the recognized fields (`name`, `type`, `min_approvers`, `description`).
 
+#### Step 3d-det — If `type: deterministic`, validate the `deterministic` entry shape
+
+These checks verify [reviewer-gates#req:deterministic-entry-shape](../../../spec/features/reviewer-gates/README.md#req-deterministic-entry-shape) and [reviewer-gates#ac:deterministic-verdict-from-exit](../../../spec/features/reviewer-gates/README.md#ac-deterministic-verdict-from-exit). A `type: deterministic` entry runs a repo-local tool (linter, security scanner, conflict check) whose verdict is derived from the command's exit code at runtime (see [`runner.md`](./runner.md) Step 2-det). Apply in order.
+
+**3d-det.i — `run:` field present.** The entry MUST declare `run:` as a non-empty string — a command resolvable in the repo (e.g., a script path or Make target). If absent or empty, refuse:
+
+> Error: reviewer entry `<name>` of `type: deterministic` is missing the required `run:` field (per [reviewer-gates#req:deterministic-entry-shape](../../../spec/features/reviewer-gates/README.md#req-deterministic-entry-shape)). Provide a command resolvable in the repo (a script path or Make target). See https://github.com/specscore/specstudio-skills/blob/main/spec/features/reviewer-gates/README.md.
+
+**3d-det.ii — No `prompt:` or `model:` field.** A `type: deterministic` entry runs a tool, not an LLM, and MUST NOT declare `prompt:` or `model:`. If either is present, refuse:
+
+> Error: reviewer entry `<name>` of `type: deterministic` declares a `prompt:` or `model:` field. A deterministic check runs a tool via `run:`, not an LLM; `prompt:`/`model:` are forbidden on deterministic entries (per [reviewer-gates#req:deterministic-entry-shape](../../../spec/features/reviewer-gates/README.md#req-deterministic-entry-shape)). See https://github.com/specscore/specstudio-skills/blob/main/spec/features/reviewer-gates/README.md.
+
+**3d-det.iii — No network commands.** Network commands are forbidden in `run:`. The loader SHOULD reject a `run:` value that is plainly a network fetch (e.g., begins with `curl`, `wget`, or contains a URL scheme such as `http://`/`https://`). On a plainly-network `run:`, refuse citing `deterministic-entry-shape`'s network prohibition.
+
+**3d-det.iv — Optional `deterministic` fields.** `description:` (string ≤ 200 chars) MAY be present. Unknown extra keys on a `type: deterministic` entry are NOT permitted in MVP — refuse with a message listing the recognized fields (`name`, `type`, `run`, `description`).
+
+#### Step 3d-noop — If `type: noop`, validate the `noop` entry shape
+
+These checks verify [reviewer-gates#req:noop-entry-shape](../../../spec/features/reviewer-gates/README.md#req-noop-entry-shape) and [reviewer-gates#ac:noop-always-approves](../../../spec/features/reviewer-gates/README.md#ac-noop-always-approves). A `type: noop` entry dispatches nothing and always returns `Approved` with no findings — the explicit auto-approve placeholder that lets an event's gate be configured as "no review at this checkpoint" without removing the gate key.
+
+**3d-noop.i — No `prompt:`, `model:`, or `run:` field.** A `type: noop` entry MUST NOT declare `prompt:`, `model:`, or `run:` — it dispatches nothing. If any is present, refuse:
+
+> Error: reviewer entry `<name>` of `type: noop` declares a `prompt:`, `model:`, or `run:` field. A `noop` entry dispatches nothing and always approves; those fields are forbidden (per [reviewer-gates#req:noop-entry-shape](../../../spec/features/reviewer-gates/README.md#req-noop-entry-shape)). See https://github.com/specscore/specstudio-skills/blob/main/spec/features/reviewer-gates/README.md.
+
+**3d-noop.ii — Optional `noop` fields.** `description:` (string ≤ 200 chars) MAY be present (e.g., the rationale for auto-approving this checkpoint). Unknown extra keys on a `type: noop` entry are NOT permitted in MVP — refuse with a message listing the recognized fields (`name`, `type`, `description`).
+
 #### Step 3e — Record the validated entry
 
 If Steps 3a–3d pass for this entry, append a normalized record to the output list in declared order. The normalized record carries:
 
 - `name`: as declared.
-- `type`: as declared (`ai` or `human`).
+- `type`: as declared (`ai`, `human`, `deterministic`, or `noop`).
 - For `type: ai`: `prompt_path` (resolved absolute path inside the working tree), `prompt_repo_relative_path` (the original value, useful for error reporting downstream), and `model` / `description` if present.
 - For `type: human`: `min_approvers: 1` (always, in MVP), and `description` if present.
+- For `type: deterministic`: `run` (the command string, as declared), and `description` if present.
+- For `type: noop`: `description` if present (no other fields).
 
 ### Step 4 — Return the validated list
 
@@ -167,7 +205,7 @@ After every entry passes Steps 3a–3e and the uniqueness check, return the vali
 2. **No partial output on failure.** If any step fails, the consumer MUST NOT carry a "partial" reviewer list forward. The output is all-or-nothing.
 3. **Refusal copy.** The error templates above are recommended copy. A consuming skill MAY adapt wording, but every refusal MUST (a) cite the specific REQ slug from the [reviewer-gates Feature](../../../spec/features/reviewer-gates/README.md), (b) include a link to that Feature, and (c) make clear that no reviewer was dispatched and no artifact was modified.
 4. **Halting after first failure inside a single entry.** Within Step 3 for a single entry, the first violation is terminal for that entry (and thus for the load). Do not accumulate multiple errors per entry — surface one clear error and halt. This keeps error messages predictable.
-5. **The validator is consumer-agnostic.** Substitute `<skill>` for the calling skill's bare name (e.g., `specify`). The same loader serves any future consumer (`plan`, `implement`, `verify`, `recap`) without contract changes — see the Feature's `## Architecture` section.
+5. **The validator is consumer-agnostic.** Substitute `<event>` for the gate-point event the calling skill guards (e.g., `feature.approved` for `specstudio:specify`; `implementation.pre_commit` for an implement-time gate). The same loader serves any future consumer (`plan`, `implement`, `verify`, `recap`) without contract changes — see the Feature's `## Architecture` section. Gate keys are event identifiers, never bare skill/command names (Step 1.5).
 6. **`gates:` block preservation across reads.** Reading `specscore.yaml` here is a pure read. If the consuming skill later writes to `specscore.yaml` for unrelated reasons, it MUST preserve the `gates:` block verbatim — every child key, every list-entry order, every field — per the SpecScore Repo Config Feature's `unknown-fields-preserved` requirement. This loader does not itself write to `specscore.yaml`.
 
 ## AC verification map
@@ -177,11 +215,14 @@ This loader is the implementation of the following acceptance criteria from the 
 | AC | Where verified in this loader |
 |---|---|
 | [`gates-block-preserved`](../../../spec/features/reviewer-gates/README.md#ac-gates-block-preserved) | Step 1 (preserve key order on read); Note 6 (consumers MUST NOT rewrite the `gates:` block on unrelated writes). |
+| [`legacy-command-key-rejected`](../../../spec/features/reviewer-gates/README.md#ac-legacy-command-key-rejected) | Step 1.5 — a bare skill/command name as a `gates:` child key (e.g., `gates.specify`) → refuse, cite `migration-to-event-keys`, name the event key (`gates.feature.approved`), dispatch nothing, halt. |
 | [`untyped-entry-refused`](../../../spec/features/reviewer-gates/README.md#ac-untyped-entry-refused) | Step 3b — `type:` absent → refuse, cite `no-untyped-entry`, halt. |
-| [`unknown-type-refused`](../../../spec/features/reviewer-gates/README.md#ac-unknown-type-refused) | Step 3b — `type:` not in `{ai, human}` → refuse, cite `mvp-type-set`, halt. |
+| [`unknown-type-refused`](../../../spec/features/reviewer-gates/README.md#ac-unknown-type-refused) | Step 3b — `type:` not in `{ai, human, deterministic, noop}` → refuse, cite `mvp-type-set`, halt. |
 | [`ai-entry-shape-violations-refused`](../../../spec/features/reviewer-gates/README.md#ac-ai-entry-shape-violations-refused) | Step 3c.i (missing `prompt:`), Step 3c.ii (path outside repo), Step 3c.iii (no documented blocker/advisory taxonomy) — all refuse, cite `ai-entry-shape`, halt. |
 | [`human-entry-min-approvers-cap`](../../../spec/features/reviewer-gates/README.md#ac-human-entry-min-approvers-cap) | Step 3d.ii — `min_approvers > 1` → refuse, cite `human-entry-shape`'s MVP cap, halt. |
 | [`human-entry-rejects-prompt`](../../../spec/features/reviewer-gates/README.md#ac-human-entry-rejects-prompt) | Step 3d.i — `prompt:` present on `type: human` → refuse, cite `human-entry-shape`'s prohibition, halt. |
-| [`missing-gates-block-refuses-with-error`](../../../spec/features/reviewer-gates/README.md#ac-missing-gates-block-refuses-with-error) | Step 2 — all three missing/empty states (no `gates:`, no `gates.<skill>`, empty `reviewers: []`) refuse, recommend minimal `type: human` configuration, halt. |
-| [`threshold-resolution-order`](../../../spec/features/reviewer-gates/README.md#ac-threshold-resolution-order) | Step 2.5 — per-stage `gates.<skill>.threshold` → top-level `grade.threshold` → default `B`; resolved threshold returned in Step 4 output. |
+| [`deterministic-verdict-from-exit`](../../../spec/features/reviewer-gates/README.md#ac-deterministic-verdict-from-exit) | Step 3d-det — validate the `type: deterministic` shape (`run:` required; `prompt:`/`model:` forbidden) at load time; the exit-code→verdict mapping itself is the runner's job ([`runner.md`](./runner.md) Step 2-det). |
+| [`noop-always-approves`](../../../spec/features/reviewer-gates/README.md#ac-noop-always-approves) | Step 3d-noop — validate the `type: noop` shape (no `prompt:`/`model:`/`run:`) at load time; the always-approve-dispatch-nothing behavior is the runner's job ([`runner.md`](./runner.md) Step 2-noop). |
+| [`missing-gates-block-refuses-with-error`](../../../spec/features/reviewer-gates/README.md#ac-missing-gates-block-refuses-with-error) | Step 2 — all three missing/empty states (no `gates:`, no `gates.<event>`, empty `reviewers: []`) refuse, recommend minimal `type: human` configuration, halt. |
+| [`threshold-resolution-order`](../../../spec/features/reviewer-gates/README.md#ac-threshold-resolution-order) | Step 2.5 — per-stage `gates.<event>.threshold` → top-level `grade.threshold` → default `B`; resolved threshold returned in Step 4 output. |
 | [`invalid-threshold-refused`](../../../spec/features/reviewer-gates/README.md#ac-invalid-threshold-refused) | Step 2.5 — a `threshold` value outside `{A, B, C, D, F}` refuses, cites `threshold-config`, halts. |

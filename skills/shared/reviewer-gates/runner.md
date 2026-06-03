@@ -16,6 +16,9 @@ There is no third verdict. The runner does not "skip" reviewers, does not silent
 
 This runner implements the following REQs from the [reviewer-gates Feature](../../../spec/features/reviewer-gates/README.md):
 
+- [`deterministic-entry-shape`](../../../spec/features/reviewer-gates/README.md#req-deterministic-entry-shape) — a `type: deterministic` entry's verdict is derived from its `run:` command's exit code (zero → `Approved`, no findings; non-zero → `Issues Found`, diagnostics captured as `Blocker`(s)).
+- [`noop-entry-shape`](../../../spec/features/reviewer-gates/README.md#req-noop-entry-shape) — a `type: noop` entry dispatches nothing and always returns `Approved` with no findings.
+- [`gate-point-events-and-multi-fire`](../../../spec/features/reviewer-gates/README.md#req-gate-point-events-and-multi-fire) — a gate keyed on a multi-occurrence gate-point event (e.g., `implementation.pre_commit`) is evaluated independently at each occurrence, with no single-shot-per-run caching.
 - [`dispatch-serial`](../../../spec/features/reviewer-gates/README.md#req-dispatch-serial) — one reviewer in flight at a time, in list order.
 - [`verdict-contract`](../../../spec/features/reviewer-gates/README.md#req-verdict-contract) — `Blocker`/`Advisory` severity on findings; no reviewer writes to `spec/`.
 - [`and-composition`](../../../spec/features/reviewer-gates/README.md#req-and-composition) — no early-halt; two-phase dispatch (all `type: ai` reviewers, then `type: human` only if the automated grade ≥ threshold).
@@ -65,9 +68,11 @@ Walk the validated reviewer list in declared order. For each entry, decide wheth
 
 The order within the dispatch set is exactly the declared order of the original reviewer list — entries skipped above do not shift the order of the remaining entries.
 
-### Step 2 — Automated phase: dispatch every `type: ai` reviewer (serial, no early-halt)
+### Step 2 — Automated phase: evaluate every automated reviewer (serial, no early-halt)
 
-For each **`type: ai`** entry in the dispatch set, in declared order (`type: human` entries are deferred to the human phase, Step 2.9):
+The **automated phase** evaluates every non-`human` reviewer — `type: ai`, `type: deterministic`, and `type: noop` — in declared order; `type: human` entries are deferred to the human phase (Step 2.9). Each automated reviewer contributes its verdict and findings to the `Blocker` union (Step 2.8). There is no early-halt: every automated entry in the dispatch set is evaluated, so the union — and hence the grade — is exact in a single pass.
+
+For each **`type: ai`** entry in the dispatch set, in declared order:
 
 1. **Record dispatch start.** Capture the timestamp at the moment dispatch begins (for AC `serial-dispatch-observed`'s instrumentation contract — see Step 6 below).
 2. **Dispatch the AI reviewer.** Invoke the consumer skill's Agent tool with the entry's resolved `prompt_path` file contents as the system prompt. Pass the artifact under review (e.g., the Feature `README.md` text for `specstudio:specify`) as the user-facing message. Wait for the subagent to return. The subagent MUST respond with exactly one of `Approved` or `Issues Found`; on `Issues Found`, the response carries a structured findings list per the prompt's documented blocker/advisory taxonomy (and, if the prompt declares the multi-role lenses, a single within-band letter).
@@ -75,13 +80,37 @@ For each **`type: ai`** entry in the dispatch set, in declared order (`type: hum
 4. **Validate the verdict shape.** The returned verdict MUST be exactly `Approved` or `Issues Found`. If a `type: ai` subagent returns anything else (e.g., omits the verdict, returns prose with no decision), the runner MUST refuse the gate with `Error: reviewer '<name>' returned a non-conforming verdict (expected 'Approved' or 'Issues Found'); reviewer prompts MUST conform to the documented taxonomy per reviewer-gates#req:verdict-contract`. No silent retry, no inference. This is a reviewer-prompt bug surfaced to the user.
 5. **Reject writes to `spec/`.** If a reviewer attempted (or its findings instruct the consumer to perform) a write or modification to any artifact under `spec/`, the runner MUST refuse the gate with `Error: reviewer '<name>' is a misclassified Producer; reviewers MUST NOT write to spec/ per reviewer-gates#req:verdict-contract`. (Reviewers are read-only; producers own artifact writes.)
 6. **Record the verdict, findings, and within-band letter.** Record `<entry.name> → <verdict>` in this pass's verdict map, and retain the entry's structured findings (each with `Blocker`/`Advisory` severity). For a `type: ai` entry whose prompt declares the multi-role lenses, also retain the single within-band letter it reported (per [`multi-role-reviewer`](../../../spec/features/reviewer-gates/README.md#req-multi-role-reviewer)); a findings-only reviewer reports no within-band letter (treated as the default `B` in Step 2.8).
-7. **No early-halt.** Record the verdict and findings and continue to the next `type: ai` entry. The runner does NOT halt on `Issues Found` (per [`and-composition`](../../../spec/features/reviewer-gates/README.md#req-and-composition)): every `type: ai` entry in the dispatch set is dispatched, so the `Blocker` union — and hence the grade — is exact and every `Blocker` surfaces in a single pass. When the automated entries are exhausted, proceed to Step 2.8.
+7. **No early-halt.** Record the verdict and findings and continue to the next automated entry. The runner does NOT halt on `Issues Found` (per [`and-composition`](../../../spec/features/reviewer-gates/README.md#req-and-composition)): every automated entry in the dispatch set is evaluated, so the `Blocker` union — and hence the grade — is exact and every `Blocker` surfaces in a single pass. When the automated entries are exhausted, proceed to Step 2.8.
+
+### Step 2-det — `type: deterministic` entries (verdict from exit code)
+
+For each **`type: deterministic`** entry in the dispatch set, in its declared position in the automated phase (serial per `dispatch-serial`, no early-halt — same loop as Step 2), derive the verdict **deterministically from the command's exit code** per [`deterministic-entry-shape`](../../../spec/features/reviewer-gates/README.md#req-deterministic-entry-shape):
+
+1. **Record dispatch start.** Capture the timestamp at the moment execution begins (same instrumentation as Step 2, for the serial-dispatch contract).
+2. **Run the command.** Execute the entry's `run:` command in the repo working tree. Capture its exit code and its combined diagnostic output (stdout + stderr). The command is read-only by contract — a `type: deterministic` check that mutates artifacts under `spec/` is a misclassified Producer and the runner MUST refuse the gate with `Error: reviewer '<name>' is a misclassified Producer; reviewers MUST NOT write to spec/ per reviewer-gates#req:verdict-contract`.
+3. **Record dispatch end.** Capture the timestamp at the moment the exit code is collected. The `[start, end]` interval MUST be disjoint from every other entry's interval in this pass (no concurrent in-flight dispatches).
+4. **Map exit code → verdict.**
+   - **Exit code zero → `Approved`** with **no findings** (contributes nothing to the `Blocker` union).
+   - **Non-zero exit code → `Issues Found`**, with the command's captured diagnostic output recorded as **at least one `Blocker` finding** (severity `Blocker`, the diagnostic output as the finding's prose description). A configurable non-exit-code success predicate is out of MVP scope — the exit code is the sole signal.
+5. **Record the verdict and findings** in this pass's verdict map (`<entry.name> → <verdict>`). A `type: deterministic` entry never reports a within-band letter (it is findings-only; treated as the default `B` in Step 2.8 when it contributes zero `Blocker`s).
+6. **No early-halt.** Continue to the next automated entry.
+
+At the default threshold `B`, a non-zero exit (≥ 1 `Blocker`) yields grade ≤ `C` < `B`, so the gate does NOT release; a zero exit contributes no `Blocker` and the gate releases iff the rest of the union is also zero-`Blocker`.
+
+### Step 2-noop — `type: noop` entries (always approve, dispatch nothing)
+
+For each **`type: noop`** entry in the dispatch set, in its declared position in the automated phase, the runner MUST:
+
+1. **Dispatch nothing.** Do NOT invoke the Agent tool, do NOT run any command, do NOT prompt the human — a `noop` entry has no reviewer to dispatch (per [`noop-entry-shape`](../../../spec/features/reviewer-gates/README.md#req-noop-entry-shape)).
+2. **Record `Approved` with no findings.** Record `<entry.name> → Approved` in the verdict map with an empty findings list. A `noop` entry contributes **no `Blocker`** (and no `Advisory`) to the grade, and reports no within-band letter (treated as the default `B` in Step 2.8).
+
+A `noop` is the explicit auto-approve placeholder: it lets a gate be configured as "no review at this checkpoint" without removing the gate key (e.g., a `noop` where a `human` would otherwise sit). Because it dispatches nothing and contributes no `Blocker`, it can never lower the grade.
 
 ### Step 2.8 — Compute the automated grade and route
 
-After the automated phase (Step 2) has dispatched every `type: ai` entry, compute the **automated grade** from their findings, per [`grade-band-mapping`](../../../spec/features/reviewer-gates/README.md#req-grade-band-mapping) and [`grade-aggregation`](../../../spec/features/reviewer-gates/README.md#req-grade-aggregation):
+After the automated phase (Step 2, Step 2-det, Step 2-noop) has evaluated every automated entry (`type: ai`, `type: deterministic`, `type: noop`), compute the **automated grade** from their findings, per [`grade-band-mapping`](../../../spec/features/reviewer-gates/README.md#req-grade-band-mapping) and [`grade-aggregation`](../../../spec/features/reviewer-gates/README.md#req-grade-aggregation):
 
-1. **Blocker union.** Form the union of all `Blocker` findings across every `type: ai` reviewer dispatched this pass and (for a multi-role reviewer) every lens. Let `n = |union|`. (Because no reviewer was halted, this union is exact.)
+1. **Blocker union.** Form the union of all `Blocker` findings across every automated reviewer dispatched this pass — every `type: ai` reviewer (and, for a multi-role reviewer, every lens) and every `type: deterministic` reviewer (its non-zero-exit diagnostics). `type: noop` entries contribute nothing. Let `n = |union|`. (Because no reviewer was halted, this union is exact.)
 2. **Band by Blocker count.** `n == 0` → pass band (`A`/`B`); `n == 1` → `C`; `2 ≤ n ≤ 3` → `D`; `n ≥ 4` → `F`.
 3. **Within-band letter (pass band only).** Across the reviewers that reported a within-band letter, take the **lowest** (since `A > B`, any reported `B` wins over `A`). A reviewer that reported no within-band letter (findings-only) contributes the default `B`. Result: the grade is `A` iff at least one reviewer reported `A` and none reported `B`; otherwise `B`.
 4. **Route on the automated grade** (letters ordered `A > B > C > D > F`):
@@ -167,6 +196,20 @@ This assertion shape rules out the looser "list-order-only" reading of the AC: i
 
 The Rehearse scenario stub at [`spec/features/reviewer-gates/_tests/serial-dispatch-observed.md`](../../../spec/features/reviewer-gates/_tests/serial-dispatch-observed.md) is the canonical place to author the Given/When/Then steps for this harness; the harness shape above is the implementation contract the scenario steps lower to.
 
+### Step 7 — Per-occurrence evaluation for multi-fire gate-point events
+
+A gate may be keyed on a **pre-action gate-point event** that occurs at execution checkpoints rather than at a once-per-artifact lifecycle transition. The MVP gate-point events are `implementation.pre_commit` (before each commit a producer makes during an `implement` run) and `implementation.pre_push` (before a publish/promote); both are registered in [`events.md`](../events.md) alongside the lifecycle events. (Wiring an actual `implement` run to *fire* these gate-points is a downstream Feature — the implement-autonomy layer — not this contract.)
+
+A gate keyed on an event that occurs **multiple times** in one run (e.g., `implementation.pre_commit` firing once per commit/batch) MUST be evaluated **independently at each occurrence**, per [`gate-point-events-and-multi-fire`](../../../spec/features/reviewer-gates/README.md#req-gate-point-events-and-multi-fire):
+
+- Each occurrence of the event is a **fresh gate run**: the consumer invokes this runner from Step 0 with an **empty previous-pass verdict map** (each occurrence is a first pass, not a rerun of a prior occurrence) and dispatches the gate's full reviewer list (Step 1's first-pass branch). Each occurrence produces its **own independent verdict** (grade + per-reviewer verdict map).
+- There is **no single-shot-per-run caching**: the runner MUST NOT memoize an occurrence's verdict and reuse it for a later occurrence of the same event in the same run, and MUST NOT skip dispatch on a later occurrence because an earlier occurrence already passed. A reviewer's verdict at occurrence *k* says nothing about occurrence *k+1* (the artifact/diff under review differs per occurrence).
+- The rerun policy (Step 5) governs **re-evaluation of a single occurrence** after a fix — it does NOT carry state across distinct occurrences. The previous-pass verdict map threaded between Step-0 invocations applies only within one occurrence's fix-rerun loop, never across occurrences.
+
+A gate keyed on a once-per-artifact lifecycle event (e.g., `feature.approved`) fires exactly once per run; the multi-fire contract above is a no-op for it (a single occurrence).
+
+**Test-harness contract for `pre-commit-gate-fires-per-occurrence`.** The gate-runner harness simulates a run in which `implementation.pre_commit` occurs three times. The harness drives this runner three times — once per occurrence, each from Step 0 with an empty previous-pass map — and asserts: (1) the runner is invoked exactly three times (once per occurrence, not once per run); (2) each invocation dispatches the gate's reviewers (the dispatch spy from Step 6 records three independent dispatch sets); (3) each invocation yields its own verdict object, and the three verdicts are computed independently (no verdict is reused/cached from a prior occurrence). The Rehearse scenario stub at [`spec/features/reviewer-gates/_tests/pre-commit-gate-fires-per-occurrence.md`](../../../spec/features/reviewer-gates/_tests/pre-commit-gate-fires-per-occurrence.md) is the canonical place to author the Given/When/Then steps.
+
 ## Notes for skill authors
 
 1. **Where to invoke this runner.** Call this runner immediately after [`loader.md`](./loader.md) Step 4 returns the validated reviewer list. Do not insert any other gate-related work between the loader and the runner; together they form the gate's single execution path.
@@ -185,6 +228,9 @@ This runner is the implementation of the following acceptance criteria from the 
 |---|---|
 | [`serial-dispatch-observed`](../../../spec/features/reviewer-gates/README.md#ac-serial-dispatch-observed) | Step 2 (serial dispatch loop with per-entry start/end timestamping) + Step 6 (mocked-Agent-tool spy harness: no-overlap and start-order-equals-registry-order assertions). |
 | [`and-composition-blocks-on-any-issues-found`](../../../spec/features/reviewer-gates/README.md#ac-and-composition-blocks-on-any-issues-found) | Step 2 (all `type: ai` dispatched, no early-halt) + Step 2.8 (automated grade `C` < `B` → `Issues Found`, human phase skipped) + Step 4 (surface the `Blocker`; do NOT release; do NOT emit `feature.approved`). |
+| [`deterministic-verdict-from-exit`](../../../spec/features/reviewer-gates/README.md#ac-deterministic-verdict-from-exit) | Step 2-det (exit code zero → `Approved`, no findings; non-zero → `Issues Found` with diagnostics as ≥1 `Blocker`) + Step 2.8.1 (the `Blocker` enters the union → grade ≤ `C` < default `B` → gate does NOT release). |
+| [`noop-always-approves`](../../../spec/features/reviewer-gates/README.md#ac-noop-always-approves) | Step 2-noop (dispatch nothing; record `Approved` with no findings; contribute no `Blocker`) + Step 2.8.1 (`noop` contributes nothing to the union). |
+| [`pre-commit-gate-fires-per-occurrence`](../../../spec/features/reviewer-gates/README.md#ac-pre-commit-gate-fires-per-occurrence) | Step 7 (each occurrence of `implementation.pre_commit` is a fresh gate run from Step 0 with an empty previous-pass map, dispatches the reviewers, and yields its own independent verdict; no single-shot-per-run caching) + the three-occurrence harness contract. |
 | [`rerun-policy-applies-on-structural-fix`](../../../spec/features/reviewer-gates/README.md#ac-rerun-policy-applies-on-structural-fix) | Step 1 (rerun-pass dispatch-set computation: re-dispatch previously-`Issues Found` always; re-dispatch previously-`Approved` when structural-fix flag is `true`) + Step 5 (structural-section enumeration for Feature artifacts and per-artifact-type extension note). |
 | [`grade-band-by-blocker-count`](../../../spec/features/reviewer-gates/README.md#ac-grade-band-by-blocker-count) | Step 2.8.1–2.8.2 (Blocker union over dispatched reviewers → band: 0→A/B, 1→C, 2–3→D, 4+→F). |
 | [`within-band-letter-derivation`](../../../spec/features/reviewer-gates/README.md#ac-within-band-letter-derivation) | Step 2.8.3 (lowest within-band letter across reviewers; findings-only reviewer contributes default `B`) + Step 2.8.4 (threshold `A` releases only on grade `A`; default `B` releases on `A`/`B`). |
@@ -194,7 +240,7 @@ This runner is the implementation of the following acceptance criteria from the 
 
 ### Walk-through against AC `serial-dispatch-observed`
 
-> **Given** a `gates.specify.reviewers` list with three entries (two `ai` plus one `human`) and instrumentation that records dispatch start/end timestamps per entry,
+> **Given** a `gates.feature.approved.reviewers` list with three entries (two `ai` plus one `human`) and instrumentation that records dispatch start/end timestamps per entry,
 > **When** `specstudio:specify` runs through the gate,
 > **Then** at no point during the run are two reviewer dispatches concurrently in flight, and the recorded dispatch start order matches the list order exactly.
 
@@ -202,7 +248,7 @@ Following this runner: Step 1 includes all three entries in the dispatch set (fi
 
 ### Walk-through against AC `and-composition-blocks-on-any-issues-found`
 
-> **Given** a `gates.specify.reviewers` list with two `ai` entries followed by one `human` entry, where the first `ai` entry returns `Approved` and the second `ai` entry returns `Issues Found` with one `Blocker` finding,
+> **Given** a `gates.feature.approved.reviewers` list with two `ai` entries followed by one `human` entry, where the first `ai` entry returns `Approved` and the second `ai` entry returns `Issues Found` with one `Blocker` finding,
 > **When** `specstudio:specify` runs through the gate,
 > **Then** both `ai` entries MUST be dispatched (no early-halt), the automated grade MUST be `C`, the gate MUST NOT release, the skill MUST surface the `Blocker` finding, the human entry MUST NOT be dispatched (automated grade below the default threshold `B`), and the skill MUST NOT emit `feature.approved`.
 

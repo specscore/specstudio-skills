@@ -7,7 +7,7 @@ project:
     repo: specstudio-skills
 
 gates:
-  specify:
+  feature.approved:
     reviewers:
       - name: spec-document-reviewer
         type: ai

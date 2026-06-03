@@ -1,6 +1,6 @@
 # Plan: Reviewer Gates MVP
 
-**Status:** Implementing
+**Status:** Completed
 **Source Feature:** reviewer-gates
 **Date:** 2026-05-22
 **Owner:** alex
@@ -88,7 +88,7 @@ Implementation status (done): the protocol/prose changes are complete — `skill
 ### Task 9: Event-keyed gates revision
 
 **Verifies:** reviewer-gates#ac:legacy-command-key-rejected, reviewer-gates#ac:deterministic-verdict-from-exit, reviewer-gates#ac:noop-always-approves, reviewer-gates#ac:pre-commit-gate-fires-per-occurrence
-**Status:** pending
+**Status:** done
 **Depends-On:** 1, 2
 
 Implements the event-keyed revision of the contract added after the original MVP shipped: migrate gate keys from command names to events (`gates.feature.approved`, plus the gate-point events `implementation.pre_commit` / `implementation.pre_push`), reject legacy command-keyed gates with a migration error, and add the `deterministic` (tool-backed; verdict derived from exit code, diagnostics captured as `Blocker`s) and `noop` (always-approve placeholder) reviewer types in the loader/validator (Task 1) and the gate runner (Task 2). Register the gate-point events `implementation.pre_commit` / `implementation.pre_push` in the canonical `skills/shared/events.md` catalog (currently only lifecycle events are listed). Evaluate multi-occurrence gate-point events independently per occurrence (no single-shot caching). Test via fixtures: legacy-command-key rejection, deterministic exit-code→verdict mapping, noop always-approves, and per-occurrence multi-fire of `implementation.pre_commit`. Wiring an actual `implement` run to *fire* these gate-points is a downstream Feature (the implement-autonomy layer), not this task.
