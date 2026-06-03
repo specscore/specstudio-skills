@@ -10,7 +10,7 @@ Do **not** use a standalone `command -v` probe. Invoke the relevant `specscore` 
 |---|---|
 | **success** (exit `0`) | CLI present and the call worked — proceed. |
 | **`127`** | Binary not on PATH (not installed). Provided by the shell, *not* by `specscore` — the command never ran, so nothing was mutated. |
-| **dedicated "too old / missing subcommand" code** | Binary present but predates a required subcommand. A documented `specscore` exit code (tracked in the `specscore-cli` repo); distinct from `127` and from a generic failure. |
+| **exit `8`** (too old / missing subcommand) | Binary present but predates a required subcommand. `specscore`'s `UnsupportedCommand` (8) — distinct from `127` (absent) and from a generic failure (1). See `specscore`'s `docs/exit-codes.md`. |
 | **any other non-zero** | The command ran and genuinely failed. |
 
 `command -v` is never necessary: `specscore --version` is a cheap read-only call you can branch on, and skills that mutate state or hard-require the CLI run the real command regardless. A `127` cleanly means "absent" without a separate probe.
@@ -19,7 +19,7 @@ Do **not** use a standalone `command -v` probe. Invoke the relevant `specscore` 
 
 Only the response to each outcome varies by class:
 
-| Class | success | `127` (absent) | dedicated too-old code | other non-zero |
+| Class | success | `127` (absent) | exit `8` (too old) | other non-zero |
 |---|---|---|---|---|
 | **Optional** (`ideate`, `sidekick`) | use CLI | take the fallback | (treat as other non-zero) | surface error; do **not** fall back |
 | **Mandatory** (`relocate-idea`) | proceed | install message → stop | (treat as other non-zero) | surface error |
@@ -34,4 +34,4 @@ Only the response to each outcome varies by class:
 ## The install / upgrade messages
 
 - **Absent (`127`)** — point the user at `/specscore:install`.
-- **Too old (dedicated code)** — tell the user to upgrade, and name the missing subcommand.
+- **Too old (exit `8`)** — tell the user to upgrade, and name the missing subcommand.

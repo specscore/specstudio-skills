@@ -30,7 +30,7 @@ Before claiming any task — and **before the Stage 3 nine-role panel** — veri
 
 1. **specscore present + capable (capability-gated detection).** Per [`../shared/cli-detection.md`](../shared/cli-detection.md), `consilium` is a **capability-gated** skill: it needs the `specscore consilium verdict` subcommand, not merely the binary. Do **not** run a standalone `command -v` probe; detect by invoking `specscore consilium verdict` (e.g. with `--help`) and branch on the exit status:
    - **exit `127`** (binary not installed) → emit the install message (point the user at `/specscore:install`) and stop.
-   - **the dedicated "unsupported subcommand / too old" exit code** → the binary is present but predates `consilium verdict`; emit an **upgrade** message: "Phase 1 requires `specscore` with the `consilium verdict` subcommand (cross-repo dependency, tracked in `spec/plans/sidekick-consilium-arbiter-companion.md`). Upgrade and re-run."
+   - **exit `8`** (`UnsupportedCommand` — unsupported subcommand / too old) → the binary is present but predates `consilium verdict`; emit an **upgrade** message: "Phase 1 requires `specscore` with the `consilium verdict` subcommand (cross-repo dependency, tracked in `spec/plans/sidekick-consilium-arbiter-companion.md`). Upgrade and re-run."
    - **any other non-zero** → surface the CLI's error.
    This capability check MUST run here, before the Stage 3 panel — never after.
 2. The orchestrator CLI is on PATH — the task lifecycle lives there (`orchestrator task claim`, `orchestrator task update`).

@@ -32,7 +32,7 @@ Every skill that depends on the `specscore` CLI MUST detect it by invoking the r
 
 #### REQ: branch-outcomes
 
-The detection branch MUST distinguish four outcomes: **success** (exit `0`), **`127`** (binary absent — provided by the shell, not by `specscore`), the **dedicated "too old / missing subcommand" exit code** (assumed implemented in the CLI per the `specscore-cli` seed), and **any other non-zero** (the command ran and genuinely failed).
+The detection branch MUST distinguish four outcomes: **success** (exit `0`), **`127`** (binary absent — provided by the shell, not by `specscore`), **exit `8`** (`UnsupportedCommand` — binary present but too old / missing the required subcommand; implemented in `specscore-cli`), and **any other non-zero** (the command ran and genuinely failed).
 
 ### Per-Class Response Policy
 
@@ -48,7 +48,7 @@ For skills where the CLI is mandatory with no fallback (`relocate-idea`): on **`
 
 #### REQ: capability-gated-response
 
-For skills that depend on a specific subcommand (`consilium` needs `consilium verdict`): on the **dedicated "too old / missing subcommand" exit code** emit an upgrade message; on **`127`** emit the install message and stop; on **any other non-zero** surface the error. The capability check MUST run **before** expensive multi-step work (e.g. before `consilium`'s 9-role panel), not after.
+For skills that depend on a specific subcommand (`consilium` needs `consilium verdict`): on **exit `8`** (`UnsupportedCommand` — too old / missing subcommand) emit an upgrade message; on **`127`** emit the install message and stop; on **any other non-zero** surface the error. The capability check MUST run **before** expensive multi-step work (e.g. before `consilium`'s 9-role panel), not after.
 
 ### Skill Conversions
 
@@ -64,7 +64,7 @@ Three representative skills — one per class that changes behavior — adopt th
 
 #### REQ: consilium-conversion
 
-`skills/consilium/SKILL.md` MUST follow the capability-gated-response policy — branching on the dedicated exit code for a missing `consilium verdict` subcommand to an upgrade message, and running the capability check before the 9-role panel — and MUST cite `skills/shared/cli-detection.md`.
+`skills/consilium/SKILL.md` MUST follow the capability-gated-response policy — branching on **exit `8`** (`UnsupportedCommand`) for a missing `consilium verdict` subcommand to an upgrade message, and running the capability check before the 9-role panel — and MUST cite `skills/shared/cli-detection.md`.
 
 ## Acceptance Criteria
 
@@ -84,7 +84,7 @@ Three representative skills — one per class that changes behavior — adopt th
 
 **Given** `skills/shared/cli-detection.md`
 **When** the mechanism section is read
-**Then** it enumerates exactly the four outcomes — success, `127`, the dedicated too-old/missing-subcommand code, and other non-zero — and the meaning of each
+**Then** it enumerates exactly the four outcomes — success, `127`, exit `8` (too old / missing subcommand), and other non-zero — and the meaning of each
 
 ### AC: optional-127-fallback (verifies REQ:optional-response)
 
@@ -107,7 +107,7 @@ Three representative skills — one per class that changes behavior — adopt th
 ### AC: capability-upgrade (verifies REQ:capability-gated-response)
 
 **Given** the convention is applied to `consilium`
-**When** `specscore` is present but returns the dedicated "missing subcommand" exit code for `consilium verdict`
+**When** `specscore` is present but returns exit `8` (`UnsupportedCommand`) for `consilium verdict`
 **Then** `consilium` emits an upgrade message rather than a generic failure
 
 ### AC: capability-precheck-order (verifies REQ:capability-gated-response)
@@ -140,7 +140,7 @@ No executable Rehearse stubs are scaffolded. Every AC is a documentation-conform
 
 ## Open Questions
 
-- The exact value of the dedicated "too old / missing subcommand" exit code is owned by the `specscore-cli` seed (`specscore-cli-should-return-a-dedicated-documented-exit`); this Feature assumes it exists and references it symbolically.
+- **Resolved:** the "too old / missing subcommand" exit code is **`8`** (`UnsupportedCommand`), now implemented in `specscore-cli` (see its `docs/exit-codes.md`). Originally tracked via the seed `specscore-cli-should-return-a-dedicated-documented-exit`.
 - When the remaining CLI-touching skills (`specify`, `plan`, `implement`, `sidekick`, `init`) are converted to cite the convention — deferred to follow-up, not blocking this Feature.
 - Whether to later add a lint rule flagging `command -v specscore` for automatic drift detection (out of scope here; prose enforcement chosen).
 
