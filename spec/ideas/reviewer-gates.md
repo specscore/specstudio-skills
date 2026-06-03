@@ -1,6 +1,6 @@
 # Idea: Reviewer Gates
 
-**Status:** Implementing
+**Status:** Specified
 **Date:** 2026-05-22
 **Owner:** alex
 **Promotes To:** reviewer-gates

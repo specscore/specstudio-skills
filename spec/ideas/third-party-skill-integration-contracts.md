@@ -1,6 +1,6 @@
 # Idea: Third-Party Skill Integration Contracts
 
-**Status:** Implementing
+**Status:** Specified
 **Date:** 2026-05-08
 **Owner:** alexander.trakhimenok
 **Promotes To:** third-party-integration

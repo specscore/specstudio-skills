@@ -1,6 +1,6 @@
 # Idea: CLI Detection Convention — Match the Check to the Skill's Dependency on the CLI
 
-**Status:** Implementing
+**Status:** Specified
 **Date:** 2026-06-03
 **Owner:** alexander.trakhimenok
 **Promotes To:** cli-detection-convention

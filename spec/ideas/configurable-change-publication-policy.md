@@ -1,6 +1,6 @@
 # Idea: Configurable Change Publication Policy
 
-**Status:** Implementing
+**Status:** Specifying
 **Date:** 2026-05-31
 **Owner:** alex
 **Promotes To:** change-publication-policy

@@ -1,6 +1,6 @@
 # Idea: Auto-stage lint --fix changes via the CLI fixed-files report
 
-**Status:** Implementing
+**Status:** Specified
 **Date:** 2026-06-02
 **Owner:** alexander.trakhimenok
 **Promotes To:** skills/lint-fix-staging

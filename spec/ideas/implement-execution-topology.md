@@ -1,6 +1,6 @@
 # Idea: Implement Execution Topology & Branch Model
 
-**Status:** Implementing
+**Status:** Specified
 **Date:** 2026-06-02
 **Owner:** alexander.trakhimenok
 **Promotes To:** implement-execution-topology, implement-execution-topology/current-branch, implement-execution-topology/worktree-per-agent

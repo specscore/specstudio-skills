@@ -1,6 +1,6 @@
 # Idea: SpecStudio recap skill
 
-**Status:** Implementing
+**Status:** Specified
 **Date:** 2026-05-22
 **Owner:** alex
 **Promotes To:** skills/recap

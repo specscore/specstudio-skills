@@ -1,6 +1,6 @@
 # Idea: Flexible Lifecycle Flows
 
-**Status:** Implementing
+**Status:** Specified
 **Date:** 2026-05-25
 **Owner:** alexander.trakhimenok
 **Promotes To:** flexible-lifecycle-flows
