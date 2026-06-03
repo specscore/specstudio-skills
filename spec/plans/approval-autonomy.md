@@ -1,6 +1,6 @@
 # Plan: Approval Autonomy (Implement)
 
-**Status:** Approved
+**Status:** Implementing
 **Source Feature:** approval-autonomy
 **Date:** 2026-06-03
 **Owner:** alexander.trakhimenok
@@ -20,7 +20,7 @@ Order is linear and dependency-respecting. Tasks 1–2 are in-place revisions to
 ### Task 1: Add the `when:` branch-pattern gate-entry condition to reviewer-gates
 
 **Verifies:** approval-autonomy#ac:branch-mask-as-gate-when
-**Status:** pending
+**Status:** done
 **Depends-On:** —
 
 Revise the `reviewer-gates` Feature and its loader/runner in place to add an optional `when: <branch-pattern>` field on a gate reviewer entry: when present, the entry participates in the gate only if the current branch matches; when absent, it always participates. Pin the match grammar (regex vs glob) in `reviewer-gates` so both layers agree. This is the home for per-branch autonomy masks.
@@ -28,7 +28,7 @@ Revise the `reviewer-gates` Feature and its loader/runner in place to add an opt
 ### Task 2: Reconcile current-branch protected-branch confirmation to gate-at-promote (Option B)
 
 **Verifies:** approval-autonomy#ac:current-branch-reconciled
-**Status:** pending
+**Status:** done
 **Depends-On:** —
 
 Revise `implement-execution-topology/current-branch` in place so REQ `protected-branch-commit-confirmation` no longer requires human confirmation before committing onto a protected branch; the protected-branch checkpoint moves to promote/push (`implementation.pre_push` + publication-policy push-safety). Preserve the clean-tree precondition and pre-run revert ref.

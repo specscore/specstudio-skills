@@ -24,6 +24,7 @@ This runner implements the following REQs from the [reviewer-gates Feature](../.
 - [`and-composition`](../../../spec/features/reviewer-gates/README.md#req-and-composition) — no early-halt; two-phase dispatch (all `type: ai` reviewers, then `type: human` only if the automated grade ≥ threshold).
 - [`grade-band-mapping`](../../../spec/features/reviewer-gates/README.md#req-grade-band-mapping), [`grade-aggregation`](../../../spec/features/reviewer-gates/README.md#req-grade-aggregation), [`threshold-derived-verdict`](../../../spec/features/reviewer-gates/README.md#req-threshold-derived-verdict) — compute the grade from the `Blocker` union + within-band letter (Step 2.8) and release iff `grade ≥ threshold`.
 - [`rerun-policy`](../../../spec/features/reviewer-gates/README.md#req-rerun-policy) — re-dispatch previously-`Issues Found` reviewers on rerun; ALSO re-dispatch previously-`Approved` reviewers when the fix touched a structural section.
+- [`gate-entry-when-condition`](../../../spec/features/reviewer-gates/README.md#req-gate-entry-when-condition) — an entry carrying a `when: "branch =~ <anchored-regex>"` condition participates only if the current branch matches; an entry with no `when:` always participates. A masked-out entry is neither dispatched nor counted toward the verdict.
 
 ## Inputs
 
@@ -33,6 +34,7 @@ This runner implements the following REQs from the [reviewer-gates Feature](../.
 | Calling skill's Agent-tool dispatch capability | For `type: ai` entries. The consumer's host (Claude with the skill's runtime context) is the dispatcher. | Yes |
 | Calling skill's approval-phrase recognizer | For `type: human` entries. The same recognizer used by `specstudio:ideate` and `specstudio:specify` for user-approval gates (`approve` / `approved` / `accept` / `accepted` / `lgtm` / direct semantic equivalents → `Approved`; explicit change requests → `Issues Found` with the user's text captured as a single `Blocker` finding). | Yes |
 | Resolved Approve threshold | The whole-letter threshold (`A`–`F`, default `B`) returned by [`loader.md`](./loader.md) Step 2.5. The gate releases iff `grade ≥ threshold`. | Yes |
+| Current branch name | The name of the branch the run is on (e.g., `main`, `feature/x`). Used only to evaluate entries that carry a `when:` branch condition (Step 1.5). When no entry in the list carries a `when:`, this input is unused. | Yes (when any entry carries `when:`) |
 | Previous-pass verdict map (rerun only) | A map of `<reviewer-name> → <last-verdict>` from the previous pass, used only when this is a rerun. On the first pass the map is empty. | Yes (may be empty) |
 | Structural-fix flag (rerun only) | Boolean. `true` when the user's fix between passes touched a structural section of the artifact under review (see Step 5 for what counts as structural per artifact type). On the first pass, this flag is unused. | Yes (may be `false`) |
 
@@ -67,6 +69,17 @@ Walk the validated reviewer list in declared order. For each entry, decide wheth
   - If the entry is absent from the previous-pass verdict map (e.g., a `type: human` entry deferred because the previous pass's automated grade was below threshold): dispatch it in its phase. The previous pass never collected its verdict; the rerun MUST collect one (a `type: human` entry still runs only if this pass's automated grade ≥ threshold, per Step 2.8).
 
 The order within the dispatch set is exactly the declared order of the original reviewer list — entries skipped above do not shift the order of the remaining entries.
+
+### Step 1.5 — Apply each entry's `when:` branch condition
+
+Before evaluating any entry, mask the dispatch set by each entry's optional `when:` branch condition, per [`gate-entry-when-condition`](../../../spec/features/reviewer-gates/README.md#req-gate-entry-when-condition). For each entry in the dispatch set computed by Step 1:
+
+- If the entry carries **no `when:`** field (the normalized record from [`loader.md`](./loader.md) Step 3e has no `when`): the entry **always participates** — leave it in the dispatch set unchanged.
+- If the entry carries a **`when:`** condition (a string of the validated form `branch =~ <anchored-regex>`): resolve the **current branch name** (the runner input above) and evaluate the right-hand-side regex against it, **anchored** (the regex matches the full branch name; e.g., `^(main|master|release/)` matches `main`, `master`, and any branch under `release/`, but not `feature/x`). There is no glob interpretation — the grammar is anchored regex, identical to the dialect the loader validated (so the two layers never disagree).
+  - **Match** → the entry **participates**: keep it in the dispatch set in its declared position.
+  - **No match** → the entry **does NOT participate**: remove it from the dispatch set for this pass. It is **neither dispatched nor counted toward the verdict** — it contributes no `Blocker` (and no `Approved`/`Issues Found` entry to the verdict map), exactly as if it were absent from the list on this branch. A `when:`-masked `type: human` entry that does not match therefore means the human is not asked, and the gate can release on its remaining (matching) entries alone.
+
+Masking does not reorder the surviving entries — their declared order is preserved into Step 2. The resulting `when:`-masked dispatch set is what Steps 2/2-det/2-noop/2.9 evaluate. This is the home for per-branch autonomy masks (e.g., a `type: human` entry on `implementation.pre_commit` with `when: "branch =~ ^(main|master|release/)"` is asked before commit on `main` but not on a feature branch — the per-branch behavior comes entirely from the gate-entry `when:` condition).
 
 ### Step 2 — Automated phase: evaluate every automated reviewer (serial, no early-halt)
 
@@ -231,6 +244,7 @@ This runner is the implementation of the following acceptance criteria from the 
 | [`deterministic-verdict-from-exit`](../../../spec/features/reviewer-gates/README.md#ac-deterministic-verdict-from-exit) | Step 2-det (exit code zero → `Approved`, no findings; non-zero → `Issues Found` with diagnostics as ≥1 `Blocker`) + Step 2.8.1 (the `Blocker` enters the union → grade ≤ `C` < default `B` → gate does NOT release). |
 | [`noop-always-approves`](../../../spec/features/reviewer-gates/README.md#ac-noop-always-approves) | Step 2-noop (dispatch nothing; record `Approved` with no findings; contribute no `Blocker`) + Step 2.8.1 (`noop` contributes nothing to the union). |
 | [`pre-commit-gate-fires-per-occurrence`](../../../spec/features/reviewer-gates/README.md#ac-pre-commit-gate-fires-per-occurrence) | Step 7 (each occurrence of `implementation.pre_commit` is a fresh gate run from Step 0 with an empty previous-pass map, dispatches the reviewers, and yields its own independent verdict; no single-shot-per-run caching) + the three-occurrence harness contract. |
+| [`when-condition-masks-by-branch`](../../../spec/features/reviewer-gates/README.md#ac-when-condition-masks-by-branch) | Step 1.5 (resolve the current branch; a `when:`-masked entry participates iff the anchored regex matches — on no match it is neither dispatched nor counted toward the verdict; an entry with no `when:` always participates). The malformed-`when:` refusal is the loader's job ([`loader.md`](./loader.md) Step 3-when). |
 | [`rerun-policy-applies-on-structural-fix`](../../../spec/features/reviewer-gates/README.md#ac-rerun-policy-applies-on-structural-fix) | Step 1 (rerun-pass dispatch-set computation: re-dispatch previously-`Issues Found` always; re-dispatch previously-`Approved` when structural-fix flag is `true`) + Step 5 (structural-section enumeration for Feature artifacts and per-artifact-type extension note). |
 | [`grade-band-by-blocker-count`](../../../spec/features/reviewer-gates/README.md#ac-grade-band-by-blocker-count) | Step 2.8.1–2.8.2 (Blocker union over dispatched reviewers → band: 0→A/B, 1→C, 2–3→D, 4+→F). |
 | [`within-band-letter-derivation`](../../../spec/features/reviewer-gates/README.md#ac-within-band-letter-derivation) | Step 2.8.3 (lowest within-band letter across reviewers; findings-only reviewer contributes default `B`) + Step 2.8.4 (threshold `A` releases only on grade `A`; default `B` releases on `A`/`B`). |
@@ -253,6 +267,14 @@ Following this runner: Step 1 includes all three entries in the dispatch set (fi
 > **Then** both `ai` entries MUST be dispatched (no early-halt), the automated grade MUST be `C`, the gate MUST NOT release, the skill MUST surface the `Blocker` finding, the human entry MUST NOT be dispatched (automated grade below the default threshold `B`), and the skill MUST NOT emit `feature.approved`.
 
 Following this runner: Step 1 includes all three in the dispatch set. Step 2 (automated phase) dispatches the first `ai` entry (`Approved`), then the second `ai` entry (`Issues Found`, one `Blocker`) — no halt, both run. Step 2.8 computes the automated grade from the union (one `Blocker` → `C`); since `C < B` (default threshold) it routes to Step 4 and skips the human phase, so the third (human) entry is NOT dispatched. Step 4 surfaces the second `ai` entry's `Blocker` verbatim and returns `Issues Found`. The consumer (`specstudio:specify`) does not emit `feature.approved`. Outcome matches.
+
+### Walk-through against AC `when-condition-masks-by-branch`
+
+> **Given** a `gates.implementation.pre_commit.reviewers` list with a `type: human` entry carrying `when: "branch =~ ^(main|master|release/)"`,
+> **When** the gate is evaluated on a feature branch (e.g., `feature/x`) and separately on `main`,
+> **Then** on the feature branch the human entry does NOT participate (commits stay autonomous) and on `main` it does (the human is asked before commit); the per-branch behavior comes entirely from the gate-entry `when:` condition.
+
+Following this runner: the loader (Step 3-when) validated the `when:` shape and carried it onto the human entry's normalized record. **On `feature/x`:** Step 1 puts the human entry in the dispatch set (first pass); Step 1.5 resolves the current branch `feature/x`, evaluates `^(main|master|release/)` anchored against it, finds **no match**, and removes the human entry — it is neither dispatched nor counted. The remaining (e.g., `noop`/`ai`) entries with no `when:` carry the gate, which releases without asking the human (commits stay autonomous). **On `main`:** Step 1.5 evaluates the same regex against `main`, finds a **match**, and keeps the human entry; Step 2.9's human phase asks the human before the commit proceeds. The only difference between the two runs is the current-branch input fed to Step 1.5 — the per-branch behavior comes entirely from the gate-entry `when:` condition. Outcome matches.
 
 ### Walk-through against AC `rerun-policy-applies-on-structural-fix`
 

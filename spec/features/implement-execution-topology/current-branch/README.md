@@ -32,7 +32,7 @@ This topology MUST be used only when the current-branch opt-in is set per the pa
 
 #### REQ: protected-branch-commit-confirmation
 
-Because work lands directly on the checked-out branch, when that branch is protected (`main`/`master`/`release/*` per the parent's `protected-branch-promotion-guard`), `implement` MUST obtain explicit human confirmation before the run's first commit lands — even with the opt-in set. Standing config alone MUST NOT authorize committing onto a protected branch. This confirmation is scoped to protected branches only and does NOT weaken the parent's default (`gate-points`): commits onto a non-protected current branch remain autonomous.
+Because work lands directly on the checked-out branch, a current-branch run MAY commit onto that branch even when it is protected (`main`/`master`/`release/*` per the parent's `protected-branch-promotion-guard`) WITHOUT a commit-time human confirmation. Commits remain local and revertable, so the protected-branch human checkpoint MUST NOT sit at commit time; it relocates to the promote/push gate (`implementation.pre_push` plus the `change-publication-policy` push-safety guard). Standing config alone authorizes the local commit, but it MUST NOT authorize publishing a protected branch to a remote — that publication remains gated at promote/push. The relocated checkpoint and the parent's default (`gate-points`) are unchanged for non-protected branches: commits onto any current branch, protected or not, remain autonomous; the protected-branch distinction now bites only at publication. The topology's `clean-tree-precondition` and `pre-run-revert-ref` continue to apply, preserving the run's revertability in the absence of a commit-time gate.
 
 ### Execution Model
 
@@ -66,7 +66,7 @@ Because work context and plan primary are the same branch, T2 integrate MUST be 
 
 #### REQ: promote-is-local-noop
 
-Because the plan primary and canonical target are the same branch, T3 promote MUST be a local no-op; the human gate the parent places at promotion instead applies at commit time onto a protected branch (see `protected-branch-commit-confirmation`). Any publication of the branch to a remote is governed by `change-publication-policy` and is out of scope for this topology.
+Because the plan primary and canonical target are the same branch, T3 promote MUST be a local no-op; promote publishes nothing locally. The protected-branch human checkpoint the parent places at promotion therefore materializes only on an actual remote push (see `protected-branch-commit-confirmation`), and a local-only run never publishes and is correctly ungated at commit. Any publication of the branch to a remote is governed by `change-publication-policy` and is out of scope for this topology.
 
 ## Dependencies
 
@@ -86,11 +86,11 @@ Because the plan primary and canonical target are the same branch, T3 promote MU
 **When** `implement` starts,
 **Then** it uses the worktree-per-agent topology rather than the current-branch topology.
 
-### AC: protected-branch-confirmed-before-commit (verifies REQ: protected-branch-commit-confirmation)
+### AC: protected-branch-committed-without-commit-time-prompt (verifies REQ: protected-branch-commit-confirmation)
 
 **Given** the checked-out branch is `main` and the current-branch opt-in is set at project scope,
-**When** the run is about to make its first commit,
-**Then** `implement` first requires explicit human confirmation — standing config alone does not authorize it.
+**When** the run makes its commits,
+**Then** `implement` commits onto the protected branch WITHOUT a commit-time human confirmation, and the protected-branch human checkpoint instead lives at the promote/push gate (`implementation.pre_push` plus `change-publication-policy` push-safety), where it materializes only on an actual remote push.
 
 ### AC: serial-by-default-execution (verifies REQ: serial-by-default)
 
@@ -136,7 +136,7 @@ Because the plan primary and canonical target are the same branch, T3 promote MU
 
 ## Rehearse Integration
 
-Every AC here is testable against a git-fixture harness (initialize a temp repo, set/clear the opt-in, dirty/clean the tree, run the topology, and assert branch state, the recorded revert ref, serial-vs-parallel execution, and the protected-branch confirmation). Per the Rehearse heuristic these are testable, but stub scaffolding is deferred to the planning stage — the harness is uniform across these ACs and is better authored as one cohesive `_tests/` set when the plan defines it. This is an explicit, recorded deferral, not a "not testable" skip.
+Every AC here is testable against a git-fixture harness (initialize a temp repo, set/clear the opt-in, dirty/clean the tree, run the topology, and assert branch state, the recorded revert ref, serial-vs-parallel execution, and that a commit onto a protected current branch lands without a commit-time prompt). Per the Rehearse heuristic these are testable, but stub scaffolding is deferred to the planning stage — the harness is uniform across these ACs and is better authored as one cohesive `_tests/` set when the plan defines it. This is an explicit, recorded deferral, not a "not testable" skip.
 
 ## Open Questions
 

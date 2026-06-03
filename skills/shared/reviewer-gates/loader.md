@@ -142,7 +142,7 @@ On any of the above, refuse:
 
 > Error: reviewer entry `<name>`'s prompt file at `<path>` contains no documented blocker/advisory taxonomy section (per [reviewer-gates#req:ai-entry-shape](../../../spec/features/reviewer-gates/README.md#req-ai-entry-shape)). The prompt MUST explicitly state which finding categories are `Blocker` vs. `Advisory`. See https://github.com/specscore/specstudio-skills/blob/main/spec/features/reviewer-gates/README.md.
 
-**3c.iv — Optional `ai` fields.** `model:` (string identifier; opaque to this loader) and `description:` (string ≤ 200 chars) MAY be present. If `description:` is present and exceeds 200 characters, refuse with a short message naming the cap. Unknown extra keys on a `type: ai` entry are NOT permitted in MVP — refuse with a message listing the recognized fields (`name`, `type`, `prompt`, `model`, `description`).
+**3c.iv — Optional `ai` fields.** `model:` (string identifier; opaque to this loader) and `description:` (string ≤ 200 chars) MAY be present. If `description:` is present and exceeds 200 characters, refuse with a short message naming the cap. Unknown extra keys on a `type: ai` entry are NOT permitted in MVP — refuse with a message listing the recognized fields (`name`, `type`, `prompt`, `model`, `description`, `when`). (`when:` is the optional branch condition validated in Step 3-when.)
 
 #### Step 3d — If `type: human`, validate the `human` entry shape
 
@@ -156,7 +156,7 @@ These checks verify [reviewer-gates#req:human-entry-shape](../../../spec/feature
 
 > Error: reviewer entry `<name>` of `type: human` declares `min_approvers: <value>`. MVP pins `min_approvers: 1` — values > 1 are deferred (per [reviewer-gates#req:human-entry-shape](../../../spec/features/reviewer-gates/README.md#req-human-entry-shape) and the Feature's `## Not Doing` list). See https://github.com/specscore/specstudio-skills/blob/main/spec/features/reviewer-gates/README.md.
 
-**3d.iii — Optional `human` fields.** `description:` (string ≤ 200 chars) MAY be present. Unknown extra keys on a `type: human` entry are NOT permitted in MVP — refuse with a message listing the recognized fields (`name`, `type`, `min_approvers`, `description`).
+**3d.iii — Optional `human` fields.** `description:` (string ≤ 200 chars) MAY be present. Unknown extra keys on a `type: human` entry are NOT permitted in MVP — refuse with a message listing the recognized fields (`name`, `type`, `min_approvers`, `description`, `when`). (`when:` is the optional branch condition validated in Step 3-when — the home for per-branch autonomy masks.)
 
 #### Step 3d-det — If `type: deterministic`, validate the `deterministic` entry shape
 
@@ -172,7 +172,7 @@ These checks verify [reviewer-gates#req:deterministic-entry-shape](../../../spec
 
 **3d-det.iii — No network commands.** Network commands are forbidden in `run:`. The loader SHOULD reject a `run:` value that is plainly a network fetch (e.g., begins with `curl`, `wget`, or contains a URL scheme such as `http://`/`https://`). On a plainly-network `run:`, refuse citing `deterministic-entry-shape`'s network prohibition.
 
-**3d-det.iv — Optional `deterministic` fields.** `description:` (string ≤ 200 chars) MAY be present. Unknown extra keys on a `type: deterministic` entry are NOT permitted in MVP — refuse with a message listing the recognized fields (`name`, `type`, `run`, `description`).
+**3d-det.iv — Optional `deterministic` fields.** `description:` (string ≤ 200 chars) MAY be present. Unknown extra keys on a `type: deterministic` entry are NOT permitted in MVP — refuse with a message listing the recognized fields (`name`, `type`, `run`, `description`, `when`). (`when:` is the optional branch condition validated in Step 3-when.)
 
 #### Step 3d-noop — If `type: noop`, validate the `noop` entry shape
 
@@ -182,14 +182,24 @@ These checks verify [reviewer-gates#req:noop-entry-shape](../../../spec/features
 
 > Error: reviewer entry `<name>` of `type: noop` declares a `prompt:`, `model:`, or `run:` field. A `noop` entry dispatches nothing and always approves; those fields are forbidden (per [reviewer-gates#req:noop-entry-shape](../../../spec/features/reviewer-gates/README.md#req-noop-entry-shape)). See https://github.com/specscore/specstudio-skills/blob/main/spec/features/reviewer-gates/README.md.
 
-**3d-noop.ii — Optional `noop` fields.** `description:` (string ≤ 200 chars) MAY be present (e.g., the rationale for auto-approving this checkpoint). Unknown extra keys on a `type: noop` entry are NOT permitted in MVP — refuse with a message listing the recognized fields (`name`, `type`, `description`).
+**3d-noop.ii — Optional `noop` fields.** `description:` (string ≤ 200 chars) MAY be present (e.g., the rationale for auto-approving this checkpoint). Unknown extra keys on a `type: noop` entry are NOT permitted in MVP — refuse with a message listing the recognized fields (`name`, `type`, `description`, `when`). (`when:` is the optional branch condition validated in Step 3-when.)
+
+#### Step 3-when — Validate the optional `when:` branch condition (any type)
+
+This check verifies [reviewer-gates#req:gate-entry-when-condition](../../../spec/features/reviewer-gates/README.md#req-gate-entry-when-condition) and [reviewer-gates#ac:when-condition-masks-by-branch](../../../spec/features/reviewer-gates/README.md#ac-when-condition-masks-by-branch). The `when:` field is **optional on a reviewer entry of any type** (`ai`, `human`, `deterministic`, `noop`) and is the home for per-branch autonomy masks (e.g., [approval-autonomy#req:branch-mask-via-gate-when](../../../spec/features/approval-autonomy/README.md#req-branch-mask-via-gate-when)). It is therefore an allowed extra key alongside each type's recognized-field set (Steps 3c.iv, 3d.iii, 3d-det.iv, 3d-noop.ii — `when` is permitted on top of those lists and MUST NOT trip the unknown-extra-key rejection).
+
+- If `when:` is **absent**, the entry always participates — record nothing for it (default unconditioned behavior) and continue.
+- If `when:` is **present**, its value MUST be a string of the form `branch =~ <regex>`: the literal token `branch`, optional whitespace, the operator `=~`, optional whitespace, then a non-empty regular expression matched (anchored) against the current branch name. The grammar is **anchored regex** — there is no glob alternative (per [reviewer-gates#req:gate-entry-when-condition](../../../spec/features/reviewer-gates/README.md#req-gate-entry-when-condition)). The loader validates the **shape** only (the `branch =~ <non-empty-regex>` form); the runner resolves the current branch and applies the match at dispatch time (see [`runner.md`](./runner.md) Step 1.5). On a malformed `when:` — not a string, missing the `branch =~` prefix, or an empty/absent right-hand-side regex — refuse:
+
+  > Error: reviewer entry `<name>` declares a malformed `when:` condition `<value>`. The `when:` field MUST be a string of the form `branch =~ <anchored-regex>` (e.g., `when: "branch =~ ^(main|master|release/)"`) — anchored regex, no glob alternative (per [reviewer-gates#req:gate-entry-when-condition](../../../spec/features/reviewer-gates/README.md#req-gate-entry-when-condition)). See https://github.com/specscore/specstudio-skills/blob/main/spec/features/reviewer-gates/README.md.
 
 #### Step 3e — Record the validated entry
 
-If Steps 3a–3d pass for this entry, append a normalized record to the output list in declared order. The normalized record carries:
+If Steps 3a–3d (and Step 3-when) pass for this entry, append a normalized record to the output list in declared order. The normalized record carries:
 
 - `name`: as declared.
 - `type`: as declared (`ai`, `human`, `deterministic`, or `noop`).
+- `when`: the original `when:` string if present (the `branch =~ <regex>` condition the runner applies per branch); absent when the entry carries no `when:` (the entry then always participates).
 - For `type: ai`: `prompt_path` (resolved absolute path inside the working tree), `prompt_repo_relative_path` (the original value, useful for error reporting downstream), and `model` / `description` if present.
 - For `type: human`: `min_approvers: 1` (always, in MVP), and `description` if present.
 - For `type: deterministic`: `run` (the command string, as declared), and `description` if present.
@@ -224,5 +234,6 @@ This loader is the implementation of the following acceptance criteria from the 
 | [`deterministic-verdict-from-exit`](../../../spec/features/reviewer-gates/README.md#ac-deterministic-verdict-from-exit) | Step 3d-det — validate the `type: deterministic` shape (`run:` required; `prompt:`/`model:` forbidden) at load time; the exit-code→verdict mapping itself is the runner's job ([`runner.md`](./runner.md) Step 2-det). |
 | [`noop-always-approves`](../../../spec/features/reviewer-gates/README.md#ac-noop-always-approves) | Step 3d-noop — validate the `type: noop` shape (no `prompt:`/`model:`/`run:`) at load time; the always-approve-dispatch-nothing behavior is the runner's job ([`runner.md`](./runner.md) Step 2-noop). |
 | [`missing-gates-block-refuses-with-error`](../../../spec/features/reviewer-gates/README.md#ac-missing-gates-block-refuses-with-error) | Step 2 — all three missing/empty states (no `gates:`, no `gates.<event>`, empty `reviewers: []`) refuse, recommend minimal `type: human` configuration, halt. |
+| [`when-condition-masks-by-branch`](../../../spec/features/reviewer-gates/README.md#ac-when-condition-masks-by-branch) | Step 3-when — validate the optional `when: "branch =~ <anchored-regex>"` shape (allowed on any type); a malformed `when:` refuses citing `gate-entry-when-condition`; the validated `when:` is carried through to the normalized record (Step 3e). The per-branch match itself is applied by the runner ([`runner.md`](./runner.md) Step 1.5). |
 | [`threshold-resolution-order`](../../../spec/features/reviewer-gates/README.md#ac-threshold-resolution-order) | Step 2.5 — per-stage `gates.<event>.threshold` → top-level `grade.threshold` → default `B`; resolved threshold returned in Step 4 output. |
 | [`invalid-threshold-refused`](../../../spec/features/reviewer-gates/README.md#ac-invalid-threshold-refused) | Step 2.5 — a `threshold` value outside `{A, B, C, D, F}` refuses, cites `threshold-config`, halts. |

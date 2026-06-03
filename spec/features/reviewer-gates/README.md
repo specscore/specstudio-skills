@@ -71,6 +71,10 @@ This revision replaces command/skill-keyed gates (`gates.<skill>`, e.g. `gates.s
 
 A reviewer entry without an explicit `type:` field MUST be rejected at consumer load time with an error citing this REQ. There is no implicit default for `type:` — entries from any pre-existing flat `reviewers:` registry (e.g., the predecessor shape carried by `third-party-integration` prior to this Feature) that lack a `type:` MUST be rejected with a clear migration message pointing at this Feature.
 
+#### REQ: gate-entry-when-condition
+
+A reviewer entry MAY declare an optional `when:` field that conditions the entry's participation in the gate on the current branch. When present, the entry participates in the gate **only if** the current branch matches; when absent, the entry **always** participates (the unconditioned default — unchanged behavior). The match grammar is **anchored regex** against the current branch name, expressed in the exact form `when: "branch =~ <anchored-regex>"` (e.g., `when: "branch =~ ^(main|master|release/)"`). The `branch =~` prefix is mandatory and the right-hand side is an anchored regular expression matched against the current branch name; a glob alternative is NOT supported. A `when:` value that is not a string of the form `branch =~ <regex>` MUST be rejected at consumer load time with an error citing this REQ. This single grammar is shared by both the gates layer and any autonomy layer that masks gate entries per branch (e.g., [`approval-autonomy`](../approval-autonomy/README.md)'s `branch-mask-via-gate-when`), so the two layers never guess the dialect differently. An entry whose `when:` does not match the current branch does NOT participate: it is neither dispatched nor counted toward the gate's verdict (it contributes no `Blocker`, exactly as if it were absent from the list for that branch). Per-branch autonomy is therefore expressed entirely as a `when:` mask on a gate entry, NOT as autonomy-local config.
+
 ### Dispatch and verdict
 
 #### REQ: dispatch-serial
@@ -239,6 +243,12 @@ ACs are grouped here with explicit REQ back-references, mirroring sibling Featur
 **Given** a gate `reviewers:` list containing a `type: noop` entry,
 **When** the gate is evaluated,
 **Then** the `noop` entry MUST return `Approved` with no findings, MUST dispatch nothing (no subagent, no command, no human prompt), and MUST NOT contribute any `Blocker` to the grade.
+
+### AC: when-condition-masks-by-branch (verifies REQ:gate-entry-when-condition)
+
+**Given** a `gates.implementation.pre_commit.reviewers` list with a `type: human` entry carrying `when: "branch =~ ^(main|master|release/)"`,
+**When** the gate is evaluated on a feature branch (e.g., `feature/x`) and separately on `main`,
+**Then** on the feature branch the human entry does NOT participate — it is neither dispatched nor counted toward the verdict, so the gate releases without asking the human (commits stay autonomous) — and on `main` the human entry DOES participate (the human is asked before commit); a sibling entry with no `when:` participates on both branches. The per-branch behavior comes entirely from the gate-entry `when:` condition, evaluated by the runner against the current branch with the anchored-regex grammar; and a malformed `when:` (not of the form `branch =~ <regex>`) is refused at load time citing `gate-entry-when-condition`.
 
 ### AC: pre-commit-gate-fires-per-occurrence (verifies REQ:gate-point-events-and-multi-fire)
 
