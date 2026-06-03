@@ -97,15 +97,15 @@ Record the resolved threshold; it is returned alongside the validated reviewer l
 
 Iterate the `reviewers` list in declared order. For each entry, apply Steps 3a–3e below in order. The first violation in any entry refuses the entire load; the loader MUST NOT skip the bad entry and continue, MUST NOT dispatch any previously-validated entry, and MUST NOT dispatch the offending entry. The check order within an entry is fixed so that error messages are predictable.
 
-After validating every entry, also confirm that all `name:` values are unique within this gate's `reviewers:` list (case-sensitive string comparison). Duplicate names refuse per [reviewer-gates#req:reviewer-entry-required-fields](../../../spec/features/reviewer-gates/README.md#req-reviewer-entry-required-fields) with:
+After validating every entry, compute each entry's **effective name** — its declared `name:` if present, else its `type:` value (Step 3b) — and set the normalized record's `name` to that effective name (so downstream consumers, e.g. the runner's verdict map, always see a concrete name). Then confirm all effective names are unique within this gate's `reviewers:` list (case-sensitive string comparison). This means two entries that share a `type:` and both omit `name:` collide and MUST be disambiguated with an explicit `name:`. Duplicate effective names refuse per [reviewer-gates#req:reviewer-entry-required-fields](../../../spec/features/reviewer-gates/README.md#req-reviewer-entry-required-fields) (verifies [reviewer-gates#ac:duplicate-effective-name-refused](../../../spec/features/reviewer-gates/README.md#ac-duplicate-effective-name-refused)) with:
 
-> Error: duplicate reviewer `name:` `<value>` in `gates.<event>.reviewers`. Names MUST be unique within a gate (per [reviewer-gates#req:reviewer-entry-required-fields](../../../spec/features/reviewer-gates/README.md#req-reviewer-entry-required-fields)). See https://github.com/specscore/specstudio-skills/blob/main/spec/features/reviewer-gates/README.md.
+> Error: duplicate reviewer effective name `<value>` in `gates.<event>.reviewers` (the effective name is the declared `name:`, or the `type:` when `name:` is omitted). Effective names MUST be unique within a gate; give same-type entries an explicit `name:` to disambiguate (per [reviewer-gates#req:reviewer-entry-required-fields](../../../spec/features/reviewer-gates/README.md#req-reviewer-entry-required-fields)). See https://github.com/specscore/specstudio-skills/blob/main/spec/features/reviewer-gates/README.md.
 
-#### Step 3a — `name:` required
+#### Step 3a — `name:` optional (defaults to `type:`)
 
-Every entry MUST declare `name:` as a non-empty string. The value MUST be lowercase plus hyphens only (regex check: `^[a-z][a-z0-9-]*$`). On any violation refuse with:
+`name:` is OPTIONAL (verifies [reviewer-gates#ac:name-defaults-to-type](../../../spec/features/reviewer-gates/README.md#ac-name-defaults-to-type)). When present, it MUST be a non-empty string of lowercase plus hyphens only (regex check: `^[a-z][a-z0-9-]*$`). When omitted, the entry's **effective name** defaults to its `type:` value — computed and uniqueness-checked in the post-entry effective-name step above. On a present-but-invalid `name:` refuse with:
 
-> Error: reviewer entry at index `<i>` in `gates.<event>.reviewers` is missing or has an invalid `name:` (required: lowercase + hyphens). Per [reviewer-gates#req:reviewer-entry-required-fields](../../../spec/features/reviewer-gates/README.md#req-reviewer-entry-required-fields). See https://github.com/specscore/specstudio-skills/blob/main/spec/features/reviewer-gates/README.md.
+> Error: reviewer entry at index `<i>` in `gates.<event>.reviewers` has an invalid `name:` — when present it MUST be lowercase + hyphens (`^[a-z][a-z0-9-]*$`); omit it to default the effective name to `type:`. Per [reviewer-gates#req:reviewer-entry-required-fields](../../../spec/features/reviewer-gates/README.md#req-reviewer-entry-required-fields). See https://github.com/specscore/specstudio-skills/blob/main/spec/features/reviewer-gates/README.md.
 
 #### Step 3b — `type:` required and recognized
 

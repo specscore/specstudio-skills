@@ -1,6 +1,6 @@
 # Plan: Reviewer Gates MVP
 
-**Status:** Implementing
+**Status:** Completed
 **Source Feature:** reviewer-gates
 **Date:** 2026-05-22
 **Owner:** alex
@@ -103,7 +103,7 @@ Add the optional `when: "branch =~ <anchored-regex>"` field to a gate reviewer e
 
 ### Task 11: Optional reviewer `name:` — default to `type:`, refuse duplicate effective names
 
-**Status:** pending
+**Status:** done
 **Depends-On:** 1
 
 **Verifies:** reviewer-gates#ac:name-defaults-to-type, reviewer-gates#ac:duplicate-effective-name-refused
