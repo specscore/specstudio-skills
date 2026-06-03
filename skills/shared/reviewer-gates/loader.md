@@ -109,15 +109,15 @@ Every entry MUST declare `name:` as a non-empty string. The value MUST be lowerc
 
 #### Step 3b — `type:` required and recognized
 
-Every entry MUST declare an explicit `type:` field. There is no implicit default. The value MUST be exactly one of the MVP type set `{ai, human, deterministic, noop}`.
+Every entry MUST declare an explicit `type:` field. There is no implicit default. The value MUST be exactly one of the MVP type set `{ai, human, deterministic, auto-approve}`.
 
 - If `type:` is absent, refuse — citing [reviewer-gates#req:no-untyped-entry](../../../spec/features/reviewer-gates/README.md#req-no-untyped-entry) (verifies [reviewer-gates#ac:untyped-entry-refused](../../../spec/features/reviewer-gates/README.md#ac-untyped-entry-refused)):
 
-  > Error: reviewer entry `<name>` in `gates.<event>.reviewers` has no `type:` field. There is no implicit default — entries MUST declare one of `type: ai`, `type: human`, `type: deterministic`, or `type: noop` (per [reviewer-gates#req:no-untyped-entry](../../../spec/features/reviewer-gates/README.md#req-no-untyped-entry)). If this entry was migrated from a legacy flat `reviewers:` registry, add `type: ai` and a `prompt:` path explicitly. See https://github.com/specscore/specstudio-skills/blob/main/spec/features/reviewer-gates/README.md.
+  > Error: reviewer entry `<name>` in `gates.<event>.reviewers` has no `type:` field. There is no implicit default — entries MUST declare one of `type: ai`, `type: human`, `type: deterministic`, or `type: auto-approve` (per [reviewer-gates#req:no-untyped-entry](../../../spec/features/reviewer-gates/README.md#req-no-untyped-entry)). If this entry was migrated from a legacy flat `reviewers:` registry, add `type: ai` and a `prompt:` path explicitly. See https://github.com/specscore/specstudio-skills/blob/main/spec/features/reviewer-gates/README.md.
 
-- If `type:` is present but not in `{ai, human, deterministic, noop}`, refuse — citing [reviewer-gates#req:mvp-type-set](../../../spec/features/reviewer-gates/README.md#req-mvp-type-set) (verifies [reviewer-gates#ac:unknown-type-refused](../../../spec/features/reviewer-gates/README.md#ac-unknown-type-refused)):
+- If `type:` is present but not in `{ai, human, deterministic, auto-approve}`, refuse — citing [reviewer-gates#req:mvp-type-set](../../../spec/features/reviewer-gates/README.md#req-mvp-type-set) (verifies [reviewer-gates#ac:unknown-type-refused](../../../spec/features/reviewer-gates/README.md#ac-unknown-type-refused)):
 
-  > Error: reviewer entry `<name>` declares `type: <value>`, which is outside the MVP type set `{ai, human, deterministic, noop}` (per [reviewer-gates#req:mvp-type-set](../../../spec/features/reviewer-gates/README.md#req-mvp-type-set)). Unknown types MUST NOT be treated as `ai`. A tool-backed check (lint, security scanner) is expressed as `type: deterministic` with a `run:` command, not as a bespoke type; further specialized types (`ux`, `peer-review-bot`, etc.) are deferred — see https://github.com/specscore/specstudio-skills/blob/main/spec/features/reviewer-gates/README.md.
+  > Error: reviewer entry `<name>` declares `type: <value>`, which is outside the MVP type set `{ai, human, deterministic, auto-approve}` (per [reviewer-gates#req:mvp-type-set](../../../spec/features/reviewer-gates/README.md#req-mvp-type-set)). Unknown types MUST NOT be treated as `ai`. A tool-backed check (lint, security scanner) is expressed as `type: deterministic` with a `run:` command, not as a bespoke type; further specialized types (`ux`, `peer-review-bot`, etc.) are deferred — see https://github.com/specscore/specstudio-skills/blob/main/spec/features/reviewer-gates/README.md.
 
 #### Step 3c — If `type: ai`, validate the `ai` entry shape
 
@@ -174,19 +174,19 @@ These checks verify [reviewer-gates#req:deterministic-entry-shape](../../../spec
 
 **3d-det.iv — Optional `deterministic` fields.** `description:` (string ≤ 200 chars) MAY be present. Unknown extra keys on a `type: deterministic` entry are NOT permitted in MVP — refuse with a message listing the recognized fields (`name`, `type`, `run`, `description`, `when`). (`when:` is the optional branch condition validated in Step 3-when.)
 
-#### Step 3d-noop — If `type: noop`, validate the `noop` entry shape
+#### Step 3d-auto-approve — If `type: auto-approve`, validate the `auto-approve` entry shape
 
-These checks verify [reviewer-gates#req:noop-entry-shape](../../../spec/features/reviewer-gates/README.md#req-noop-entry-shape) and [reviewer-gates#ac:noop-always-approves](../../../spec/features/reviewer-gates/README.md#ac-noop-always-approves). A `type: noop` entry dispatches nothing and always returns `Approved` with no findings — the explicit auto-approve placeholder that lets an event's gate be configured as "no review at this checkpoint" without removing the gate key.
+These checks verify [reviewer-gates#req:auto-approve-entry-shape](../../../spec/features/reviewer-gates/README.md#req-auto-approve-entry-shape) and [reviewer-gates#ac:auto-approve-always-approves](../../../spec/features/reviewer-gates/README.md#ac-auto-approve-always-approves). A `type: auto-approve` entry dispatches nothing and always returns `Approved` with no findings — the explicit auto-approve placeholder that lets an event's gate be configured as "no review at this checkpoint" without removing the gate key.
 
-**3d-noop.i — No `prompt:`, `model:`, or `run:` field.** A `type: noop` entry MUST NOT declare `prompt:`, `model:`, or `run:` — it dispatches nothing. If any is present, refuse:
+**3d-auto-approve.i — No `prompt:`, `model:`, or `run:` field.** A `type: auto-approve` entry MUST NOT declare `prompt:`, `model:`, or `run:` — it dispatches nothing. If any is present, refuse:
 
-> Error: reviewer entry `<name>` of `type: noop` declares a `prompt:`, `model:`, or `run:` field. A `noop` entry dispatches nothing and always approves; those fields are forbidden (per [reviewer-gates#req:noop-entry-shape](../../../spec/features/reviewer-gates/README.md#req-noop-entry-shape)). See https://github.com/specscore/specstudio-skills/blob/main/spec/features/reviewer-gates/README.md.
+> Error: reviewer entry `<name>` of `type: auto-approve` declares a `prompt:`, `model:`, or `run:` field. A `auto-approve` entry dispatches nothing and always approves; those fields are forbidden (per [reviewer-gates#req:auto-approve-entry-shape](../../../spec/features/reviewer-gates/README.md#req-auto-approve-entry-shape)). See https://github.com/specscore/specstudio-skills/blob/main/spec/features/reviewer-gates/README.md.
 
-**3d-noop.ii — Optional `noop` fields.** `description:` (string ≤ 200 chars) MAY be present (e.g., the rationale for auto-approving this checkpoint). Unknown extra keys on a `type: noop` entry are NOT permitted in MVP — refuse with a message listing the recognized fields (`name`, `type`, `description`, `when`). (`when:` is the optional branch condition validated in Step 3-when.)
+**3d-auto-approve.ii — Optional `auto-approve` fields.** `description:` (string ≤ 200 chars) MAY be present (e.g., the rationale for auto-approving this checkpoint). Unknown extra keys on a `type: auto-approve` entry are NOT permitted in MVP — refuse with a message listing the recognized fields (`name`, `type`, `description`, `when`). (`when:` is the optional branch condition validated in Step 3-when.)
 
 #### Step 3-when — Validate the optional `when:` branch condition (any type)
 
-This check verifies [reviewer-gates#req:gate-entry-when-condition](../../../spec/features/reviewer-gates/README.md#req-gate-entry-when-condition) and [reviewer-gates#ac:when-condition-masks-by-branch](../../../spec/features/reviewer-gates/README.md#ac-when-condition-masks-by-branch). The `when:` field is **optional on a reviewer entry of any type** (`ai`, `human`, `deterministic`, `noop`) and is the home for per-branch autonomy masks (e.g., [approval-autonomy#req:branch-mask-via-gate-when](../../../spec/features/approval-autonomy/README.md#req-branch-mask-via-gate-when)). It is therefore an allowed extra key alongside each type's recognized-field set (Steps 3c.iv, 3d.iii, 3d-det.iv, 3d-noop.ii — `when` is permitted on top of those lists and MUST NOT trip the unknown-extra-key rejection).
+This check verifies [reviewer-gates#req:gate-entry-when-condition](../../../spec/features/reviewer-gates/README.md#req-gate-entry-when-condition) and [reviewer-gates#ac:when-condition-masks-by-branch](../../../spec/features/reviewer-gates/README.md#ac-when-condition-masks-by-branch). The `when:` field is **optional on a reviewer entry of any type** (`ai`, `human`, `deterministic`, `auto-approve`) and is the home for per-branch autonomy masks (e.g., [approval-autonomy#req:branch-mask-via-gate-when](../../../spec/features/approval-autonomy/README.md#req-branch-mask-via-gate-when)). It is therefore an allowed extra key alongside each type's recognized-field set (Steps 3c.iv, 3d.iii, 3d-det.iv, 3d-auto-approve.ii — `when` is permitted on top of those lists and MUST NOT trip the unknown-extra-key rejection).
 
 - If `when:` is **absent**, the entry always participates — record nothing for it (default unconditioned behavior) and continue.
 - If `when:` is **present**, its value MUST be a string of the form `branch =~ <regex>`: the literal token `branch`, optional whitespace, the operator `=~`, optional whitespace, then a non-empty regular expression matched (anchored) against the current branch name. The grammar is **anchored regex** — there is no glob alternative (per [reviewer-gates#req:gate-entry-when-condition](../../../spec/features/reviewer-gates/README.md#req-gate-entry-when-condition)). The loader validates the **shape** only (the `branch =~ <non-empty-regex>` form); the runner resolves the current branch and applies the match at dispatch time (see [`runner.md`](./runner.md) Step 1.5). On a malformed `when:` — not a string, missing the `branch =~` prefix, or an empty/absent right-hand-side regex — refuse:
@@ -198,12 +198,12 @@ This check verifies [reviewer-gates#req:gate-entry-when-condition](../../../spec
 If Steps 3a–3d (and Step 3-when) pass for this entry, append a normalized record to the output list in declared order. The normalized record carries:
 
 - `name`: as declared.
-- `type`: as declared (`ai`, `human`, `deterministic`, or `noop`).
+- `type`: as declared (`ai`, `human`, `deterministic`, or `auto-approve`).
 - `when`: the original `when:` string if present (the `branch =~ <regex>` condition the runner applies per branch); absent when the entry carries no `when:` (the entry then always participates).
 - For `type: ai`: `prompt_path` (resolved absolute path inside the working tree), `prompt_repo_relative_path` (the original value, useful for error reporting downstream), and `model` / `description` if present.
 - For `type: human`: `min_approvers: 1` (always, in MVP), and `description` if present.
 - For `type: deterministic`: `run` (the command string, as declared), and `description` if present.
-- For `type: noop`: `description` if present (no other fields).
+- For `type: auto-approve`: `description` if present (no other fields).
 
 ### Step 4 — Return the validated list
 
@@ -227,12 +227,12 @@ This loader is the implementation of the following acceptance criteria from the 
 | [`gates-block-preserved`](../../../spec/features/reviewer-gates/README.md#ac-gates-block-preserved) | Step 1 (preserve key order on read); Note 6 (consumers MUST NOT rewrite the `gates:` block on unrelated writes). |
 | [`legacy-command-key-rejected`](../../../spec/features/reviewer-gates/README.md#ac-legacy-command-key-rejected) | Step 1.5 — a bare skill/command name as a `gates:` child key (e.g., `gates.specify`) → refuse, cite `migration-to-event-keys`, name the event key (`gates.feature.approved`), dispatch nothing, halt. |
 | [`untyped-entry-refused`](../../../spec/features/reviewer-gates/README.md#ac-untyped-entry-refused) | Step 3b — `type:` absent → refuse, cite `no-untyped-entry`, halt. |
-| [`unknown-type-refused`](../../../spec/features/reviewer-gates/README.md#ac-unknown-type-refused) | Step 3b — `type:` not in `{ai, human, deterministic, noop}` → refuse, cite `mvp-type-set`, halt. |
+| [`unknown-type-refused`](../../../spec/features/reviewer-gates/README.md#ac-unknown-type-refused) | Step 3b — `type:` not in `{ai, human, deterministic, auto-approve}` → refuse, cite `mvp-type-set`, halt. |
 | [`ai-entry-shape-violations-refused`](../../../spec/features/reviewer-gates/README.md#ac-ai-entry-shape-violations-refused) | Step 3c.i (missing `prompt:`), Step 3c.ii (path outside repo), Step 3c.iii (no documented blocker/advisory taxonomy) — all refuse, cite `ai-entry-shape`, halt. |
 | [`human-entry-min-approvers-cap`](../../../spec/features/reviewer-gates/README.md#ac-human-entry-min-approvers-cap) | Step 3d.ii — `min_approvers > 1` → refuse, cite `human-entry-shape`'s MVP cap, halt. |
 | [`human-entry-rejects-prompt`](../../../spec/features/reviewer-gates/README.md#ac-human-entry-rejects-prompt) | Step 3d.i — `prompt:` present on `type: human` → refuse, cite `human-entry-shape`'s prohibition, halt. |
 | [`deterministic-verdict-from-exit`](../../../spec/features/reviewer-gates/README.md#ac-deterministic-verdict-from-exit) | Step 3d-det — validate the `type: deterministic` shape (`run:` required; `prompt:`/`model:` forbidden) at load time; the exit-code→verdict mapping itself is the runner's job ([`runner.md`](./runner.md) Step 2-det). |
-| [`noop-always-approves`](../../../spec/features/reviewer-gates/README.md#ac-noop-always-approves) | Step 3d-noop — validate the `type: noop` shape (no `prompt:`/`model:`/`run:`) at load time; the always-approve-dispatch-nothing behavior is the runner's job ([`runner.md`](./runner.md) Step 2-noop). |
+| [`auto-approve-always-approves`](../../../spec/features/reviewer-gates/README.md#ac-auto-approve-always-approves) | Step 3d-auto-approve — validate the `type: auto-approve` shape (no `prompt:`/`model:`/`run:`) at load time; the always-approve-dispatch-nothing behavior is the runner's job ([`runner.md`](./runner.md) Step 2-auto-approve). |
 | [`missing-gates-block-refuses-with-error`](../../../spec/features/reviewer-gates/README.md#ac-missing-gates-block-refuses-with-error) | Step 2 — all three missing/empty states (no `gates:`, no `gates.<event>`, empty `reviewers: []`) refuse, recommend minimal `type: human` configuration, halt. |
 | [`when-condition-masks-by-branch`](../../../spec/features/reviewer-gates/README.md#ac-when-condition-masks-by-branch) | Step 3-when — validate the optional `when: "branch =~ <anchored-regex>"` shape (allowed on any type); a malformed `when:` refuses citing `gate-entry-when-condition`; the validated `when:` is carried through to the normalized record (Step 3e). The per-branch match itself is applied by the runner ([`runner.md`](./runner.md) Step 1.5). |
 | [`threshold-resolution-order`](../../../spec/features/reviewer-gates/README.md#ac-threshold-resolution-order) | Step 2.5 — per-stage `gates.<event>.threshold` → top-level `grade.threshold` → default `B`; resolved threshold returned in Step 4 output. |

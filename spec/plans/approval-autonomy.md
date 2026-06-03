@@ -13,7 +13,7 @@ Decomposes the [approval-autonomy Feature](../features/approval-autonomy/README.
 
 ## Approach
 
-Order is linear and dependency-respecting. Tasks 1–2 are in-place revisions to *other* Features that this Feature mandates, sequenced first because the core wiring leans on them (Task 1 supplies the `when:` field used by branch masks; Task 2 removes the commit-time gate the autonomy model assumes gone). Task 3 wires `implement` to fire the gate-point events; Tasks 4–8 layer the execution dynamics and safety floor on that wiring. **Cross-plan dependency:** the gate-point events (`implementation.pre_commit`/`pre_push`), the `noop`/`deterministic` reviewer types, and multi-fire are delivered by the `reviewer-gates` Plan's pending **Task 9** (event-keyed implementation) — that task is a runtime prerequisite for Tasks 3–8 here, even though it lives in the `reviewer-gates` Plan. Tasks 1–2 are themselves edits to already-approved Features (revise-in-place), tracked as tasks here because this Feature's REQs mandate them.
+Order is linear and dependency-respecting. Tasks 1–2 are in-place revisions to *other* Features that this Feature mandates, sequenced first because the core wiring leans on them (Task 1 supplies the `when:` field used by branch masks; Task 2 removes the commit-time gate the autonomy model assumes gone). Task 3 wires `implement` to fire the gate-point events; Tasks 4–8 layer the execution dynamics and safety floor on that wiring. **Cross-plan dependency:** the gate-point events (`implementation.pre_commit`/`pre_push`), the `auto-approve`/`deterministic` reviewer types, and multi-fire are delivered by the `reviewer-gates` Plan's pending **Task 9** (event-keyed implementation) — that task is a runtime prerequisite for Tasks 3–8 here, even though it lives in the `reviewer-gates` Plan. Tasks 1–2 are themselves edits to already-approved Features (revise-in-place), tracked as tasks here because this Feature's REQs mandate them.
 
 ## Tasks
 
@@ -92,7 +92,7 @@ The source Feature punted four decisions to plan time; pinned here:
 
 ## Open Questions
 
-- ~~Task sequencing assumes the `reviewer-gates` Plan's Task 9 lands first (it delivers the gate-point events and `noop`/`deterministic` types that Tasks 3–8 consume at runtime). If Task 9 slips, Tasks 3–8 here are blocked — track that cross-plan ordering at implement time.~~ **Resolved:** reviewer-gates Task 9 landed at commit `5a6c199` (gate-point events `implementation.pre_commit`/`pre_push` + `noop`/`deterministic` reviewer types). Tasks 3–8 are runtime-unblocked.
+- ~~Task sequencing assumes the `reviewer-gates` Plan's Task 9 lands first (it delivers the gate-point events and `auto-approve`/`deterministic` types that Tasks 3–8 consume at runtime). If Task 9 slips, Tasks 3–8 here are blocked — track that cross-plan ordering at implement time.~~ **Resolved:** reviewer-gates Task 9 landed at commit `5a6c199` (gate-point events `implementation.pre_commit`/`pre_push` + `auto-approve`/`deterministic` reviewer types). Tasks 3–8 are runtime-unblocked.
 
 ---
 *This document follows the https://specscore.md/plan-specification*

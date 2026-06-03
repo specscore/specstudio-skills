@@ -15,7 +15,7 @@ The implement-autonomy layer. `implement` fires the event-keyed gate-point event
 
 ## Problem
 
-`implement` today hard-gates per-batch user approval, which blocks prolonged unattended runs — the user's actual goal. The event-keyed [`reviewer-gates`](../reviewer-gates/README.md) revision now supplies the gate-point events (`implementation.pre_commit`/`pre_push`, multi-fire) and the `noop`/`deterministic` reviewer types that *could* express autonomy, but nothing fires those events from `implement`, and the execution dynamics that are not reviewer decisions (cadence, sibling-conflict/BLOCKED halts, re-arm, cumulative review) have no home. This Feature wires `implement` to the gates and owns those dynamics, enabling bounded autonomy — commit freely, gate at push, halt loudly on anomalies — without weakening revert-safety (commits are local and revertable; push is independently branch-safe via [`change-publication-policy`](../change-publication-policy/README.md)).
+`implement` today hard-gates per-batch user approval, which blocks prolonged unattended runs — the user's actual goal. The event-keyed [`reviewer-gates`](../reviewer-gates/README.md) revision now supplies the gate-point events (`implementation.pre_commit`/`pre_push`, multi-fire) and the `auto-approve`/`deterministic` reviewer types that *could* express autonomy, but nothing fires those events from `implement`, and the execution dynamics that are not reviewer decisions (cadence, sibling-conflict/BLOCKED halts, re-arm, cumulative review) have no home. This Feature wires `implement` to the gates and owns those dynamics, enabling bounded autonomy — commit freely, gate at push, halt loudly on anomalies — without weakening revert-safety (commits are local and revertable; push is independently branch-safe via [`change-publication-policy`](../change-publication-policy/README.md)).
 
 ## Behavior
 
@@ -29,7 +29,7 @@ The implement-autonomy layer. `implement` fires the event-keyed gate-point event
 
 #### REQ: autonomy-is-gate-config
 
-"Commit-autonomous" and "push-gated" MUST be expressed solely through the reviewers configured on `gates.implementation.pre_commit` / `gates.implementation.pre_push` (a `noop`/`deterministic`-only gate is autonomous; a gate with a `type: human` reviewer stops for a human). `implement` MUST NOT carry a separate hardcoded per-batch user-approval step — the per-batch human checkpoint exists if and only if a `type: human` reviewer is configured on `implementation.pre_commit`.
+"Commit-autonomous" and "push-gated" MUST be expressed solely through the reviewers configured on `gates.implementation.pre_commit` / `gates.implementation.pre_push` (a `auto-approve`/`deterministic`-only gate is autonomous; a gate with a `type: human` reviewer stops for a human). `implement` MUST NOT carry a separate hardcoded per-batch user-approval step — the per-batch human checkpoint exists if and only if a `type: human` reviewer is configured on `implementation.pre_commit`.
 
 ### Commit cadence
 
@@ -45,7 +45,7 @@ The commit cadence MUST be resolvable from `autonomy.implement.commit_cadence` w
 
 #### REQ: anomaly-halt-set
 
-Regardless of gate configuration — including a fully autonomous (`noop`) `pre_commit` gate — `implement` MUST halt the run on any of these **execution-state anomalies**: (a) a sibling integration/merge conflict, (b) a BLOCKED subagent, (c) a lint failure that `specscore spec lint --fix` did not resolve in one pass, (d) source-Feature drift (the Plan's source Feature regressed below `Approved`). These are distinct from gate verdicts: a reviewer does not "approve" a conflict or a BLOCKED task.
+Regardless of gate configuration — including a fully autonomous (`auto-approve`) `pre_commit` gate — `implement` MUST halt the run on any of these **execution-state anomalies**: (a) a sibling integration/merge conflict, (b) a BLOCKED subagent, (c) a lint failure that `specscore spec lint --fix` did not resolve in one pass, (d) source-Feature drift (the Plan's source Feature regressed below `Approved`). These are distinct from gate verdicts: a reviewer does not "approve" a conflict or a BLOCKED task.
 
 #### REQ: halt-no-auto-resolve
 
@@ -93,7 +93,7 @@ The [`reviewer-gates`](../reviewer-gates/README.md) Feature MUST be revised in p
 
 #### REQ: current-branch-reconciliation
 
-The [`implement-execution-topology/current-branch`](../implement-execution-topology/current-branch/README.md) Feature's REQ `protected-branch-commit-confirmation` MUST be revised in place to align with Option B: a current-branch run MUST NOT require human confirmation before committing onto a protected branch at commit time. The protected-branch human checkpoint moves to the promote/push gate (`implementation.pre_push` + publication-policy push-safety). Commits remain local and revertable; the topology's clean-tree precondition and pre-run revert ref still apply. Note: in the current-branch topology promote is a local no-op (per that Feature's `promote-is-local-noop`), so the relocated checkpoint materializes only on an actual remote push — a local-only run never publishes and is therefore correctly ungated at commit.
+The [`implement-execution-topology/current-branch`](../implement-execution-topology/current-branch/README.md) Feature's REQ `protected-branch-commit-confirmation` MUST be revised in place to align with Option B: a current-branch run MUST NOT require human confirmation before committing onto a protected branch at commit time. The protected-branch human checkpoint moves to the promote/push gate (`implementation.pre_push` + publication-policy push-safety). Commits remain local and revertable; the topology's clean-tree precondition and pre-run revert ref still apply. Note: in the current-branch topology promote is a local no-op (per that Feature's `promote-is-local-auto-approve`), so the relocated checkpoint materializes only on an actual remote push — a local-only run never publishes and is therefore correctly ungated at commit.
 
 ## Dependencies
 
@@ -110,7 +110,7 @@ The [`implement-execution-topology/current-branch`](../implement-execution-topol
 
 ### AC: no-hardcoded-approval (verifies REQ: autonomy-is-gate-config)
 
-**Given** `gates.implementation.pre_commit` configured with only a `noop` reviewer,
+**Given** `gates.implementation.pre_commit` configured with only a `auto-approve` reviewer,
 **When** a batch is ready to commit,
 **Then** `implement` commits without prompting any human (no hardcoded per-batch approval step runs); **and given** the gate instead includes a `type: human` reviewer, **then** `implement` stops for that human before committing.
 
@@ -128,7 +128,7 @@ The [`implement-execution-topology/current-branch`](../implement-execution-topol
 
 ### AC: halts-on-each-anomaly (verifies REQ: anomaly-halt-set)
 
-**Given** a fully autonomous `pre_commit` gate (`noop`),
+**Given** a fully autonomous `pre_commit` gate (`auto-approve`),
 **When** the run encounters any of a sibling merge conflict, a BLOCKED subagent, an unresolved-after-`--fix` lint failure, or source-Feature drift,
 **Then** the run halts despite the autonomous gate — the anomaly is not subject to the gate verdict.
 

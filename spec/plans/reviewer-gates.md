@@ -1,6 +1,6 @@
 # Plan: Reviewer Gates MVP
 
-**Status:** Completed
+**Status:** Implementing
 **Source Feature:** reviewer-gates
 **Date:** 2026-05-22
 **Owner:** alex
@@ -87,11 +87,11 @@ Implementation status (done): the protocol/prose changes are complete — `skill
 
 ### Task 9: Event-keyed gates revision
 
-**Verifies:** reviewer-gates#ac:legacy-command-key-rejected, reviewer-gates#ac:deterministic-verdict-from-exit, reviewer-gates#ac:noop-always-approves, reviewer-gates#ac:pre-commit-gate-fires-per-occurrence
+**Verifies:** reviewer-gates#ac:legacy-command-key-rejected, reviewer-gates#ac:deterministic-verdict-from-exit, reviewer-gates#ac:auto-approve-always-approves, reviewer-gates#ac:pre-commit-gate-fires-per-occurrence
 **Status:** done
 **Depends-On:** 1, 2
 
-Implements the event-keyed revision of the contract added after the original MVP shipped: migrate gate keys from command names to events (`gates.feature.approved`, plus the gate-point events `implementation.pre_commit` / `implementation.pre_push`), reject legacy command-keyed gates with a migration error, and add the `deterministic` (tool-backed; verdict derived from exit code, diagnostics captured as `Blocker`s) and `noop` (always-approve placeholder) reviewer types in the loader/validator (Task 1) and the gate runner (Task 2). Register the gate-point events `implementation.pre_commit` / `implementation.pre_push` in the canonical `skills/shared/events.md` catalog (currently only lifecycle events are listed). Evaluate multi-occurrence gate-point events independently per occurrence (no single-shot caching). Test via fixtures: legacy-command-key rejection, deterministic exit-code→verdict mapping, noop always-approves, and per-occurrence multi-fire of `implementation.pre_commit`. Wiring an actual `implement` run to *fire* these gate-points is a downstream Feature (the implement-autonomy layer), not this task.
+Implements the event-keyed revision of the contract added after the original MVP shipped: migrate gate keys from command names to events (`gates.feature.approved`, plus the gate-point events `implementation.pre_commit` / `implementation.pre_push`), reject legacy command-keyed gates with a migration error, and add the `deterministic` (tool-backed; verdict derived from exit code, diagnostics captured as `Blocker`s) and `auto-approve` (always-approve placeholder) reviewer types in the loader/validator (Task 1) and the gate runner (Task 2). Register the gate-point events `implementation.pre_commit` / `implementation.pre_push` in the canonical `skills/shared/events.md` catalog (currently only lifecycle events are listed). Evaluate multi-occurrence gate-point events independently per occurrence (no single-shot caching). Test via fixtures: legacy-command-key rejection, deterministic exit-code→verdict mapping, auto-approve always-approves, and per-occurrence multi-fire of `implementation.pre_commit`. Wiring an actual `implement` run to *fire* these gate-points is a downstream Feature (the implement-autonomy layer), not this task.
 
 ### Task 10: Optional `when:` branch-pattern gate-entry condition
 
@@ -100,6 +100,15 @@ Implements the event-keyed revision of the contract added after the original MVP
 **Depends-On:** 1, 2, 9
 
 Add the optional `when: "branch =~ <anchored-regex>"` field to a gate reviewer entry (any type): present means the entry participates only if the current branch matches the anchored regex; absent means it always participates. Pin the match grammar as anchored regex (no glob alternative) in the `reviewer-gates` Feature so the gates layer and the autonomy layer share one dialect. The loader (Task 1, Step 3-when) validates the `branch =~ <regex>` shape, allows `when:` alongside each type's recognized fields, and carries it through to the normalized record; the runner (Task 2, Step 1.5) resolves the current branch and masks the dispatch set so a non-matching entry is neither dispatched nor counted toward the verdict. This is the home for per-branch autonomy masks consumed by the [approval-autonomy](../features/approval-autonomy/README.md) Feature (its `branch-mask-via-gate-when` REQ).
+
+### Task 11: Optional reviewer `name:` — default to `type:`, refuse duplicate effective names
+
+**Status:** pending
+**Depends-On:** 1
+
+**Verifies:** reviewer-gates#ac:name-defaults-to-type, reviewer-gates#ac:duplicate-effective-name-refused
+
+Make `name:` optional in the loader/validator (Step 3a): when omitted, the entry's *effective* name defaults to its `type:` value. Recompute the uniqueness check (Step 3, current "names unique") over effective names, so two same-type entries that both omit `name:` collide and are refused. Forward addition from the `noop`→`auto-approve` rename revision; lands with the plugin release that ships the rename (the rename is inert until republish).
 
 ## Open Questions
 
