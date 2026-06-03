@@ -26,12 +26,15 @@ For *what* a sidekick seed is and how it gets captured, read [Phase 0's `sidekic
 
 ## Pre-flight
 
-Before claiming any task, verify the cross-repo dependencies are present:
+Before claiming any task — and **before the Stage 3 nine-role panel** — verify the cross-repo dependencies are present:
 
-1. `command -v specscore` — the arbiter subcommand lives here (`specscore consilium verdict`).
+1. **specscore present + capable (capability-gated detection).** Per [`../shared/cli-detection.md`](../shared/cli-detection.md), `consilium` is a **capability-gated** skill: it needs the `specscore consilium verdict` subcommand, not merely the binary. Do **not** run a standalone `command -v` probe; detect by invoking `specscore consilium verdict` (e.g. with `--help`) and branch on the exit status:
+   - **exit `127`** (binary not installed) → emit the install message (point the user at `/specscore:install`) and stop.
+   - **the dedicated "unsupported subcommand / too old" exit code** → the binary is present but predates `consilium verdict`; emit an **upgrade** message: "Phase 1 requires `specscore` with the `consilium verdict` subcommand (cross-repo dependency, tracked in `spec/plans/sidekick-consilium-arbiter-companion.md`). Upgrade and re-run."
+   - **any other non-zero** → surface the CLI's error.
+   This capability check MUST run here, before the Stage 3 panel — never after.
 2. The orchestrator CLI is on PATH — the task lifecycle lives there (`orchestrator task claim`, `orchestrator task update`).
-3. `specscore --version` — must include the `consilium verdict` subcommand. If absent, exit cleanly with a message: "Phase 1 requires `specscore` with the `consilium verdict` subcommand (cross-repo dependency, tracked in `spec/plans/sidekick-consilium-arbiter-companion.md`). Install or upgrade and re-run."
-4. `orchestrator task types` — must include `consilium-review`. If absent, exit cleanly with the analogous message referencing the task-type companion plan.
+3. `orchestrator task types` — must include `consilium-review`. If absent, exit cleanly with the analogous message referencing the task-type companion plan.
 
 If either cross-repo dependency is missing, do NOT claim any task and do NOT modify any file. Exit with the actionable error.
 

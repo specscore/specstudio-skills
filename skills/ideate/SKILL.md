@@ -115,15 +115,13 @@ Before invoking the CLI or writing the file directly, check that `spec/ideas/` e
 
 This step MUST NOT happen silently.
 
-### Step 3a — Detect the CLI
+### Step 3a — Detect the CLI (per the shared convention)
 
-Probe once with Bash:
+`ideate` is an **optional-class** skill: the CLI is preferred but a direct-write fallback exists. Follow [`../shared/cli-detection.md`](../shared/cli-detection.md) — do **not** run a standalone `command -v` probe. Instead, attempt the CLI path's scaffold call (Step 3b's `specscore idea new`) and branch on its exit status:
 
-```bash
-command -v specscore >/dev/null 2>&1 && specscore --version
-```
-
-If the probe succeeds, take the **CLI path**. Otherwise, take the **fallback path**.
+- **exit `127`** (binary not installed) → take the **fallback path** (Step 3c). A `127` means the command never ran, so nothing was written — the fallback is safe.
+- **any other non-zero** → the CLI is present but the call genuinely failed; **surface the error and do NOT fall back** (a hand-written file would mask a real CLI bug).
+- **success** → continue on the CLI path (Step 3b, step 2).
 
 ### Step 3b (CLI path) — Scaffold, then fill
 
