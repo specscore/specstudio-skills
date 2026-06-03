@@ -11,7 +11,7 @@
 
 ## Summary
 
-Defines the canonical reviewer-gates contract: **event-keyed** reviewer lists scoped under a `gates:` block in `specscore.yaml`, with a `type:` discriminator and type-specific fields per reviewer entry. Gates are keyed by the **event/checkpoint they guard** (`gates.<event>`) — both artifact-lifecycle events (e.g., `feature.approved`) and pre-action gate-point events that may fire repeatedly within a run (e.g., `implementation.pre_commit`, `implementation.pre_push`). Pins the schema, dispatch semantics, and verdict contract for the type set (`ai`, `human`, `deterministic`, `noop`), and wires `specstudio:specify` as the first consumer (on `gates.feature.approved`) — replacing its built-in reviewer dispatch and User Review Gate with the new typed-gate model. Carves the Reviewer parts of [`third-party-integration`](../third-party-integration/README.md) out into this Feature.
+Defines the canonical reviewer-gates contract: **event-keyed** reviewer lists scoped under a `gates:` block in `specscore.yaml`, with a `type:` discriminator and type-specific fields per reviewer entry. Gates are keyed by the **event/checkpoint they guard** (`gates.<event>`) — both artifact-lifecycle events (e.g., `feature.approved`) and pre-action gate-point events that may fire repeatedly within a run (e.g., `implementation.pre_commit`, `implementation.pre_push`). Pins the schema, dispatch semantics, and verdict contract for the type set (`ai`, `human`, `deterministic`, `auto-approve`), and wires `specstudio:specify` as the first consumer (on `gates.feature.approved`) — replacing its built-in reviewer dispatch and User Review Gate with the new typed-gate model. Carves the Reviewer parts of [`third-party-integration`](../third-party-integration/README.md) out into this Feature.
 
 The gate's verdict currency is an A–F **grade**: per-reviewer `Blocker`/`Advisory` findings are aggregated into a grade, and a gate releases iff `grade ≥ threshold` (configurable, default `B`). Both producer-exit gates and the manual [`score-command`](../score-command/README.md) consume this same grade, so verdict parity is structural. The grade model is designed so the **default threshold reproduces today's binary behavior exactly** (see [the grade design doc](../../research/reviewer-gates-grade-design.md)).
 
@@ -37,11 +37,11 @@ Each gate value MUST be an object containing exactly one required field: `review
 
 #### REQ: reviewer-entry-required-fields
 
-Every reviewer entry MUST declare `name:` (string, unique within the gate's `reviewers:` list, lowercase + hyphens) and `type:` (string, one of the values in `mvp-type-set`). Entries missing `name:` or `type:` MUST be rejected at consumer load time with an error citing this REQ.
+Every reviewer entry MUST declare `type:` (string, one of the values in `mvp-type-set`). `name:` (string, lowercase + hyphens) is OPTIONAL; when omitted it defaults to the entry's `type:` value. The *effective* name (declared or defaulted) MUST be unique within the gate's `reviewers:` list — so two entries that share a `type:` on the same gate MUST each declare an explicit `name:` to disambiguate. An entry missing `type:`, or a gate whose effective names collide, MUST be rejected at consumer load time with an error citing this REQ.
 
 #### REQ: mvp-type-set
 
-The type set is exactly `{ai, human, deterministic, noop}`. Any other `type:` value MUST be rejected at consumer load time with an error pointing at this Feature; consumers MUST NOT silently treat unknown types as `ai`. `ai` and `human` are defined in `ai-entry-shape` / `human-entry-shape`; `deterministic` and `noop` in `deterministic-entry-shape` / `noop-entry-shape`. Further specialized types (e.g., `ux`, `peer-review-bot`, `third-party-ci`) remain deferred to additive revisions — a tool-backed check (lint, security scanner) is expressed as `type: deterministic` with a `run:` command, not as a bespoke type.
+The type set is exactly `{ai, human, deterministic, auto-approve}`. Any other `type:` value — including the former `noop` (renamed to `auto-approve`) — MUST be rejected at consumer load time with an error pointing at this Feature; consumers MUST NOT silently treat unknown types as `ai`. `ai` and `human` are defined in `ai-entry-shape` / `human-entry-shape`; `deterministic` and `auto-approve` in `deterministic-entry-shape` / `auto-approve-entry-shape`. Further specialized types (e.g., `ux`, `peer-review-bot`, `third-party-ci`) remain deferred to additive revisions — a tool-backed check (lint, security scanner) is expressed as `type: deterministic` with a `run:` command, not as a bespoke type.
 
 #### REQ: ai-entry-shape
 
@@ -55,9 +55,9 @@ The type set is exactly `{ai, human, deterministic, noop}`. Any other `type:` va
 
 `type: deterministic` entries run a repo-local tool (linter, security scanner, conflict check, etc.) rather than an LLM or a human. They MUST declare `run:` (string — a command resolvable in the repo, e.g. a script path or Make target; network commands are forbidden) and MAY declare `description:`. They MUST NOT declare `prompt:` or `model:`. The verdict MUST be derived deterministically: exit code zero maps to `Approved`; a non-zero exit maps to `Issues Found`, with the tool's diagnostic output captured as `Blocker` finding(s). (A configurable non-exit-code success predicate is out of MVP scope.) Like every reviewer, a `deterministic` entry MUST NOT write to `spec/` artifacts (it is a read-only check per `verdict-contract`); a tool that mutates artifacts is a Producer, not a reviewer.
 
-#### REQ: noop-entry-shape
+#### REQ: auto-approve-entry-shape
 
-`type: noop` entries dispatch nothing and always return `Approved` with no findings. They are the explicit auto-approve placeholder that lets an event's gate be configured as "no review at this checkpoint" *without removing the gate key* — so autonomy at a checkpoint is expressed as gate configuration (a `noop` where a `human` would otherwise sit), not as a separate mechanism. A `noop` entry MUST NOT declare `prompt:`, `model:`, or `run:`; it MAY declare `description:` (e.g., the rationale for auto-approving this checkpoint).
+`type: auto-approve` entries dispatch nothing and always return `Approved` with no findings. They are the explicit auto-approve placeholder that lets an event's gate be configured as "no review at this checkpoint" *without removing the gate key* — so autonomy at a checkpoint is expressed as gate configuration (an `auto-approve` where a `human` would otherwise sit), not as a separate mechanism. An `auto-approve` entry MUST NOT declare `prompt:`, `model:`, or `run:`; it MAY declare `description:` (e.g., the rationale for auto-approving this checkpoint). (This type was formerly named `noop`; the rename makes the auto-approve intent explicit in config.)
 
 #### REQ: gate-point-events-and-multi-fire
 
@@ -222,9 +222,21 @@ ACs are grouped here with explicit REQ back-references, mirroring sibling Featur
 
 ### AC: unknown-type-refused (verifies REQ:mvp-type-set)
 
-**Given** a `gates.feature.approved.reviewers` entry with `type: peer-review-bot` (a type outside the set `{ai, human, deterministic, noop}`),
+**Given** a `gates.feature.approved.reviewers` entry with `type: noop` (the former type name, now outside the set `{ai, human, deterministic, auto-approve}`),
 **When** `specstudio:specify` attempts to load the gate,
 **Then** the skill MUST refuse to run with an error citing `mvp-type-set` and pointing at this Feature, MUST NOT dispatch any reviewer, and MUST exit non-zero.
+
+### AC: name-defaults-to-type (verifies REQ:reviewer-entry-required-fields)
+
+**Given** a `gates.feature.approved.reviewers` entry that declares `type: auto-approve` and omits `name:`,
+**When** a consumer loads the gate,
+**Then** the entry's effective name MUST be `auto-approve` (its `type:` value), and the gate MUST load without error.
+
+### AC: duplicate-effective-name-refused (verifies REQ:reviewer-entry-required-fields)
+
+**Given** a gate `reviewers:` list with two `type: ai` entries that both omit `name:` (so both default to the effective name `ai`),
+**When** a consumer loads the gate,
+**Then** the consumer MUST refuse to run with an error citing `reviewer-entry-required-fields` (duplicate effective name) and pointing at this Feature, MUST NOT dispatch any reviewer, and MUST exit non-zero.
 
 ### AC: legacy-command-key-rejected (verifies REQ:migration-to-event-keys, REQ:gates-block-location)
 
@@ -238,11 +250,11 @@ ACs are grouped here with explicit REQ back-references, mirroring sibling Featur
 **When** the gate is evaluated,
 **Then** that reviewer's verdict MUST be `Issues Found` with the command's diagnostic output captured as at least one `Blocker` finding, and the gate MUST NOT release at the default threshold `B`; and given the same command exits zero, that reviewer MUST contribute `Approved` with no findings.
 
-### AC: noop-always-approves (verifies REQ:noop-entry-shape)
+### AC: auto-approve-always-approves (verifies REQ:auto-approve-entry-shape)
 
-**Given** a gate `reviewers:` list containing a `type: noop` entry,
+**Given** a gate `reviewers:` list containing a `type: auto-approve` entry,
 **When** the gate is evaluated,
-**Then** the `noop` entry MUST return `Approved` with no findings, MUST dispatch nothing (no subagent, no command, no human prompt), and MUST NOT contribute any `Blocker` to the grade.
+**Then** the `auto-approve` entry MUST return `Approved` with no findings, MUST dispatch nothing (no subagent, no command, no human prompt), and MUST NOT contribute any `Blocker` to the grade.
 
 ### AC: when-condition-masks-by-branch (verifies REQ:gate-entry-when-condition)
 
@@ -398,7 +410,7 @@ Rehearse stubs for each AC are scaffolded at `_tests/<ac-slug>.md` with `**Statu
 
 Inherited from the source Idea and pinned here:
 
-- **Reviewer types beyond `ai`, `human`, `deterministic`, `noop`** — bespoke types like `ux`, `peer-review-bot`, `third-party-ci` are deferred. Tool-backed checks (lint, security scanners) are NOT new types — they are `type: deterministic` with a `run:` command. The type set rejects unknown values; future additive revisions add types one at a time as real consumers ship.
+- **Reviewer types beyond `ai`, `human`, `deterministic`, `auto-approve`** — bespoke types like `ux`, `peer-review-bot`, `third-party-ci` are deferred. Tool-backed checks (lint, security scanners) are NOT new types — they are `type: deterministic` with a `run:` command. The type set rejects unknown values; future additive revisions add types one at a time as real consumers ship.
 - **`min_approvers > 1` for `type: human`** — pinned to 1 in MVP. Multi-approver workflows are deferred until a real need surfaces.
 - **Wiring `plan`, `implement`, `verify`, `recap` into `gates`** — each is a separate follow-on Feature with its own status-transition and event-emission specifics.
 - **Auto-skip rule** — a `type: human` reviewer auto-passed when preceding `ai` reviewers all return `Approved` is explicitly out of scope. Deferred until at least one gate runs in real dogfood and we have signal on false-positive risk.
