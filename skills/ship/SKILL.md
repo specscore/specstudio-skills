@@ -58,9 +58,7 @@ Create a task for each and complete in order:
 2. **Pre-flight machine gates** (Pre-Flight steps 3–4): verify-green, then recap-no-contradiction. Both are hard gates; any refusal exits immediately.
 3. **Reviewer gate** (`## Reviewer Gate`): fire `ship.pre_dispatch`, load and run `gates.ship.pre_dispatch` reviewers (AND-composed). Halt on `Issues Found`; proceed only on release.
 4. **Deploy dispatch** (`## Deploy Dispatch`): if `ship.delegate` is configured, dispatch it once; otherwise hand back. Act on the delegate's outcome only.
-
-<!-- Subsequent checklist steps (lifecycle transition, event emission) are added
-by later tasks in the ship plan. -->
+5. **Transition and emit** (`## Lifecycle Transition and Event`): on explicit delegate success, transition `Implementing → Stable`, apply publication policy, and emit `ship.completed` exactly once.
 
 ## Reviewer Gate
 
@@ -90,6 +88,13 @@ ship:
 1. **Configured delegate → single dispatch.** When `ship.delegate` is present, invoke the named delegate skill **exactly once**, passing `delegate.args`. Ship does not sequence multiple delegates and does not retry. (AC: `dispatches-single-configured-delegate`)
 2. **No delegate → hand back.** When `ship.delegate` is absent, summarize the gate results, state explicitly that no deploy delegate is configured, transition no status, emit no `ship.completed`, and exit without attempting a deploy. Ship never guesses how to deploy. (AC: `hands-back-when-no-delegate`)
 3. **Explicit success only.** Treat **only** the delegate's explicit success signal as success. On delegate failure, an ambiguous result, or no clear success signal, leave the Feature in `Implementing`, do not retry, surface the delegate's outcome verbatim, and emit no `ship.completed`. (AC: `no-transition-on-delegate-failure`)
+
+## Lifecycle Transition and Event
+
+Runs **only** on the delegate's explicit success (never on refusal or hand-back).
+
+1. **Transition.** Transition the Feature `Implementing → Stable` by invoking `specscore feature change-status <feature-slug> --to Stable`. Ship owns this status write; `Implementing → Stable` is the only transition ship performs. (AC: `transitions-to-stable-on-success`)
+2. **Publication + event.** Build the checkpoint manifest, apply [publication-policy.md](../shared/publication-policy.md) for the `ship.completed` checkpoint, then emit `ship.completed` **exactly once** with `publication_result` per [events.md](../shared/events.md). The event carries `feature_slug`, `revision`, the dispatched `delegate`, and `from_status: Implementing` / `to_status: Stable`. No `ship.completed` is emitted on any refusal or on the no-delegate hand-back. (AC: `emits-ship-completed-once`)
 
 ## References
 

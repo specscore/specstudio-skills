@@ -202,6 +202,35 @@ payload:
 
 **Consumer:** A downstream orchestrator's task-prioritization reader surfaces `consilium-review` tasks with `needs-human-review` verdicts at the top of its prioritization report. Phase 2 auto-promote (future Feature) will subscribe to `verdict: should-implement` events.
 
+## Events Emitted by `specstudio:ship`
+
+### `ship.completed`
+Fired **exactly once** on a successful ship — after the delegate returns explicit success and ship transitions the Feature `Implementing → Stable`. It is NOT emitted on any refusal (pre-flight or reviewer-gate) or on the no-delegate hand-back. Emitted after publication policy is applied for its checkpoint, carrying `publication_result`.
+
+```yaml
+event: ship.completed
+version: 1
+artifact:
+  type: feature
+  id: <feature-slug>
+  path: spec/features/<feature-slug>/README.md
+  revision: <sha>
+payload:
+  feature_slug: <feature-slug>
+  revision: <sha>
+  delegate: <delegate-skill-name>     # the deploy skill ship dispatched
+  from_status: Implementing
+  to_status: Stable
+  publication_result:
+    resolved_actions: [<stage | commit | push>, ...]
+    executed_actions: [<stage | commit | push>, ...]
+    skipped_actions: [{action: <...>, reason: <string>}]
+    commit_sha: <git SHA> | null
+    push_target: <remote>/<branch> | null
+```
+
+**Invariants:** emitted at most once per successful ship run; `from_status` is always `Implementing` and `to_status` always `Stable`; absent on every refusal and on the no-delegate hand-back.
+
 ## Gate-Point Events (pre-action checkpoints)
 
 Gate-point events fire at **execution checkpoints** rather than at artifact-lifecycle transitions. Unlike the once-per-artifact lifecycle events above, a gate-point event MAY fire **multiple times within a single run**. They exist so that a [reviewer gate](../../spec/features/reviewer-gates/README.md) can be keyed on a pre-action checkpoint (`gates.implementation.pre_commit`, `gates.implementation.pre_push`) and evaluated independently at each occurrence per [reviewer-gates#req:gate-point-events-and-multi-fire](../../spec/features/reviewer-gates/README.md#req-gate-point-events-and-multi-fire).
@@ -364,6 +393,7 @@ Skills MUST NOT introduce additional configurable milestone names without adding
 | `implement.batch-completed` | `specstudio:implement` | A Plan-sourced implementation batch reaches its publication checkpoint after user approval |
 | `verify.completed` | `specstudio:verify` | Verify report and index are written successfully |
 | `recap.completed` | `specstudio:recap` | Recap report and index are written successfully |
+| `ship.completed` | `specstudio:ship` | Delegate returned explicit success and the Feature transitioned Implementing → Stable (exactly once per successful ship) |
 | `lifecycle.phase-skipped` | `specstudio:ideate`, `specstudio:specify` | User chose a non-default downstream option at a transition menu (before downstream invocation) |
 | `sidekick-idea.captured` | `specstudio:sidekick` | Successful seed write at `spec/ideas/seeds/<slug>.md` (exactly once per seed) |
 | `sidekick-idea.reviewed` | `specstudio:consilium` | Successful `consilium-review` task completion (exactly once per task) |
