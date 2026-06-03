@@ -36,9 +36,9 @@ This skill MUST NOT replicate any of the CLI verb's logic. No file copy, no in-f
 
 ## Pre-flight
 
-1. **CLI present.** Run `command -v specscore` to confirm the CLI is installed. If missing, tell the user verbatim:
+1. **CLI present (mandatory-class detection).** `relocate-idea` is a thin wrapper over `specscore idea relocate` with no fallback — a **mandatory-class** skill per [`../shared/cli-detection.md`](../shared/cli-detection.md). Do **not** run a standalone `command -v` probe; detect via the relocate call's exit status (see `## Invocation`). If that call exits `127` (binary not installed), emit the standardized install message verbatim and stop without writing:
    > The `specscore` CLI is not installed. Invoke `/specscore:install` to see install options, or install from <https://specscore.md/install>. Then retry your command.
-   Stop. Do not proceed.
+   On any other non-zero exit, surface the CLI's error. Stop. Do not proceed.
 
 2. **Collect arguments.** The skill needs two values:
    - **slug** — the artifact's slug (basename of `spec/ideas/<slug>.md` or `spec/ideas/seeds/<slug>.md` in the source repo).
