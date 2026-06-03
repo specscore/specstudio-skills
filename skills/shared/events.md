@@ -206,7 +206,7 @@ payload:
 
 Gate-point events fire at **execution checkpoints** rather than at artifact-lifecycle transitions. Unlike the once-per-artifact lifecycle events above, a gate-point event MAY fire **multiple times within a single run**. They exist so that a [reviewer gate](../../spec/features/reviewer-gates/README.md) can be keyed on a pre-action checkpoint (`gates.implementation.pre_commit`, `gates.implementation.pre_push`) and evaluated independently at each occurrence per [reviewer-gates#req:gate-point-events-and-multi-fire](../../spec/features/reviewer-gates/README.md#req-gate-point-events-and-multi-fire).
 
-These are the MVP gate-point events. Inventing arbitrary gate-point identifiers (or gate-points for stages other than `implement`) is out of scope; the consumers that actually *fire* these checkpoints (the implement-autonomy layer) are downstream Features.
+The `implementation.*` events are the reviewer-gates MVP gate-points. Follow-on consumer Features register their own gate-point events in this catalog when they wire a new pre-action checkpoint — `specstudio:ship` registers `ship.pre_dispatch` below. Inventing arbitrary gate-point identifiers that no consumer fires remains out of scope; each registered gate-point names the Feature that fires it.
 
 ### `implementation.pre_commit`
 A pre-action gate-point evaluated **before each commit** a producer makes during an `implement` run. It MAY fire multiple times in one run — once per commit/batch — and each occurrence is an independent gate evaluation (no single-shot-per-run caching). Used as a reviewer-gate key (`gates.implementation.pre_commit`).
@@ -231,6 +231,19 @@ payload:
 ```
 
 **Consumer:** a [reviewer gate](../../spec/features/reviewer-gates/README.md) keyed on the event evaluates the gate's reviewers at each occurrence. Wiring an actual `implement` run to *fire* these events is a downstream Feature (the implement-autonomy layer), not the reviewer-gates contract itself.
+
+### `ship.pre_dispatch`
+A pre-action gate-point evaluated **once per `ship` run** — after `specstudio:ship`'s pre-flight machine gates pass and **before** ship dispatches the deploy to its configured delegate. Unlike the multi-fire `implementation.*` gate-points, it fires at most once per run, because ship performs a single dispatch. Used as a reviewer-gate key (`gates.ship.pre_dispatch`).
+
+```yaml
+event: ship.pre_dispatch
+version: 1
+payload:
+  feature_slug: <slug>       # the Feature being shipped
+  run_id: <string>           # stable identifier for the enclosing ship run
+```
+
+**Consumer:** a [reviewer gate](../../spec/features/reviewer-gates/README.md) keyed on `ship.pre_dispatch` evaluates the gate's reviewers; the consumer that *fires* it is `specstudio:ship` (see the [Ship Skill Feature](../../spec/features/skills/ship/README.md)).
 
 ## Events Emitted by Transition Menus
 
@@ -346,6 +359,7 @@ Skills MUST NOT introduce additional configurable milestone names without adding
 | `plan.updated` | `specstudio:plan`, `specstudio:implement` | Every successful lint pass after an approved Plan is edited, including implementation status updates |
 | `implementation.pre_commit` | gate-point (implement-autonomy layer) | Pre-action checkpoint before each commit during an `implement` run (multi-fire; per-occurrence gate evaluation) |
 | `implementation.pre_push` | gate-point (implement-autonomy layer) | Pre-action checkpoint before a publish/promote during an `implement` run |
+| `ship.pre_dispatch` | gate-point (`specstudio:ship`) | Pre-action checkpoint after ship's pre-flight gates and before the deploy dispatch (single-fire per run) |
 | `implement.batch-started` | `specstudio:implement` | A Plan-sourced implementation batch dispatches |
 | `implement.batch-completed` | `specstudio:implement` | A Plan-sourced implementation batch reaches its publication checkpoint after user approval |
 | `verify.completed` | `specstudio:verify` | Verify report and index are written successfully |

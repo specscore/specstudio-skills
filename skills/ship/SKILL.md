@@ -56,9 +56,18 @@ Create a task for each and complete in order:
 
 1. **Pre-flight input + status** (Pre-Flight steps 1–2): resolve the single-Feature input, then the status guard. Refusals exit immediately; do not proceed.
 2. **Pre-flight machine gates** (Pre-Flight steps 3–4): verify-green, then recap-no-contradiction. Both are hard gates; any refusal exits immediately.
+3. **Reviewer gate** (`## Reviewer Gate`): fire `ship.pre_dispatch`, load and run `gates.ship.pre_dispatch` reviewers (AND-composed). Halt on `Issues Found`; proceed only on release.
 
-<!-- Subsequent checklist steps (reviewer gate, deploy dispatch, lifecycle
-transition, event emission) are added by later tasks in the ship plan. -->
+<!-- Subsequent checklist steps (deploy dispatch, lifecycle transition, event
+emission) are added by later tasks in the ship plan. -->
+
+## Reviewer Gate
+
+After every pre-flight gate passes, ship fires the `ship.pre_dispatch` gate-point event and evaluates the reviewer gate keyed on it — `gates.ship.pre_dispatch` in `specscore.yaml` — via the shared reviewer-gates [loader](../shared/reviewer-gates/loader.md) and [runner](../shared/reviewer-gates/runner.md). This is the judgment-and-human go/no-go checkpoint before any deploy. Ship carries **no** hardcoded baseline reviewer; the reviewer list comes exclusively from the gate config.
+
+1. **Fire and load.** Fire `ship.pre_dispatch` (single-fire per run; see [events.md](../shared/events.md)). Load and validate `gates.ship.pre_dispatch.reviewers` via the loader with event key `ship.pre_dispatch`. If the gate is unconfigured or invalid, the loader refuses per its contract — surface its error verbatim and halt; do not dispatch a delegate, do not transition status.
+2. **Run.** Dispatch the validated reviewer list via the runner: serial, in declared list order, AND-composed. The gate releases only when **every** entry returns `Approved`. A `type: human` entry is the operator's go/no-go. Ship introduces **no new reviewer type** — it uses only the types reviewer-gates already defines (`ai`, `human`, and the broader `deterministic` / `auto-approve`).
+3. **Outcome.** On release (`Approved`), proceed to deploy dispatch. On `Issues Found`, halt: surface the failing reviewer's `Blocker` findings, dispatch no delegate, and transition no status. (AC: `gate-releases-only-on-all-approved`)
 
 ## References
 
