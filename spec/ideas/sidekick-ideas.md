@@ -1,6 +1,6 @@
 # Idea: Sidekick Ideas
 
-**Status:** Implementing
+**Status:** Specified
 **Date:** 2026-05-18
 **Owner:** alexandertrakhimenok
 **Promotes To:** sidekick-capture

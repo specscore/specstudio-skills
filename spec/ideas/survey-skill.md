@@ -1,6 +1,6 @@
 # Idea: Survey Skill — Fast Architecture Summary & Research Zone Proposal
 
-**Status:** Implementing
+**Status:** Specified
 **Date:** 2026-05-22
 **Owner:** alex
 **Promotes To:** skills/survey

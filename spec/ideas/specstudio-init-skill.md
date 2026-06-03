@@ -1,6 +1,6 @@
 # Idea: specstudio:init Skill
 
-**Status:** Implementing
+**Status:** Specified
 **Date:** 2026-05-08
 **Owner:** alexander.trakhimenok
 **Promotes To:** skills/init

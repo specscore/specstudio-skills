@@ -1,6 +1,6 @@
 # Idea: Multi-Repo Destination Resolution for Idea-Creation Skills
 
-**Status:** Specified
+**Status:** Implemented
 **Date:** 2026-05-20
 **Owner:** alexandertrakhimenok
 **Promotes To:** sidekick-capture/destination-resolution
