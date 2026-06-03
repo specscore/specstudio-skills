@@ -36,7 +36,7 @@ Extend the shared guidance so the skill reports the staged set back to the user,
 
 Add the degraded-mode rule: when the running `specscore` CLI does not emit a fixed-files report under `--fix`, the skill surfaces the missing-capability limitation to the user and does NOT reconstruct the change set from a `git status`/`git diff` heuristic. Include how the absence is detected (e.g., absence of the `fixed` key in `--format json` output, or a CLI version check).
 
-## Outstanding Questions
+## Open Questions
 
 - Implementation is blocked until the upstream producer ships the report: the `specscore` Spec Lint "Fixed-files reporting" behavior (source Idea `specscore-cli:lint-fix-reports-modified-files`) must provide `.fixed[]`, and the skills must require a CLI version that includes it.
 - Per-skill rollout breadth — whether each skill's existing `auto-stage-on-create` REQ references this shared contract or the staging behavior is consolidated here — is carried over from the Feature's Open Questions and should be settled before the per-skill instruction files are edited.
