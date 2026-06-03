@@ -31,6 +31,7 @@ flowchart TD
         implement([implement])
         verify([verify])
         recap([recap])
+        ship([ship])
     end
 
     raw --> ideate
@@ -46,6 +47,7 @@ flowchart TD
 
     implement --> verify
     verify --> recap
+    recap --> ship
 ```
 
 ## Behavior

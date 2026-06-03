@@ -96,6 +96,29 @@ Runs **only** on the delegate's explicit success (never on refusal or hand-back)
 1. **Transition.** Transition the Feature `Implementing → Stable` by invoking `specscore feature change-status <feature-slug> --to Stable`. Ship owns this status write; `Implementing → Stable` is the only transition ship performs. (AC: `transitions-to-stable-on-success`)
 2. **Publication + event.** Build the checkpoint manifest, apply [publication-policy.md](../shared/publication-policy.md) for the `ship.completed` checkpoint, then emit `ship.completed` **exactly once** with `publication_result` per [events.md](../shared/events.md). The event carries `feature_slug`, `revision`, the dispatched `delegate`, and `from_status: Implementing` / `to_status: Stable`. No `ship.completed` is emitted on any refusal or on the no-delegate hand-back. (AC: `emits-ship-completed-once`)
 
+## Architectural Boundary
+
+This boundary is load-bearing and applies across the whole skill: **ship gates, records, and dispatches once — it never executes or orchestrates.** Concretely, ship MUST NOT itself perform any of:
+
+- deploy mechanics (build, push, migrate);
+- sequencing of multiple steps, or retrying a failed step;
+- rollback, canary rollout, or feature-flag flips;
+- scheduling, or dispatching work across runs;
+- multi-feature or multi-project release coordination.
+
+All of these belong to the delegate or to a separate orchestration layer. The `ship:` config block MUST expose **only** `delegate.skill` and `delegate.args`; it MUST NOT grow any field expressing the concerns above. Working inside one project is ship's scope; executing and dispatching work across things is not. (AC: `bars-execution-and-orchestration`)
+
+## Red Flags
+
+- Performing a deploy, migration, or push directly instead of delegating it.
+- Sequencing or retrying delegates, or interposing orchestration between ship and the delegate.
+- Owning rollback, canary, or feature-flag logic in ship.
+- Adding any `ship:` config field beyond `delegate.skill` / `delegate.args`.
+- Transitioning status or emitting `ship.completed` on anything other than the delegate's explicit success.
+- Coordinating more than one Feature in a single ship run.
+- Carrying a hardcoded reviewer instead of loading `gates.ship.pre_dispatch`.
+- Waiving the recap-no-contradiction or verify-green gate.
+
 ## References
 
 - [Feature: Ship Skill](../../spec/features/skills/ship/README.md) — the SpecScore Feature this skill implements.
