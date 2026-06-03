@@ -36,7 +36,7 @@ Revise `implement-execution-topology/current-branch` in place so REQ `protected-
 ### Task 3: Fire the gate-point events from implement (no hardcoded approval)
 
 **Verifies:** approval-autonomy#ac:fires-pre-commit-and-pre-push, approval-autonomy#ac:no-hardcoded-approval
-**Status:** pending
+**Status:** done
 **Depends-On:** 1, 2
 
 Wire `implement` to fire `implementation.pre_commit` before each commit and `implementation.pre_push` before promote, proceeding only when the gate releases. Remove any hardcoded per-batch user-approval step: the per-batch human checkpoint exists iff a `type: human` reviewer is configured on `pre_commit`. Depends on the gate-point events existing (reviewer-gates Task 9).

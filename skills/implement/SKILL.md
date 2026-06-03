@@ -4,8 +4,11 @@ description: |
   Turns an approved SpecScore Plan into focused, AC-traceable
   source-code changes by dispatching one subagent per task in parallel
   batches computed from the Plan's **Depends-On:** dependency graph.
-  Hard-gates on per-batch user approval of the consolidated staged
-  diff. Applies publication policy at approved implementation
+  Fires the `implementation.pre_commit` / `implementation.pre_push`
+  reviewer gates at its checkpoints, so per-batch approval is
+  gate-config-driven (a `type: human` reviewer is the human
+  checkpoint; a `noop` gate commits autonomously). Applies
+  publication policy at approved implementation
   milestones; provides a Verifies: commit-message trailer template.
   Also accepts a Feature directly (no Plan) or an Idea directly
   (no Feature or Plan) for single-pass conversational implementation.
@@ -16,7 +19,7 @@ aliases: [implement]
 
 # Implement
 
-Turn an approved SpecScore Plan, Feature, or Idea into AC-traceable source-code changes. Plan-sourced mode uses parallel subagent dispatch with per-batch user approval. Feature-sourced and Idea-sourced modes operate as a single-pass conversation. After approval, the skill applies the shared publication policy at the implementation milestone; downstream verification still requires the relevant Feature or implementation commits to exist in git history.
+Turn an approved SpecScore Plan, Feature, or Idea into AC-traceable source-code changes. Plan-sourced mode uses parallel subagent dispatch; each commit is gated by the `implementation.pre_commit` reviewer gate and each push by `implementation.pre_push`, so per-batch approval is gate-config-driven rather than a hardcoded step (a `type: human` reviewer is the human checkpoint; a `noop`/`deterministic`-only gate releases autonomously). Feature-sourced and Idea-sourced modes operate as a single-pass conversation. After the commit gate releases, the skill applies the shared publication policy at the implementation milestone; downstream verification still requires the relevant Feature or implementation commits to exist in git history.
 
 ## Hard Gate
 
@@ -25,8 +28,8 @@ Do NOT invoke `specstudio:verify`, `writing-plans`, `frontend-design`, `mcp-buil
   1. Every subagent in the batch returned a terminal status (`DONE`, `DONE_WITH_CONCERNS`, or `BLOCKED` with user decision); no subagent is still `NEEDS_CONTEXT`.
   2. The consolidated staged diff for the batch is lint-clean (`specscore spec lint` exits zero against the project, including any Plan-file changes staged in stub mode).
   3. The conflict-detection check has passed (no line-overlap between sibling subagents' staged diffs) OR the user has explicitly approved a manual conflict-resolution path.
-  4. The user has explicitly approved the batch's consolidated staged diff.
-  5. Publication policy for the approved implementation milestone has been resolved, disclosed, and applied. If the allowed actions did not create a commit, the user has committed the approved set manually before the next batch or downstream verification. The skill MUST NOT advance to the next batch while the working tree still has the prior batch staged but uncommitted.
+  4. The batch's `implementation.pre_commit` gate released (`Approved`) before the commit. Approval is **gate-config-driven**, not hardcoded: a `noop`/`deterministic`-only gate releases autonomously (no human prompt); a gate with a `type: human` reviewer stops for that human before committing. On `Issues Found` the commit is blocked and the gate's findings are surfaced.
+  5. Publication policy for the approved implementation milestone has been resolved, disclosed, and applied; and when a push/promote is attempted, its `implementation.pre_push` gate released (`Approved`) first. If the allowed actions did not create a commit, the user has committed the approved set manually before the next batch or downstream verification. The skill MUST NOT advance to the next batch while the working tree still has the prior batch staged but uncommitted.
 
 The only skill invoked after `specstudio:implement` is `specstudio:verify` (or — while `verify` is unshipped — a hand-back to the user with that recommendation).
 </HARD-GATE>
@@ -45,7 +48,7 @@ The only skill invoked after `specstudio:implement` is `specstudio:verify` (or �
 - The Plan's `**Source Feature:**` has regressed to `Draft` or `Under Review` → stop, surface the spec drift, recommend re-approving the Feature via `specstudio:specify` or reverting.
 - The Feature's `**Status:**` is `Draft` or `Under Review` → tell the user to run `specstudio:specify` first.
 - The Idea's `**Status:**` is `Draft` or `Under Review` → tell the user to run `specstudio:ideate` first.
-- The user asks the skill to commit or push before the consolidated diff is approved, lint-clean, and conflict-checked → refuse; publication actions are available only after the batch or single-pass approval gate.
+- The user asks the skill to commit or push before the consolidated diff is lint-clean and conflict-checked and its gate has released → refuse; the commit is available only after the `implementation.pre_commit` gate releases, and the push only after the `implementation.pre_push` gate releases (and publication-policy branch-safety passes).
 
 ## Pre-Flight
 
@@ -64,7 +67,7 @@ The only skill invoked after `specstudio:implement` is `specstudio:verify` (or �
 
 ### Plan-sourced (default)
 
-Existing behavior, unchanged. The skill resolves a Plan, parses its tasks and dependency graph, dispatches subagents in batches, and gates each batch on user approval. `Verifies:` trailers reference Feature AC IDs (e.g., `Verifies: <feature-slug>#ac:<ac-slug>`). Per-task Status writes track progress on the Plan file. The full Checklist below applies.
+The skill resolves a Plan, parses its tasks and dependency graph, dispatches subagents in batches, and gates each batch's commit on the `implementation.pre_commit` reviewer gate (and each push on `implementation.pre_push`) — so whether a human is asked per batch is gate config, not hardcoded. `Verifies:` trailers reference Feature AC IDs (e.g., `Verifies: <feature-slug>#ac:<ac-slug>`). Per-task Status writes track progress on the Plan file. The full Checklist below applies.
 
 ### Feature-sourced (single-pass)
 
@@ -74,7 +77,7 @@ No Plan exists. The skill resolves a Feature directly. Instead of batch dispatch
 - **Implementation:** The skill implements the user's described change conversationally, staging via `git add`.
 - **Verifies: trailer:** Uses Feature AC IDs: `Verifies: <feature-slug>#ac:<ac-slug>, ...` listing every AC addressed by the staged change.
 - **Lint and self-review:** `specscore spec lint` still runs against staged changes.
-- **User-approval gate:** The consolidated staged diff is presented for user approval before publication policy may commit or push it.
+- **Commit/push gates:** The consolidated staged diff is gated by `implementation.pre_commit` before commit and `implementation.pre_push` before push, evaluated via the reviewer-gates loader + runner (same as Plan-sourced steps 13–14). A `type: human` reviewer on the gate is the human-approval checkpoint; a `noop`/`deterministic`-only gate releases autonomously.
 - **Promotion:** On completion, hand off to `specstudio:verify` (or hand-back if unshipped), same as Plan-sourced.
 
 ### Idea-sourced (single-pass)
@@ -84,7 +87,7 @@ No Feature or Plan exists. The skill resolves an Idea directly. Same single-pass
 - **Source of truth:** The Idea's `## Recommended Direction` section (instead of Feature ACs).
 - **Verifies: trailer:** Uses `Verifies: idea:<slug>` (instead of Feature AC IDs).
 
-All other single-pass behavior (no subagents, no batch dispatch, no task-status writes, lint, user-approval gate, publication milestone) is identical to Feature-sourced.
+All other single-pass behavior (no subagents, no batch dispatch, no task-status writes, lint, the `implementation.pre_commit`/`pre_push` gates, publication milestone) is identical to Feature-sourced.
 
 ## Checklist (per invocation)
 
@@ -103,9 +106,9 @@ Create a task for each and complete in order:
 9. **Lint.** Run `specscore spec lint`. On failure (typically Plan-file edits the skill produced), run `specscore spec lint --fix` exactly once, re-lint. On persistent failure: unstage Plan-file changes (`git restore --staged spec/plans/<slug>.md`), surface violations with rule IDs, stop the batch.
 10. **Inline self-review.** Scan staged Plan-file changes for: (a) Status transitions violating the state machine (e.g., `done → in-progress` without user action), (b) writeback bodies still containing placeholder tokens (`<!-- implement: pending -->`, `TBD`, `TODO`), (c) Status values outside the canonical four-token set. Findings stop the batch.
 11. **Emit `implement.batch-started`** (already done on step 3 — confirm payload was emitted: Plan slug, batch number, task numbers, dispatched count).
-12. **Present consolidated diff.** User-facing message contains: per-task status summary (including any `DONE_WITH_CONCERNS` concerns or `BLOCKED` reports), the staged diff (or per-file summary if very large), the proposed commit-message template with mandatory `Verifies:` trailer listing every AC ID covered by **successful** tasks (DONE / DONE_WITH_CONCERNS only; BLOCKED tasks' ACs NOT included), and an explicit approval instruction. Also state that publication policy will be resolved after approval and may leave the change unstaged, stage it, commit it, or commit and push it.
-13. **User-approval gate.** Wait for explicit approval phrase (`approve`, `approved`, `accept`, `accepted`, `lgtm`, or semantic equivalents in any language). On vague positive (`looks good`, `ship it`, `🚀`): ask one explicit confirmation question — never silently advance.
-14. **Publication checkpoint.** Build the approved manifest from subagent-touched code paths, Plan status/writeback paths, single-pass edits, and any CLI-reported touched paths. Resolve and disclose [publication-policy.md](../shared/publication-policy.md) for milestone `implement.batch-approved` in Plan-sourced mode or `implement.single-pass-approved` in Feature/Idea-sourced mode. If the allowed actions include `commit`, commit only after the unrelated-index check and verify the new `HEAD` contains the required `Verifies:` trailer. If actions do not include `commit`, refuse to advance until the user commits the approved set manually with the trailer. If actions include `push`, run branch safety first. Do not amend, squash, sign, or include non-manifest changes unless the user explicitly broadens the manifest.
+12. **Present consolidated diff.** User-facing message contains: per-task status summary (including any `DONE_WITH_CONCERNS` concerns or `BLOCKED` reports), the staged diff (or per-file summary if very large), and the proposed commit-message template with mandatory `Verifies:` trailer listing every AC ID covered by **successful** tasks (DONE / DONE_WITH_CONCERNS only; BLOCKED tasks' ACs NOT included). This consolidated diff is the artifact the `implementation.pre_commit` gate (step 13) reviews; when that gate includes a `type: human` reviewer the message also carries the explicit approval instruction the human responds to (when the gate is `noop`/`deterministic`-only, no approval prompt is needed). Also state that publication policy will be resolved at the checkpoint and may leave the change unstaged, stage it, commit it, or commit and push it.
+13. **`implementation.pre_commit` gate (before the commit).** Approval is gate-config-driven — the skill carries no hardcoded per-batch user-approval step. Fire the `implementation.pre_commit` gate-point event ([events.md](../shared/events.md), multi-fire — once per commit) and evaluate `gates.implementation.pre_commit`: load + validate the gate's reviewer list via [reviewer-gates/loader.md](../shared/reviewer-gates/loader.md) (event key `implementation.pre_commit`), then run it via [reviewer-gates/runner.md](../shared/reviewer-gates/runner.md). The consolidated staged diff is the artifact under review; a `type: human` reviewer, if configured, reviews that diff and the runner uses this skill's existing approval-phrase recognizer (`approve`/`approved`/`accept`/`accepted`/`lgtm` or semantic equivalents → `Approved`; a vague positive like `looks good`/`ship it`/`🚀` → ask one explicit confirmation question, never silently advance; an explicit change request → `Issues Found`). Proceed to step 14 **only when the gate releases (`Approved`)**. On `Issues Found`: block the commit, surface the gate's `Blocker` findings to the user, and do not advance. With a `noop`/`deterministic`-only gate (no `type: human`) the gate releases autonomously and the commit happens with no human prompt; with a `type: human` reviewer the skill stops for that human before committing. Because `implementation.pre_commit` is multi-fire, each commit is an independent gate evaluation (a fresh first-pass run per the runner's per-occurrence contract). The boundary at which commits are produced (per-task / per-batch / per-plan) is resolved per the `autonomy` namespace (commit cadence — Task 4 of this Plan), not here.
+14. **Publication checkpoint.** Build the approved manifest from subagent-touched code paths, Plan status/writeback paths, single-pass edits, and any CLI-reported touched paths. Resolve and disclose [publication-policy.md](../shared/publication-policy.md) for milestone `implement.batch-approved` in Plan-sourced mode or `implement.single-pass-approved` in Feature/Idea-sourced mode. If the allowed actions include `commit`, commit only after the unrelated-index check and verify the new `HEAD` contains the required `Verifies:` trailer. If actions do not include `commit`, refuse to advance until the user commits the approved set manually with the trailer. If actions include `push`: first fire the `implementation.pre_push` gate-point event ([events.md](../shared/events.md)) and evaluate `gates.implementation.pre_push` via [reviewer-gates/loader.md](../shared/reviewer-gates/loader.md) (event key `implementation.pre_push`) + [reviewer-gates/runner.md](../shared/reviewer-gates/runner.md); the push proceeds **only when that gate releases (`Approved`)**, and on `Issues Found` the push is blocked and the gate's findings surfaced. The `pre_push` gate **complements** publication-policy push branch-safety — it does not replace it: run branch safety as well before any push. Do not amend, squash, sign, or include non-manifest changes unless the user explicitly broadens the manifest.
 15. **Emit `implement.batch-completed`.** Payload: Plan slug, batch number, task numbers, commit SHA when one exists (from `git rev-parse HEAD` after the user commit or policy-created commit), `Verifies:` AC IDs covered, and `publication_result`.
 16. **Emit `plan.updated`.** Apply publication policy for `plan.updated` only to any Plan-file changes not already included in the batch milestone, then emit with `publication_result`. Payload's `changed_sections` lists every task slug whose Status or body changed in this batch. `change_summary` factual, ≤2 sentences.
 17. **Loop back to step 2.** Compute next batch; if none, transition.
@@ -160,11 +163,11 @@ Cap concurrent subagents at **5 per batch** in MVP. When the next executable bat
 2. Offer three resolutions: (a) rewrite Plan with explicit `**Depends-On:**` that serializes the conflicting tasks, (b) manual `git restore --staged <path>` + re-run, (c) abort and investigate.
 3. On (a) or (c): unstage ALL batch changes (`git restore --staged` per touched file), revert each task's `**Status:** in-progress → pending` (or → `blocked` if conflict implies a missing dependency), stop.
 
-**Mixed terminal statuses are NOT conflicts.** A batch where 3 subagents are DONE and 2 are BLOCKED is a partial success: present the 3 DONE subagents' diff for user approval and commit, mark the 2 BLOCKED tasks `**Status:** blocked` (with cited causes), advance. Atomic-rollback semantics apply only to *line-overlap conflicts*, not to mixed-terminal batches.
+**Mixed terminal statuses are NOT conflicts.** A batch where 3 subagents are DONE and 2 are BLOCKED is a partial success: present the 3 DONE subagents' diff, run it through the `implementation.pre_commit` gate, and commit on release, mark the 2 BLOCKED tasks `**Status:** blocked` (with cited causes), advance. Atomic-rollback semantics apply only to *line-overlap conflicts*, not to mixed-terminal batches.
 
 ## Staging, Publication Policy, and Commit-Message Template
 
-Subagents stage their own changes so the parent can aggregate and review a consolidated diff. The parent skill applies [publication-policy.md](../shared/publication-policy.md) only after the consolidated diff has passed conflict detection, lint, self-review, and user approval. Policy does not persist as an `implement`-specific override; durable preferences are saved only through `specscore publication set`.
+Subagents stage their own changes so the parent can aggregate and review a consolidated diff. The parent skill applies [publication-policy.md](../shared/publication-policy.md) only after the consolidated diff has passed conflict detection, lint, self-review, and the `implementation.pre_commit` gate's release (step 13). Policy does not persist as an `implement`-specific override; durable preferences are saved only through `specscore publication set`.
 
 ### Policy-created commits
 
@@ -172,11 +175,11 @@ When the resolved policy allows `commit`, the skill MAY run `git commit` using t
 
 The override MUST NOT:
 
-- Bypass the consolidated-diff approval gate.
+- Bypass the `implementation.pre_commit` gate (commit only after it releases `Approved`).
 - Commit before conflict detection, lint, and inline self-review pass.
 - Commit unrelated staged or unstaged files.
 - Amend, squash, sign, or otherwise rewrite history unless the user leaves `implement` and explicitly requests that separate git operation.
-- Push without branch-policy approval and an upstream branch.
+- Push before the `implementation.pre_push` gate releases, or without branch-policy approval and an upstream branch.
 - Allow subagents to commit; subagents always stage only.
 
 ### Commit-message template (provided every batch / single-pass)
@@ -253,11 +256,11 @@ Findings stop the batch and prompt the user — never auto-fix beyond the one `-
 
 **Deliberate departure from `superpowers:subagent-driven-development`.** That skill dispatches a spec-compliance reviewer AND a code-quality reviewer per task. `implement` does **neither** in MVP.
 
-- The user-approval gate on the consolidated batch diff IS the quality gate `implement` enforces.
+- The `implementation.pre_commit` / `implementation.pre_push` reviewer gates on the consolidated batch diff ARE the quality gates `implement` enforces. What sits in each gate (a `type: human` checkpoint, an automated `deterministic` check, or an auto-approving `noop`) is project config, not hardcoded here.
 - Code-quality and architecture review are the responsibility of `specstudio:review` downstream.
 - Spec-compliance review for *the Feature spec* is owned by `specstudio:specify`'s reviewer subagent, not `implement`.
 
-This keeps `implement` focused on dispatch + staging + per-batch user approval, and avoids triple-gating inside the loop.
+This keeps `implement` focused on dispatch + staging + firing the gate-point events, and avoids triple-gating inside the loop. The `implement`-specific reviewer subagents this section forgoes are distinct from the configured `implementation.pre_commit`/`pre_push` gate reviewers, which `implement` fires but does not itself author.
 
 ## Promotion Boundary
 
@@ -294,9 +297,10 @@ The skill MUST NOT yes-machine weak Plans or silently retry blocked subagents. W
 - [ ] Every subagent returned a terminal status (DONE / DONE_WITH_CONCERNS / BLOCKED) or was re-dispatched on NEEDS_CONTEXT
 - [ ] Conflict detection ran post-batch; conflicts surfaced and resolved per the three resolution paths
 - [ ] Consolidated batch diff presented with: per-task status summary, staged diff (or summary), `Verifies:` trailer template covering only successful tasks' AC IDs
-- [ ] User explicitly approved each batch (explicit phrase OR vague + confirmation)
-- [ ] Publication policy was resolved and disclosed at each approved implementation milestone
-- [ ] Approved staged set was committed before the next batch dispatched, either by the user or by policy-created commit after the approval gate
+- [ ] `implementation.pre_commit` fired before each commit and released (`Approved`) before committing; on `Issues Found` the commit was blocked and findings surfaced. Approval was gate-config-driven (a `noop`/`deterministic`-only gate committed with no human prompt; a `type: human` reviewer stopped for that human) — no hardcoded per-batch user-approval step ran
+- [ ] `implementation.pre_push` fired before any push/promote and released (`Approved`) before pushing; on `Issues Found` the push was blocked and findings surfaced
+- [ ] Publication policy was resolved and disclosed at each approved implementation milestone, and push branch-safety still ran (the `pre_push` gate complements it, does not replace it)
+- [ ] Approved staged set was committed before the next batch dispatched, either by the user or by policy-created commit after the `implementation.pre_commit` gate released
 - [ ] Plan `**Status:**` field updated correctly per the state machine (no fifth tokens; no auto-fix violating the canonical four-token set)
 - [ ] In `stub` mode: every successful task's placeholder body replaced with a SHA-free 1–2 sentence summary; bundled with code in one staging set
 - [ ] In `full` mode: NO task body modified by the skill (only Status writes)
@@ -308,9 +312,13 @@ The skill MUST NOT yes-machine weak Plans or silently retry blocked subagents. W
 
 ## Red Flags
 
-- Running `git commit` before explicit batch approval and an allowed publication action
+- Running `git commit` before the `implementation.pre_commit` gate releases (`Approved`) and an allowed publication action exists
+- Running `git push` before the `implementation.pre_push` gate releases (`Approved`)
+- Carrying a hardcoded, unconditional per-batch user-approval step (an always-required approval phrase) instead of letting `gates.implementation.pre_commit`'s reviewers decide — the per-batch human checkpoint exists iff a `type: human` reviewer is configured on that gate
+- Prompting a human to approve a commit when `gates.implementation.pre_commit` has only `noop`/`deterministic` reviewers (autonomous commit, no prompt)
 - Running `git commit` or `git push` before publication policy is resolved and disclosed for the approved milestone
-- Letting publication policy bypass the consolidated diff approval gate or commit unrelated staged paths
+- Letting the `pre_push` gate substitute for publication-policy push branch-safety (they are complementary — branch-safety still runs)
+- Letting publication policy bypass the `implementation.pre_commit` gate or commit unrelated staged paths
 - Auto-advancing past a `BLOCKED` subagent without surfacing to the user
 - Silently retrying a `BLOCKED` task without user resolution
 - Introducing a fifth `**Status:**` token (anything outside `{pending, in-progress, done, blocked}`)
@@ -333,7 +341,9 @@ The skill MUST NOT yes-machine weak Plans or silently retry blocked subagents. W
 - [philosophy.md](../shared/philosophy.md) — shared tenets.
 - [path-conventions.md](../shared/path-conventions.md) — `spec/` vs `docs/` rules.
 - [publication-policy.md](../shared/publication-policy.md) — checkpoint resolution, manifest safety, first-run preference prompt, and publication disclosure.
-- [events.md](../shared/events.md) — event payloads emitted by this skill.
+- [reviewer-gates/loader.md](../shared/reviewer-gates/loader.md) — load + validate the `gates.implementation.pre_commit` / `gates.implementation.pre_push` reviewer list from `specscore.yaml`.
+- [reviewer-gates/runner.md](../shared/reviewer-gates/runner.md) — evaluate a loaded gate (serial dispatch, grade/verdict, `Approved` vs `Issues Found`, per-occurrence multi-fire for the gate-point events).
+- [events.md](../shared/events.md) — event payloads emitted by this skill, including the `implementation.pre_commit` / `implementation.pre_push` gate-point events.
 - [sidekick-capture.md](../shared/sidekick-capture.md) — sidekick-idea handling during the skill's flow.
 - [PRINCIPLES.md](../../PRINCIPLES.md) — repo-level principles (user-attention economy, batched questions, parallel work while user is idle).
 - `superpowers:subagent-driven-development` — adopted four-status protocol; two deliberate departures documented above (publication-policy checkpoints after batch approval; no code-quality reviewer subagent).
