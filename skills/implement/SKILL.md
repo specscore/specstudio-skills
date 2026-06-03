@@ -107,8 +107,8 @@ Create a task for each and complete in order:
 10. **Inline self-review.** Scan staged Plan-file changes for: (a) Status transitions violating the state machine (e.g., `done → in-progress` without user action), (b) writeback bodies still containing placeholder tokens (`<!-- implement: pending -->`, `TBD`, `TODO`), (c) Status values outside the canonical four-token set. Findings stop the batch.
 11. **Emit `implement.batch-started`** (already done on step 3 — confirm payload was emitted: Plan slug, batch number, task numbers, dispatched count).
 12. **Present consolidated diff.** User-facing message contains: per-task status summary (including any `DONE_WITH_CONCERNS` concerns or `BLOCKED` reports), the staged diff (or per-file summary if very large), and the proposed commit-message template with mandatory `Verifies:` trailer listing every AC ID covered by **successful** tasks (DONE / DONE_WITH_CONCERNS only; BLOCKED tasks' ACs NOT included). This consolidated diff is the artifact the `implementation.pre_commit` gate (step 13) reviews; when that gate includes a `type: human` reviewer the message also carries the explicit approval instruction the human responds to (when the gate is `noop`/`deterministic`-only, no approval prompt is needed). Also state that publication policy will be resolved at the checkpoint and may leave the change unstaged, stage it, commit it, or commit and push it.
-13. **`implementation.pre_commit` gate (before the commit).** Approval is gate-config-driven — the skill carries no hardcoded per-batch user-approval step. Fire the `implementation.pre_commit` gate-point event ([events.md](../shared/events.md), multi-fire — once per commit) and evaluate `gates.implementation.pre_commit`: load + validate the gate's reviewer list via [reviewer-gates/loader.md](../shared/reviewer-gates/loader.md) (event key `implementation.pre_commit`), then run it via [reviewer-gates/runner.md](../shared/reviewer-gates/runner.md). The consolidated staged diff is the artifact under review; a `type: human` reviewer, if configured, reviews that diff and the runner uses this skill's existing approval-phrase recognizer (`approve`/`approved`/`accept`/`accepted`/`lgtm` or semantic equivalents → `Approved`; a vague positive like `looks good`/`ship it`/`🚀` → ask one explicit confirmation question, never silently advance; an explicit change request → `Issues Found`). Proceed to step 14 **only when the gate releases (`Approved`)**. On `Issues Found`: block the commit, surface the gate's `Blocker` findings to the user, and do not advance. With a `noop`/`deterministic`-only gate (no `type: human`) the gate releases autonomously and the commit happens with no human prompt; with a `type: human` reviewer the skill stops for that human before committing. Because `implementation.pre_commit` is multi-fire, each commit is an independent gate evaluation (a fresh first-pass run per the runner's per-occurrence contract). The boundary at which commits are produced (per-task / per-batch / per-plan) is resolved per the `autonomy` namespace (commit cadence — Task 4 of this Plan), not here.
-14. **Publication checkpoint.** Build the approved manifest from subagent-touched code paths, Plan status/writeback paths, single-pass edits, and any CLI-reported touched paths. Resolve and disclose [publication-policy.md](../shared/publication-policy.md) for milestone `implement.batch-approved` in Plan-sourced mode or `implement.single-pass-approved` in Feature/Idea-sourced mode. If the allowed actions include `commit`, commit only after the unrelated-index check and verify the new `HEAD` contains the required `Verifies:` trailer. If actions do not include `commit`, refuse to advance until the user commits the approved set manually with the trailer. If actions include `push`: first fire the `implementation.pre_push` gate-point event ([events.md](../shared/events.md)) and evaluate `gates.implementation.pre_push` via [reviewer-gates/loader.md](../shared/reviewer-gates/loader.md) (event key `implementation.pre_push`) + [reviewer-gates/runner.md](../shared/reviewer-gates/runner.md); the push proceeds **only when that gate releases (`Approved`)**, and on `Issues Found` the push is blocked and the gate's findings surfaced. The `pre_push` gate **complements** publication-policy push branch-safety — it does not replace it: run branch safety as well before any push. Do not amend, squash, sign, or include non-manifest changes unless the user explicitly broadens the manifest.
+13. **`implementation.pre_commit` gate (before the commit).** Approval is gate-config-driven — the skill carries no hardcoded per-batch user-approval step. Fire the `implementation.pre_commit` gate-point event ([events.md](../shared/events.md), multi-fire — once per commit) and evaluate `gates.implementation.pre_commit`: load + validate the gate's reviewer list via [reviewer-gates/loader.md](../shared/reviewer-gates/loader.md) (event key `implementation.pre_commit`), then run it via [reviewer-gates/runner.md](../shared/reviewer-gates/runner.md). The consolidated staged diff is the artifact under review; a `type: human` reviewer, if configured, reviews that diff and the runner uses this skill's existing approval-phrase recognizer (`approve`/`approved`/`accept`/`accepted`/`lgtm` or semantic equivalents → `Approved`; a vague positive like `looks good`/`ship it`/`🚀` → ask one explicit confirmation question, never silently advance; an explicit change request → `Issues Found`). Proceed to step 14 **only when the gate releases (`Approved`)**. On `Issues Found`: block the commit, surface the gate's `Blocker` findings to the user, and do not advance. With a `noop`/`deterministic`-only gate (no `type: human`) the gate releases autonomously and the commit happens with no human prompt; with a `type: human` reviewer the skill stops for that human before committing. Because `implementation.pre_commit` is multi-fire, each commit is an independent gate evaluation (a fresh first-pass run per the runner's per-occurrence contract). The boundary at which commits are produced (per-task / per-batch / per-plan) is resolved per the `autonomy:` namespace — see [Commit Cadence and the `autonomy:` Namespace](#commit-cadence-and-the-autonomy-namespace) — not here.
+14. **Publication checkpoint.** Build the approved manifest from subagent-touched code paths, Plan status/writeback paths, single-pass edits, and any CLI-reported touched paths. Resolve and disclose [publication-policy.md](../shared/publication-policy.md) for milestone `implement.batch-approved` in Plan-sourced mode or `implement.single-pass-approved` in Feature/Idea-sourced mode. If the allowed actions include `commit`, commit only after the unrelated-index check and verify the new `HEAD` contains the required `Verifies:` trailer. If actions do not include `commit`, refuse to advance until the user commits the approved set manually with the trailer. If actions include `push`: first fire the `implementation.pre_push` gate-point event ([events.md](../shared/events.md)) and evaluate `gates.implementation.pre_push` via [reviewer-gates/loader.md](../shared/reviewer-gates/loader.md) (event key `implementation.pre_push`) + [reviewer-gates/runner.md](../shared/reviewer-gates/runner.md); the push proceeds **only when that gate releases (`Approved`)**, and on `Issues Found` the push is blocked and the gate's findings surfaced. When that gate includes a `type: human` reviewer, present a **cumulative review** as the reviewer's context (see [Cumulative Review at the Push Gate](#cumulative-review-at-the-push-gate)) — the full set of commits accumulated during the run, not merely the final commit. The `pre_push` gate **complements** publication-policy push branch-safety — it does not replace it: branch-safety is a non-negotiable floor that runs on every push (see [Push Safety Floor](#push-safety-floor)). Do not amend, squash, sign, or include non-manifest changes unless the user explicitly broadens the manifest.
 15. **Emit `implement.batch-completed`.** Payload: Plan slug, batch number, task numbers, commit SHA when one exists (from `git rev-parse HEAD` after the user commit or policy-created commit), `Verifies:` AC IDs covered, and `publication_result`.
 16. **Emit `plan.updated`.** Apply publication policy for `plan.updated` only to any Plan-file changes not already included in the batch milestone, then emit with `publication_result`. Payload's `changed_sections` lists every task slug whose Status or body changed in this batch. `change_summary` factual, ≤2 sentences.
 17. **Loop back to step 2.** Compute next batch; if none, transition.
@@ -153,6 +153,28 @@ c. **Inference-and-summary instruction.** "Infer your implementation approach fr
 
 Cap concurrent subagents at **5 per batch** in MVP. When the next executable batch has > 5 tasks, dispatch the first 5 and queue the rest; dispatch each queued task as a concurrent slot frees. The cap may become configurable per project via `specscore.yaml` in a future revision — MVP hardcodes 5.
 
+## Commit Cadence and the `autonomy:` Namespace
+
+`implement` execution knobs live under a top-level `autonomy:` key in `specscore.yaml`, keyed by skill name (MVP: `autonomy.implement`). This is a concern distinct from `gates:` — `gates:` declares *who approves* each event; `autonomy:` declares *execution knobs*. Workflow-step names (e.g., `implement:`) MUST NOT appear as top-level config keys; the knobs are reached only via `autonomy.implement.*`.
+
+### `commit_cadence`
+
+`autonomy.implement.commit_cadence` selects the boundary at which the skill commits:
+
+| Value | Boundary |
+|---|---|
+| `task` | one commit per task |
+| `batch` | one commit per integrated batch *(default when unset)* |
+| `plan` | one commit at run end |
+
+Resolution follows the publication-policy **scope ladder** (run → session → project → user), narrower overriding broader. When unset at every scope, the cadence is `batch`. Example: `autonomy.implement.commit_cadence: task` at project scope with no narrower (run/session) override resolves to `task` → one commit per task.
+
+`commit_cadence: plan` is allowed, but the skill MUST warn that it defers all commits to run end, weakening per-batch revert granularity (a failure late in the run cannot be reverted batch-by-batch). No additional guard mechanism is provided in MVP — the warning is the safeguard.
+
+### Cadence drives `pre_commit` firing
+
+The resolved cadence determines how many commits a run produces, and `implementation.pre_commit` fires **once per commit** (per task, per batch, or once for the plan) — each firing an independent gate evaluation per the runner's multi-fire semantics. So a `batch`-cadence run that produces three batch commits fires `implementation.pre_commit` three times, once before each commit. The gate-evaluation mechanics live in Checklist step 13; this section owns only *where the commit boundaries fall*.
+
 ## Conflict Detection and Rollback
 
 **Detection: line-overlap only** (post-batch). Run `git diff --staged` after all subagents return terminal statuses. Two subagents are in conflict when their staged changes touch the same file at overlapping line ranges. Semantic conflicts (two subagents implementing the same Feature differently in different files) are explicitly out of MVP scope.
@@ -163,7 +185,33 @@ Cap concurrent subagents at **5 per batch** in MVP. When the next executable bat
 2. Offer three resolutions: (a) rewrite Plan with explicit `**Depends-On:**` that serializes the conflicting tasks, (b) manual `git restore --staged <path>` + re-run, (c) abort and investigate.
 3. On (a) or (c): unstage ALL batch changes (`git restore --staged` per touched file), revert each task's `**Status:** in-progress → pending` (or → `blocked` if conflict implies a missing dependency), stop.
 
-**Mixed terminal statuses are NOT conflicts.** A batch where 3 subagents are DONE and 2 are BLOCKED is a partial success: present the 3 DONE subagents' diff, run it through the `implementation.pre_commit` gate, and commit on release, mark the 2 BLOCKED tasks `**Status:** blocked` (with cited causes), advance. Atomic-rollback semantics apply only to *line-overlap conflicts*, not to mixed-terminal batches.
+**Mixed terminal statuses are NOT conflicts.** A batch where 3 subagents are DONE and 2 are BLOCKED is a partial success: present the 3 DONE subagents' diff, run it through the `implementation.pre_commit` gate, and commit on release, mark the 2 BLOCKED tasks `**Status:** blocked` (with cited causes), advance. Atomic-rollback semantics apply only to *line-overlap conflicts*, not to mixed-terminal batches. (A BLOCKED subagent is also an anomaly-halt trigger — see [Anomaly Halts and Re-arm](#anomaly-halts-and-re-arm).)
+
+## Anomaly Halts and Re-arm
+
+Some failures are **execution-state anomalies**, not gate verdicts — a reviewer does not "approve" a merge conflict or a BLOCKED task. Regardless of gate configuration — **including a fully autonomous (`noop`) `pre_commit` gate** — `implement` MUST halt the run on any of:
+
+- **(a)** a sibling integration/merge conflict (the line-overlap conflict of [Conflict Detection and Rollback](#conflict-detection-and-rollback));
+- **(b)** a BLOCKED subagent;
+- **(c)** a lint failure that `specscore spec lint --fix` did not resolve in its single pass;
+- **(d)** source-Feature drift (the Plan's source Feature regressed below `Approved`).
+
+These halts are **not subject to the gate verdict** — an autonomous gate does not suppress them.
+
+On an anomaly-halt, `implement` MUST stop, name the **specific cause**, perform **no auto-resolution**, and **not advance**:
+
+| Anomaly | Surfaced cause |
+|---|---|
+| sibling conflict | the conflicting task numbers, file paths, and overlapping line range |
+| BLOCKED subagent | the BLOCKED task and its cited reason |
+| unresolved lint | the remaining lint violations (with rule IDs) |
+| source-Feature drift | the drifted Feature and its current status |
+
+### Explicit re-arm
+
+After the user addresses the cause, `implement` MUST NOT auto-resume when the anomaly clears. It resumes autonomous execution only after the user issues an **explicit re-arm signal** — the lowercase standalone token **`continue`** (recognized in the same style as the approval phrases).
+
+A re-arm re-enables autonomy for the **remainder of the current `implement` run only**. A subsequent run starts from the resolved `autonomy:` / `gates:` config — never from a prior run's re-armed state.
 
 ## Staging, Publication Policy, and Commit-Message Template
 
@@ -262,6 +310,19 @@ Findings stop the batch and prompt the user — never auto-fix beyond the one `-
 
 This keeps `implement` focused on dispatch + staging + firing the gate-point events, and avoids triple-gating inside the loop. The `implement`-specific reviewer subagents this section forgoes are distinct from the configured `implementation.pre_commit`/`pre_push` gate reviewers, which `implement` fires but does not itself author.
 
+## Cumulative Review at the Push Gate
+
+When `implement` fires `implementation.pre_push` and that gate includes a `type: human` reviewer, that human is the **single human checkpoint of an autonomous run**. `implement` MUST present a **cumulative review** as the reviewer's context — the full set of commits accumulated during the run, not merely the final commit:
+
+- **Default (small change):** the run's commits plus their **consolidated diff**, when the change is within ~**150 changed lines** *and* ~**10 files**.
+- **Large change:** when either bound is exceeded (more than ~150 changed lines OR more than ~10 files), switch to a **per-commit summary** — one entry per commit (subject + `Verifies:` AC IDs + file/line counts) — instead of the full consolidated diff.
+
+This threshold keeps the human's review context bounded; the cumulative set (commits, not just the tip) is presented either way.
+
+## Push Safety Floor
+
+Every promote/push MUST route through [`change-publication-policy`](../shared/publication-policy.md) push branch-safety, which denies `main`/`master`/`release/*` by default. Autonomy MUST NOT weaken or bypass this floor: a publication-policy-denied branch is refused regardless of `autonomy:` / `gates:` settings. A `type: deterministic` branch-safety reviewer configured on `implementation.pre_push` **complements** the publication-policy check (it can add project-specific refusals) — it is **not** a substitute for it. Both run on every push.
+
 ## Promotion Boundary
 
 The next skill is `specstudio:verify`, and only `specstudio:verify`.
@@ -300,6 +361,11 @@ The skill MUST NOT yes-machine weak Plans or silently retry blocked subagents. W
 - [ ] `implementation.pre_commit` fired before each commit and released (`Approved`) before committing; on `Issues Found` the commit was blocked and findings surfaced. Approval was gate-config-driven (a `noop`/`deterministic`-only gate committed with no human prompt; a `type: human` reviewer stopped for that human) — no hardcoded per-batch user-approval step ran
 - [ ] `implementation.pre_push` fired before any push/promote and released (`Approved`) before pushing; on `Issues Found` the push was blocked and findings surfaced
 - [ ] Publication policy was resolved and disclosed at each approved implementation milestone, and push branch-safety still ran (the `pre_push` gate complements it, does not replace it)
+- [ ] Commit cadence was resolved from `autonomy.implement.commit_cadence` (default `batch`) across the scope ladder; `pre_commit` fired once per commit the cadence produced; `commit_cadence: plan` emitted the revert-granularity warning
+- [ ] Autonomy config lived under the top-level `autonomy:` key (no workflow-step name as a top-level config key)
+- [ ] On any anomaly (sibling conflict / BLOCKED subagent / unresolved-after-`--fix` lint / source-Feature drift) the run halted regardless of gate config, surfaced the specific cause, and performed no auto-resolution
+- [ ] After an anomaly-halt, autonomous execution resumed only on an explicit `continue` re-arm, scoped to the current run
+- [ ] At a `pre_push` gate with a `type: human` reviewer, the cumulative set of run commits (consolidated diff, or per-commit summary when large) was presented — not just the final commit
 - [ ] Approved staged set was committed before the next batch dispatched, either by the user or by policy-created commit after the `implementation.pre_commit` gate released
 - [ ] Plan `**Status:**` field updated correctly per the state machine (no fifth tokens; no auto-fix violating the canonical four-token set)
 - [ ] In `stub` mode: every successful task's placeholder body replaced with a SHA-free 1–2 sentence summary; bundled with code in one staging set
@@ -319,6 +385,10 @@ The skill MUST NOT yes-machine weak Plans or silently retry blocked subagents. W
 - Running `git commit` or `git push` before publication policy is resolved and disclosed for the approved milestone
 - Letting the `pre_push` gate substitute for publication-policy push branch-safety (they are complementary — branch-safety still runs)
 - Letting publication policy bypass the `implementation.pre_commit` gate or commit unrelated staged paths
+- Auto-resuming after an anomaly-halt without an explicit `continue` re-arm, or carrying a re-armed state into a later run
+- Committing at a boundary other than the resolved `commit_cadence`, or omitting the `commit_cadence: plan` revert-granularity warning
+- Presenting only the final commit (not the cumulative run set) to a `type: human` reviewer at the `pre_push` gate
+- Placing autonomy knobs under a workflow-step top-level key (e.g., `implement:`) instead of `autonomy.implement.*`
 - Auto-advancing past a `BLOCKED` subagent without surfacing to the user
 - Silently retrying a `BLOCKED` task without user resolution
 - Introducing a fifth `**Status:**` token (anything outside `{pending, in-progress, done, blocked}`)
