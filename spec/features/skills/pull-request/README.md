@@ -91,7 +91,7 @@ The skill MUST gate, create one PR, and record — nothing more. It MUST NOT mer
 
 ### AC: verify-gate-blocks-pr-below-threshold (verifies REQ:deterministic-verify-reviewer)
 
-**Given** a `type: deterministic` verify reviewer whose `run:` command (e.g. `./scripts/coverage-gate.sh`) exits non-zero because coverage is below the project threshold
+**Given** a `type: deterministic` verify reviewer whose `run:` command (e.g. `./scripts/pull-request-gate.sh`) exits non-zero because coverage is below the project threshold
 **When** the skill runs the reviewer gate
 **Then** the gate returns `Issues Found` and no pull request is opened (the skill never reaches the push / `gh pr create` step).
 

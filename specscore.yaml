@@ -40,7 +40,7 @@ gates:
 #     reviewers:
 #       - name: verify
 #         type: deterministic
-#         run: ./scripts/coverage-gate.sh
+#         run: ./scripts/pull-request-gate.sh
 #       - name: user-approval
 #         type: human
 #
