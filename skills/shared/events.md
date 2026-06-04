@@ -231,6 +231,30 @@ payload:
 
 **Invariants:** emitted at most once per successful ship run; `from_status` is always `Implementing` and `to_status` always `Stable`; absent on every refusal and on the no-delegate hand-back.
 
+## Events Emitted by `specstudio:pull-request`
+
+### `pull_request.created`
+Fired **exactly once** on a successful pull-request creation — after the built-in `git push` + `gh pr create` path completes, or a configured `pull_request.delegate` returns explicit success. It is NOT emitted on any refusal (pre-flight or reviewer-gate) or when creation fails. Emitted after publication policy is applied for its checkpoint, carrying `publication_result`.
+
+```yaml
+event: pull_request.created
+version: 1
+payload:
+  pr_url: <url>                       # the created pull request's URL
+  pr_number: <int>                    # the created pull request's number
+  base_branch: <branch>              # the PR's base (repository default branch)
+  head_branch: <branch>              # the branch the PR was opened from
+  delegate: <delegate-skill-name> | null   # the delegate dispatched, or null for the built-in path
+  publication_result:
+    resolved_actions: [<stage | commit | push>, ...]
+    executed_actions: [<stage | commit | push>, ...]
+    skipped_actions: [{action: <...>, reason: <string>}]
+    commit_sha: <git SHA> | null
+    push_target: <remote>/<branch> | null
+```
+
+**Invariants:** emitted at most once per successful run; absent on every refusal and on any creation failure.
+
 ## Gate-Point Events (pre-action checkpoints)
 
 Gate-point events fire at **execution checkpoints** rather than at artifact-lifecycle transitions. Unlike the once-per-artifact lifecycle events above, a gate-point event MAY fire **multiple times within a single run**. They exist so that a [reviewer gate](../../spec/features/reviewer-gates/README.md) can be keyed on a pre-action checkpoint (`gates.implementation.pre_commit`, `gates.implementation.pre_push`) and evaluated independently at each occurrence per [reviewer-gates#req:gate-point-events-and-multi-fire](../../spec/features/reviewer-gates/README.md#req-gate-point-events-and-multi-fire).
@@ -273,6 +297,19 @@ payload:
 ```
 
 **Consumer:** a [reviewer gate](../../spec/features/reviewer-gates/README.md) keyed on `ship.pre_dispatch` evaluates the gate's reviewers; the consumer that *fires* it is `specstudio:ship` (see the [Ship Skill Feature](../../spec/features/skills/ship/README.md)).
+
+### `pull_request.pre_dispatch`
+A pre-action gate-point evaluated **once per `pull-request` run** — after `specstudio:pull-request`'s pre-flight machine gates pass and **before** it creates the pull request (built-in path or delegate). Like `ship.pre_dispatch`, it fires at most once per run, because the skill creates a single PR. Used as a reviewer-gate key (`gates.pull_request.pre_dispatch`), this is where the project's `type: deterministic` verify reviewer (tests, coverage) runs before any PR is opened.
+
+```yaml
+event: pull_request.pre_dispatch
+version: 1
+payload:
+  head_branch: <branch>      # the branch a PR would be opened from
+  run_id: <string>           # stable identifier for the enclosing pull-request run
+```
+
+**Consumer:** a [reviewer gate](../../spec/features/reviewer-gates/README.md) keyed on `pull_request.pre_dispatch` evaluates the gate's reviewers; the consumer that *fires* it is `specstudio:pull-request` (see the [Pull Request Skill Feature](../../spec/features/skills/pull-request/README.md)).
 
 ## Events Emitted by Transition Menus
 
@@ -389,11 +426,13 @@ Skills MUST NOT introduce additional configurable milestone names without adding
 | `implementation.pre_commit` | gate-point (implement-autonomy layer) | Pre-action checkpoint before each commit during an `implement` run (multi-fire; per-occurrence gate evaluation) |
 | `implementation.pre_push` | gate-point (implement-autonomy layer) | Pre-action checkpoint before a publish/promote during an `implement` run |
 | `ship.pre_dispatch` | gate-point (`specstudio:ship`) | Pre-action checkpoint after ship's pre-flight gates and before the deploy dispatch (single-fire per run) |
+| `pull_request.pre_dispatch` | gate-point (`specstudio:pull-request`) | Pre-action checkpoint after pull-request's pre-flight gates and before PR creation (single-fire per run) |
 | `implement.batch-started` | `specstudio:implement` | A Plan-sourced implementation batch dispatches |
 | `implement.batch-completed` | `specstudio:implement` | A Plan-sourced implementation batch reaches its publication checkpoint after user approval |
 | `verify.completed` | `specstudio:verify` | Verify report and index are written successfully |
 | `recap.completed` | `specstudio:recap` | Recap report and index are written successfully |
 | `ship.completed` | `specstudio:ship` | Delegate returned explicit success and the Feature transitioned Implementing → Stable (exactly once per successful ship) |
+| `pull_request.created` | `specstudio:pull-request` | Built-in path or delegate created the PR successfully (exactly once per successful run) |
 | `lifecycle.phase-skipped` | `specstudio:ideate`, `specstudio:specify` | User chose a non-default downstream option at a transition menu (before downstream invocation) |
 | `sidekick-idea.captured` | `specstudio:sidekick` | Successful seed write at `spec/ideas/seeds/<slug>.md` (exactly once per seed) |
 | `sidekick-idea.reviewed` | `specstudio:consilium` | Successful `consilium-review` task completion (exactly once per task) |

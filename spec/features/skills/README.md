@@ -55,6 +55,7 @@ The `review` skill is intended to perform multi-axis code review (correctness, r
 The `ship` skill is intended to run the pre-launch checklist, gated on `verify` and `review` having passed. Scope not yet defined — first step is to `ideate` it.
 | [init](init/README.md) | The specstudio:init skill bootstraps a SpecScore-managed project in one wizard-driven step: scaffolds the spec/ tree, creates specscore.yaml, installs the canonical Producer-shape instruction snippet into the appropriate platform agent-instructions file, and runs synchestra init for orchestration-side setup. Prefers specscore init and synchestra init CLIs with AI-agent fallback. Delegates CLI installation to specscore:install and specscore:install. Idempotent rerun and --update mode for drift reconciliation. |
 | [lint-fix-staging](lint-fix-staging/README.md) | Specstudio skills stage exactly the files specscore spec lint --fix reports as modified, instead of inferring the change set from a git diff. |
+| [pull-request](pull-request/README.md) | TODO: Add description. |
 
 ## Problem
 
