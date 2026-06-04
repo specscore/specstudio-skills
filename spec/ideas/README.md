@@ -15,12 +15,13 @@ Pre-spec one-pagers for SpecStudio. Each Idea is the output of `specstudio:ideat
 | [flexible-lifecycle-flows](flexible-lifecycle-flows.md) | Specified | 2026-05-25 | alexander.trakhimenok | flexible-lifecycle-flows |
 | [idea-skills-destination-resolution](idea-skills-destination-resolution.md) | Implemented | 2026-05-20 | alexandertrakhimenok | sidekick-capture/destination-resolution |
 | [implement-execution-topology](implement-execution-topology.md) | Specified | 2026-06-02 | alexander.trakhimenok | implement-execution-topology, implement-execution-topology/current-branch, implement-execution-topology/worktree-per-agent |
-| [implement-per-task-execution-mode](implement-per-task-execution-mode.md) | Draft | 2026-06-04 | alexander.trakhimenok | — |
-| [implement-workflow-execution-engine](implement-workflow-execution-engine.md) | Draft | 2026-06-04 | alexander.trakhimenok | — |
+| [implement-per-task-execution-mode](implement-per-task-execution-mode.md) | Approved | 2026-06-04 | alexander.trakhimenok | — |
+| [implement-workflow-execution-engine](implement-workflow-execution-engine.md) | Approved | 2026-06-04 | alexander.trakhimenok | — |
 | [manual-review-and-score-commands](manual-review-and-score-commands.md) | Implementing | 2026-05-28 | alex | score-command |
 | [retrofit-evaluation-skill](retrofit-evaluation-skill.md) | Draft | 2026-05-22 | alex | — |
 | [retrofit-skill](retrofit-skill.md) | Draft | 2026-05-22 | alex | — |
 | [reviewer-gates](reviewer-gates.md) | Specified | 2026-05-22 | alex | reviewer-gates |
+| [right-size-recap-cost](right-size-recap-cost.md) | Specified | 2026-06-04 | alexander.trakhimenok | skills/ship |
 | [seed-to-idea-promotion](seed-to-idea-promotion.md) | Specified | 2026-06-04 | alexander.trakhimenok | seed-to-idea-promotion |
 | [ship-skill](ship-skill.md) | Specified | 2026-06-03 | alexander.trakhimenok | skills/ship |
 | [sidekick-consilium](sidekick-consilium.md) | Specified | 2026-05-18 | alexandertrakhimenok | sidekick-consilium |

@@ -5,7 +5,7 @@
 **Status:** Approved
 **Date:** 2026-06-03
 **Owner:** alexander.trakhimenok
-**Source Ideas:** ship-skill
+**Source Ideas:** ship-skill, right-size-recap-cost
 **Supersedes:** —
 **Grade:** B
 
@@ -41,7 +41,13 @@ The skill MUST resolve the latest `spec/features/<feature-slug>/_verify/<sha>.md
 
 #### REQ: recap-contradiction-gate
 
-The skill MUST resolve the latest `spec/features/<feature-slug>/_recap/<sha>.md` report reachable at HEAD and MUST refuse unless that report's YAML summary contains zero `contradiction` verdicts. If no recap report exists, the skill MUST refuse and recommend `specstudio:recap` first. Recap is a mandatory upstream gate for ship in this MVP.
+When the recap gate is enforced (the default), the skill MUST resolve the latest `spec/features/<feature-slug>/_recap/<sha>.md` report reachable at HEAD and MUST refuse unless that report's YAML summary contains zero `contradiction` verdicts; if no recap report exists, the skill MUST refuse and recommend `specstudio:recap` first. When `recap.required_for_ship` is `false` in `specscore.yaml`, the skill MUST skip the recap gate entirely — performing no presence check and no contradiction check — and proceed. The waiver MUST be explicit: it is read from configuration only and MUST NOT be inferred from project size, token budget, or any heuristic. The `verify-green-gate` is unaffected by this waiver and remains mandatory in all cases.
+
+### Recap Gate Waiver
+
+#### REQ: recap-waiver-config-and-logging
+
+The recap gate's enforcement is governed by a top-level `recap:` config block in `specscore.yaml` exposing a single boolean field, `required_for_ship`, whose default is `true` (recap stays a mandatory upstream gate unless a project explicitly opts out). When the gate is waived (`required_for_ship: false`), the skill MUST NOT proceed silently: it MUST disclose the waiver in its pre-flight output AND MUST record `recap_status` (one of `enforced` | `waived`) on the `ship.completed` event payload so that every ship — waived or not — carries an auditable record of whether the drift gate ran. When the gate is enforced, `recap_status` is `enforced`.
 
 ### Reviewer Gate (Judgment and Human Go/No-Go)
 
@@ -101,9 +107,21 @@ The skill MUST NOT itself perform deploy mechanics (build, push, migrate), nor s
 
 ### AC: refuses-on-recap-contradiction (verifies REQ:recap-contradiction-gate)
 
-**Given** a Feature in `Implementing` whose latest `_recap/<sha>.md` report at HEAD contains at least one `contradiction` verdict (or no recap report exists)
+**Given** the recap gate is enforced (the default; `recap.required_for_ship` is absent or `true`) and a Feature in `Implementing` whose latest `_recap/<sha>.md` report at HEAD contains at least one `contradiction` verdict (or no recap report exists)
 **When** the skill runs pre-flight
 **Then** it refuses, names the contradiction/missing-recap condition, recommends `specstudio:recap`, and exits non-zero.
+
+### AC: proceeds-when-recap-waived (verifies REQ:recap-contradiction-gate)
+
+**Given** `recap.required_for_ship` is `false` in `specscore.yaml` and a Feature in `Implementing` whose verify report at HEAD is all-green, regardless of whether a recap report exists or what verdicts it carries
+**When** the skill runs pre-flight
+**Then** it skips the recap gate entirely (no presence check, no contradiction check), keeps the verify-green gate enforced, and proceeds to the reviewer gate.
+
+### AC: records-recap-waiver (verifies REQ:recap-waiver-config-and-logging)
+
+**Given** a ship run in which `recap.required_for_ship` is `false`
+**When** the skill completes pre-flight and (on success) emits `ship.completed`
+**Then** it discloses the waiver in its pre-flight output and the emitted `ship.completed` payload carries `recap_status: waived`; and when the gate is enforced instead, the payload carries `recap_status: enforced`.
 
 ### AC: gate-releases-only-on-all-approved (verifies REQ:ship-reviewer-gate)
 
@@ -169,13 +187,20 @@ Rehearse scenarios are deferred for this Feature pending the dependency resoluti
 - **Scheduling or dispatching work across runs** — belongs to a separate orchestration layer, not ship.
 - **An ordered delegate pipeline** — MVP dispatches exactly one delegate; ordered multi-step deploy choreography lives inside the delegate.
 - **A new reviewer `type`** — pre-flight handles machine checks; the reviewer gate uses the existing `ai`/`human` types only.
+- **Incremental / cheaper recap** — reducing recap's per-AC token cost (only re-narrating changed ACs) is the deferred fast-follow from the `right-size-recap-cost` Idea; this Feature only makes the gate waivable, not cheaper.
+- **Per-AC granular waiver** — `recap.required_for_ship` waives the gate for the whole Feature; selectively waiving individual ACs is out of scope.
+- **An auto-skip heuristic** — the waiver is an explicit config opt-in only; ship never infers it from project size or token budget.
 
 ## Open Questions
 
 - What is the canonical identifier for the ship gate-point event (e.g. `ship.pre_dispatch`), and is its registration owned by `reviewer-gates`?
-- Should the `recap`-contradiction gate ever be waivable (operator override with an audit record), or remain strictly mandatory?
 - Should ship own the `Implementing → Stable` transition directly, or delegate the status write to lifecycle tooling?
-- Where does the `ship:` config schema durably live — defined by this Feature, or owned by a dedicated config Feature alongside `reviewer-gates` and `change-publication-policy`?
+- Where do the `ship:` and the new `recap:` config schemas durably live — defined by this Feature, or owned by a dedicated config Feature alongside `reviewer-gates` and `change-publication-policy`? (The `recap.required_for_ship` field is documented here for now; durable schema ownership tracks this question.)
+- When the `review` stage ships, should a waived recap (`recap.required_for_ship: false`) also relax `review`'s own recap expectations, or does `review` keep an independent recap policy?
+
+## Sidekick Seeds Generated
+
+- [run-recap-s-per-ac-drift-narrators-via-dynamic-parallel](../../../ideas/seeds/run-recap-s-per-ac-drift-narrators-via-dynamic-parallel.md) — captured 2026-06-04 by specstudio:specify
 
 ---
 *This document follows the https://specscore.md/feature-specification*

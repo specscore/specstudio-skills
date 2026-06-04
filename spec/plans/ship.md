@@ -52,6 +52,13 @@ On explicit delegate success, transition the Feature `Implementing → Stable` b
 
 Encode the boundary as load-bearing skill text and config discipline: ship performs no deploy mechanics, sequencing, retry, rollback, canary, flag-flips, scheduling, or multi-feature coordination, and the `ship:` schema (owned by this Feature for the MVP) rejects fields expressing those concerns. Add the terminal `recap → ship` node to the `flexible-lifecycle-flows` valid-flow graph so ship is a recognized downstream of recap.
 
+## Deferred AC Coverage
+
+The following ACs were added to the Ship Feature by the `right-size-recap-cost` Idea (configurable recap-gate waiver) after this Plan was written. They are not yet tasked; they will be planned when the recap-waiver work is scheduled.
+
+- skills/ship#ac:proceeds-when-recap-waived
+- skills/ship#ac:records-recap-waiver
+
 ## Open Questions
 
 - Final canonical identifier for the ship gate-point event (`ship.pre_dispatch` is the working proposal); naming and registry ownership are confirmed with `reviewer-gates` during Task 3.
