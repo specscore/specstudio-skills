@@ -30,7 +30,20 @@ Ideas that can't be lint-clean aren't ready to be specified.
 - Raw, vague, or unvalidated concept.
 - User unsure whether an idea is worth building.
 - Multiple possible directions with no clear winner.
+- **Promoting a captured seed** — the user wants to turn an existing sidekick seed (`spec/ideas/seeds/<slug>.md`) into a full Idea. See [Promoting a Sidekick Seed](#promoting-a-sidekick-seed) below.
 - **Skip** when: the user already has an approved Idea or a clear, high-conviction feature to specify — go straight to `specstudio:specify`.
+
+## Promoting a Sidekick Seed
+
+Entry mode for turning an existing sidekick seed at `spec/ideas/seeds/<slug>.md` into a full Idea. Triggers: "promote seed `<slug>`", "pick up seed `<slug>`", "ideate from the `<slug>` seed". This path delegates the file transformation to the `specscore idea promote` CLI verb and then continues the normal authoring flow below — it does **not** hand-move the seed or hand-write the Idea.
+
+1. **Resolve the seed** at `spec/ideas/seeds/<slug>.md`. If it doesn't exist, say so and stop (don't silently scaffold a fresh Idea).
+2. **Consilium offer (unreviewed, manual pick).** A manually-picked seed is pulling from the queue out of band, so if the seed has **no `## Consilium Verdict` section**, OFFER to run the consilium first (`specstudio:consilium`) before promoting. Default to **yes** on an empty response (offer-and-default-to-yes). The offer is **suppressible**: when `specscore.yaml` has `promote.offer_consilium: false`, skip it and promote directly. The user MAY decline; on decline, promote without a verdict. Never hard-require a verdict, never block on decline.
+3. **Delegate to the CLI.** Run `specscore idea promote <slug>` (add `--verdict=<pointer|full|drop>` only to override the project default; `--force` only to overwrite an existing Idea at that slug). The verb owns the `git mv`, the seed→Idea transform, same-repo back-link reconciliation, and the cross-repo archive — do NOT replicate any of that by hand. Branch on exit status per [`../shared/cli-detection.md`](../shared/cli-detection.md):
+   - **exit `127`** — the verb isn't installed. Tell the user to update the `specscore` CLI (the `idea promote` verb ships in **v0.6.1+**). Do **not** fall back to hand-moving the seed — there is no fallback for promotion.
+   - **any other non-zero** — surface the error verbatim and stop; do not hand-edit.
+   - **success** — the verb prints the created Idea path (and the seed's fate: `moved` for same-repo, `archived` for cross-repo).
+4. **Fill the skeleton.** The verb leaves a lint-clean Idea at `spec/ideas/<slug>.md` with the seed body folded into `## Context` and HTML-comment prompts for the rest. Fill the remaining sections (Recommended Direction, Alternatives Considered, MVP Scope, Not Doing, Key Assumptions, SpecScore Integration, Open Questions) via the normal **Phase 3** authoring, then continue the **Checklist from step 6 (Lint)** onward — self-review, publication checkpoint, user review gate, and `idea.drafted` / `idea.approved` events all apply unchanged. Promotion yields a `**Status:** Draft` Idea.
 
 ## Philosophy
 
@@ -382,6 +395,8 @@ Promotion bookkeeping (`**Promotes To:**`, `**Status:** Approved → Specified`)
 - Empty "Not Doing" list
 - Writing to `docs/ideas/` instead of `spec/ideas/`
 - Manually editing `**Promotes To:**` (managed state)
+- Hand-moving a seed or hand-writing the Idea when promoting, instead of delegating to `specscore idea promote` (and falling back to a hand-move on exit `127` — promotion has no fallback)
+- Skipping the consilium offer when promoting an unreviewed, manually-picked seed (unless suppressed by `promote.offer_consilium: false`), or hard-requiring a verdict / blocking when the user declines
 - Jumping to `specstudio:specify`, `specstudio:plan`, or `specstudio:implement` before user approval
 - Silently bootstrapping `spec/ideas/` without telling the user
 - Looping `specscore spec lint --fix` more than once
