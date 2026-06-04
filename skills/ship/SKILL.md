@@ -32,7 +32,7 @@ Implements the [Ship Skill Feature](../../spec/features/skills/ship/README.md).
 - The invocation does not name exactly one Feature slug → print a usage error and exit non-zero. Ship operates on one Feature per invocation. (AC: `rejects-non-feature-input`)
 - The Feature's `**Status:**` is not `Implementing` → print the current Status and recommend the appropriate prior step (`Implementing` is the only status from which `Stable` is reachable). Write nothing; exit non-zero. (AC: `refuses-non-implementing-status`)
 - The Feature's latest verify report is missing or not all-green → recommend `specstudio:verify <feature-slug>`. Write nothing; exit non-zero. (AC: `refuses-when-verify-not-green`)
-- The Feature's latest recap report is missing or contains any contradiction → recommend `specstudio:recap <feature-slug>`. Write nothing; exit non-zero. (AC: `refuses-on-recap-contradiction`)
+- The Feature's latest recap report is missing or contains any contradiction **and the recap gate is enforced** (the default — `recap.required_for_ship` is absent or `true`) → recommend `specstudio:recap <feature-slug>`. Write nothing; exit non-zero. (AC: `refuses-on-recap-contradiction`) When `recap.required_for_ship` is `false`, this refusal does not apply — the recap gate is skipped (AC: `proceeds-when-recap-waived`).
 
 ## Pre-Flight
 
@@ -48,7 +48,11 @@ These are hard gates ship enforces itself by reading committed artifacts — it 
 
 3. **Verify-green gate.** Resolve the latest `spec/features/<feature-slug>/_verify/<sha>.md` report reachable at HEAD — prefer the report whose `<sha>` matches `git rev-parse --short HEAD`, otherwise the report whose embedded YAML `revision:` is most recent in branch history (the same resolution `specstudio:recap` uses). Parse its top-of-file YAML summary block. Refuse unless **every** AC verdict is `pass` (zero `fail`, zero `error`, zero `unmapped`). If `_verify/` is absent or contains no report reachable at HEAD, refuse. On any refusal, name the failing or missing condition, recommend `specstudio:verify <feature-slug>`, write nothing, and exit non-zero. (AC: `refuses-when-verify-not-green`)
 
-4. **Recap-no-contradiction gate.** Resolve the latest `spec/features/<feature-slug>/_recap/<sha>.md` report reachable at HEAD using the same resolution rule as step 3. Parse its YAML summary's `drift:` list. Refuse unless it contains **zero** `contradiction` verdicts. If `_recap/` is absent or contains no report reachable at HEAD, refuse. On any refusal, name the contradiction or missing-recap condition, recommend `specstudio:recap <feature-slug>`, write nothing, and exit non-zero. Recap is a **strictly mandatory** upstream gate for ship — there is no waiver path in the MVP. (AC: `refuses-on-recap-contradiction`)
+4. **Recap-no-contradiction gate (config-gated).** First read `recap.required_for_ship` from `specscore.yaml` (default `true` when the `recap:` block or the key is absent). The waiver is read from config **only** — never inferred from project size, token budget, or any heuristic.
+   - **Enforced (`true`, the default):** Resolve the latest `spec/features/<feature-slug>/_recap/<sha>.md` report reachable at HEAD using the same resolution rule as step 3. Parse its YAML summary's `drift:` list. Refuse unless it contains **zero** `contradiction` verdicts. If `_recap/` is absent or contains no report reachable at HEAD, refuse. On any refusal, name the contradiction or missing-recap condition, recommend `specstudio:recap <feature-slug>`, write nothing, and exit non-zero. (AC: `refuses-on-recap-contradiction`)
+   - **Waived (`false`):** Skip this gate entirely — perform **no** recap-presence check and **no** contradiction check — and proceed to the reviewer gate. The waiver MUST be disclosed in pre-flight output (see step 5 of the checklist / `## Recap-Gate Waiver` below); it is never silent. (AC: `proceeds-when-recap-waived`)
+
+   The waiver applies **only** to the recap gate. The verify-green gate (step 3) is unaffected and remains mandatory in all cases.
 
 ## Checklist
 
@@ -94,7 +98,24 @@ ship:
 Runs **only** on the delegate's explicit success (never on refusal or hand-back).
 
 1. **Transition.** Transition the Feature `Implementing → Stable` by invoking `specscore feature change-status <feature-slug> --to Stable`. Ship owns this status write; `Implementing → Stable` is the only transition ship performs. (AC: `transitions-to-stable-on-success`)
-2. **Publication + event.** Build the checkpoint manifest, apply [publication-policy.md](../shared/publication-policy.md) for the `ship.completed` checkpoint, then emit `ship.completed` **exactly once** with `publication_result` per [events.md](../shared/events.md). The event carries `feature_slug`, `revision`, the dispatched `delegate`, and `from_status: Implementing` / `to_status: Stable`. No `ship.completed` is emitted on any refusal or on the no-delegate hand-back. (AC: `emits-ship-completed-once`)
+2. **Publication + event.** Build the checkpoint manifest, apply [publication-policy.md](../shared/publication-policy.md) for the `ship.completed` checkpoint, then emit `ship.completed` **exactly once** with `publication_result` per [events.md](../shared/events.md). The event carries `feature_slug`, `revision`, the dispatched `delegate`, `from_status: Implementing` / `to_status: Stable`, and `recap_status` (`enforced` | `waived`) recording whether the recap gate ran this run. No `ship.completed` is emitted on any refusal or on the no-delegate hand-back. (AC: `emits-ship-completed-once`, `records-recap-waiver`)
+
+## Recap-Gate Waiver
+
+Recap is a mandatory upstream gate for ship **by default**. A project that accepts shipping without a fresh drift verdict (e.g. a solo or low-stakes project) can waive it explicitly via a top-level `recap:` block in `specscore.yaml`:
+
+```yaml
+recap:
+  required_for_ship: true   # default; ship refuses without a contradiction-free recap report
+  # required_for_ship: false → ship skips the recap gate entirely (see Pre-Flight step 4)
+```
+
+- `required_for_ship` is a boolean; its **default is `true`** (the key and the `recap:` block may both be absent — the gate is enforced).
+- The waiver is **explicit**: read from config only, never inferred.
+- The waiver covers **only** the recap gate. The verify-green gate is never waivable here.
+- A waived run is **never silent**: the skill MUST state in its pre-flight output that the recap gate was waived (e.g. *"Recap gate waived (`recap.required_for_ship: false`); shipping on verify-green only."*), and MUST record `recap_status: waived` on the `ship.completed` event. When enforced, `recap_status` is `enforced`. (AC: `records-recap-waiver`)
+
+This Feature only makes the gate **waivable**. Reducing recap's per-AC token cost (incremental / cheaper recap) is a separate, deferred effort.
 
 ## Architectural Boundary
 
@@ -117,7 +138,7 @@ All of these belong to the delegate or to a separate orchestration layer. The `s
 - Transitioning status or emitting `ship.completed` on anything other than the delegate's explicit success.
 - Coordinating more than one Feature in a single ship run.
 - Carrying a hardcoded reviewer instead of loading `gates.ship.pre_dispatch`.
-- Waiving the recap-no-contradiction or verify-green gate.
+- Waiving the verify-green gate (never waivable), or waiving the recap gate by any path other than an explicit `recap.required_for_ship: false` config — or waiving recap silently (a waived run MUST disclose it and record `recap_status: waived`).
 
 ## References
 
