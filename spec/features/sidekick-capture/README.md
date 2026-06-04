@@ -79,7 +79,7 @@ Every seed file MUST live at `spec/ideas/seeds/<slug>.md`, relative to project r
 
 #### REQ: seed-frontmatter-schema
 
-Each seed file MUST begin with a YAML frontmatter block containing exactly the following keys, no more, no less:
+Each seed file MUST begin with a YAML frontmatter block containing exactly the following required keys at capture time:
 
 ```yaml
 ---
@@ -95,12 +95,15 @@ captured_during: <string or null>     # spec path of the active artifact at capt
                                       # or null when no active spec context (e.g.,
                                       # a direct /sidekick outside a host session).
 trigger: heuristic                    # one of: heuristic | explicit
-status: queued                        # literal at capture time; populated downstream by Phase 1
+status: queued                        # literal at capture time; populated downstream
+                                      # (Phase 1 review; `promoted` on promotion — see below)
 synchestra_task: null                 # literal null at capture time; populated downstream by Phase 1
 ---
 ```
 
 The lint rule (per REQ `seed-lint-rule`) MUST reject unknown frontmatter keys and missing required keys.
+
+**Promoted seeds (downstream extension).** When `specscore idea promote` consumes a seed via its cross-repo path (see the [`seed-to-idea-promotion`](../seed-to-idea-promotion/README.md) Feature), it sets `status: promoted` and adds exactly one **optional** key, `promoted_to: <idea-slug>`, pointing at the created Idea, then relocates the seed to `spec/ideas/archived/<slug>.md`. `promoted_to` is the only permitted optional key: it MUST be absent at capture time and present only on a promoted seed. A promoted seed is still a `sidekick-seed` document (not an Idea) and is validated as a seed regardless of whether it lives under `seeds/` or `archived/`. `promoted` is a distinct terminal `status` from `deprecated` (the consilium's reject outcome) — the two are never conflated.
 
 #### REQ: seed-slug-derivation
 
@@ -108,7 +111,7 @@ The slug MUST be derived deterministically from the one-liner by: (a) lowercasin
 
 #### REQ: seed-lint-rule
 
-`specscore spec lint` MUST recognize files matching `spec/ideas/seeds/*.md` as the `sidekick-seed` document type and validate them against REQ `seed-frontmatter-schema`. The rule MUST: (a) reject unknown frontmatter keys, (b) reject missing required keys, (c) reject `type` values other than `sidekick-seed`, (d) reject `trigger` values outside the enumerated set, (e) require the body's first non-blank line to be an H1 heading (`# <text>`), (f) reject body content (after the frontmatter, inclusive of the H1 line) exceeding 2000 characters. The rule's CLI implementation may land cross-repo in `specscore`; this Feature specifies the rule contract and behavior, not its source location.
+`specscore spec lint` MUST recognize files matching `spec/ideas/seeds/*.md` — and any `type: sidekick-seed` file under `spec/ideas/archived/*.md` (a promoted seed, per REQ `seed-frontmatter-schema`) — as the `sidekick-seed` document type and validate them against REQ `seed-frontmatter-schema`. The rule MUST: (a) reject unknown frontmatter keys, treating the optional `promoted_to` key as recognized (not unknown), (b) reject missing required keys, (c) reject `type` values other than `sidekick-seed`, (d) reject `trigger` values outside the enumerated set, (e) require the body's first non-blank line to be an H1 heading (`# <text>`), (f) reject body content (after the frontmatter, inclusive of the H1 line) exceeding 2000 characters. A `type: sidekick-seed` file under `archived/` MUST NOT be validated against the Idea schema (it is a seed, not an archived Idea). The rule's CLI implementation may land cross-repo in `specscore`; this Feature specifies the rule contract and behavior, not its source location.
 
 ### The event contract
 
