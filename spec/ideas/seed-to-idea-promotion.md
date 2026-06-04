@@ -1,6 +1,6 @@
 # Idea: Seed-to-Idea Promotion
 
-**Status:** Specifying
+**Status:** Specified
 **Date:** 2026-06-04
 **Owner:** alexander.trakhimenok
 **Promotes To:** seed-to-idea-promotion

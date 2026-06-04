@@ -2,11 +2,12 @@
 
 > [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/specscore/specstudio-skills/spec/features/seed-to-idea-promotion?op=explore) | [Edit](https://specscore.studio/app/github.com/specscore/specstudio-skills/spec/features/seed-to-idea-promotion?op=edit) | [Ask question](https://specscore.studio/app/github.com/specscore/specstudio-skills/spec/features/seed-to-idea-promotion?op=ask) | [Request change](https://specscore.studio/app/github.com/specscore/specstudio-skills/spec/features/seed-to-idea-promotion?op=request-change) |
 
-**Status:** Under Review
+**Status:** Approved
 **Date:** 2026-06-04
 **Owner:** alexander.trakhimenok
 **Source Ideas:** seed-to-idea-promotion
 **Supersedes:** —
+**Grade:** B
 
 ## Summary
 
