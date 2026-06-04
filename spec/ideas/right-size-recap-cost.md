@@ -1,9 +1,9 @@
 # Idea: Right-Size Recap Cost (Configurable Skip + Incremental Re-Recap)
 
-**Status:** Approved
+**Status:** Specified
 **Date:** 2026-06-04
 **Owner:** alexander.trakhimenok
-**Promotes To:** —
+**Promotes To:** skills/ship
 **Supersedes:** —
 **Related Ideas:** —
 
