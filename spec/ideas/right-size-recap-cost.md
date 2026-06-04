@@ -1,6 +1,6 @@
 # Idea: Right-Size Recap Cost (Configurable Skip + Incremental Re-Recap)
 
-**Status:** Draft
+**Status:** Approved
 **Date:** 2026-06-04
 **Owner:** alexander.trakhimenok
 **Promotes To:** —

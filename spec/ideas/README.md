@@ -19,7 +19,7 @@ Pre-spec one-pagers for SpecStudio. Each Idea is the output of `specstudio:ideat
 | [retrofit-evaluation-skill](retrofit-evaluation-skill.md) | Draft | 2026-05-22 | alex | — |
 | [retrofit-skill](retrofit-skill.md) | Draft | 2026-05-22 | alex | — |
 | [reviewer-gates](reviewer-gates.md) | Specified | 2026-05-22 | alex | reviewer-gates |
-| [right-size-recap-cost](right-size-recap-cost.md) | Draft | 2026-06-04 | alexander.trakhimenok | — |
+| [right-size-recap-cost](right-size-recap-cost.md) | Approved | 2026-06-04 | alexander.trakhimenok | — |
 | [seed-to-idea-promotion](seed-to-idea-promotion.md) | Specified | 2026-06-04 | alexander.trakhimenok | seed-to-idea-promotion |
 | [ship-skill](ship-skill.md) | Specified | 2026-06-03 | alexander.trakhimenok | skills/ship |
 | [sidekick-consilium](sidekick-consilium.md) | Specified | 2026-05-18 | alexandertrakhimenok | sidekick-consilium |
