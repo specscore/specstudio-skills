@@ -1,9 +1,9 @@
 # Idea: Seed-to-Idea Promotion
 
-**Status:** Approved
+**Status:** Specifying
 **Date:** 2026-06-04
 **Owner:** alexander.trakhimenok
-**Promotes To:** —
+**Promotes To:** seed-to-idea-promotion
 **Supersedes:** —
 **Related Ideas:** —
 
