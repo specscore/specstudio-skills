@@ -21,6 +21,7 @@ Feature specifications for the SpecStudio plugin. This index lists every top-lev
 | [implement-execution-topology](implement-execution-topology/README.md) | Approved | Transport-agnostic contract for how implement executes parallel agent work: branch roles, the gated transitions between them, and how a topology is selected. Concrete per-scenario realization lives in sub-Features. |
 | [approval-autonomy](approval-autonomy/README.md) | Approved | The implement-autonomy layer: implement fires the event-keyed gate-point events (implementation.pre_commit / pre_push) at per-batch checkpoints so commit-autonomous/push-gated is pure gate config, and owns the non-reviewer execution dynamics — commit cadence, anomaly-halts, explicit re-arm, and the cumulative review fed to the push gate. |
 | [cli-detection-convention](cli-detection-convention/README.md) | Approved | One mechanism for skills to detect the specscore CLI — call and branch on exit code — with a per-skill-class response policy, plus conversion of three representative skills. |
+| [seed-to-idea-promotion](seed-to-idea-promotion/README.md) | Under Review | Promote a sidekick seed into a lint-clean Idea via a deterministic specscore idea promote verb (same-repo git mv + body transform + back-link reconcile; cross-repo keep+promoted), with a skill-side consilium-offer handshake for unreviewed manually-picked seeds. |
 
 ### skills
 
