@@ -26,3 +26,25 @@ gates:
 #   delegate:
 #     skill: gh-deploy
 #     args: "production"
+
+# pull_request: PR-creation delegation for specstudio:pull-request (optional).
+# When `delegate` is set, the skill dispatches it once after its gate releases;
+# when absent, the skill creates the PR itself (git push + gh pr create, a
+# ready PR against the default branch). The block recognizes ONLY
+# delegate.skill + delegate.args (see the pull-request Feature's
+# bars-orchestration AC). The verify gate is NOT configured here — it lives in
+# gates.pull_request.pre_dispatch as a `type: deterministic` reviewer, e.g.:
+#
+# gates:
+#   pull_request.pre_dispatch:
+#     reviewers:
+#       - name: verify
+#         type: deterministic
+#         run: ./scripts/pull-request-gate.sh
+#       - name: user-approval
+#         type: human
+#
+# pull_request:
+#   delegate:
+#     skill: commit-push-pr
+#     args: ""
