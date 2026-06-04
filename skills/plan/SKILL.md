@@ -321,11 +321,45 @@ Every file the skill creates or edits — bootstrapped `spec/plans/`, `spec/plan
 
 ## Transition to Build
 
-After `plan.approved`, transition only to `specstudio:implement`. Do **not** invoke any other downstream skill — no `frontend-design`, no `mcp-builder`, no implementation skill of any kind.
+After `plan.approved`, present the user with exactly **three** next-step options and wait for an explicit choice (per [Feature: Detached Background Plan Implementation](../../spec/features/detached-background-implement/README.md), AC `#ac:three-options-presented`):
 
-While `specstudio:implement` is unshipped, hand back to the user with:
+1. **Approve** — the Plan is approved; stop here. No implementation is started.
+2. **Approve + implement in this session** — transition to `specstudio:implement` in the current session.
+3. **Approve + implement in background** — launch a detached background `claude` session that runs `specstudio:implement` autonomously in its own git worktree, so the user keeps working and can attach to steer it later.
 
-> "Plan approved. The `specstudio:implement` skill is not yet shipped — implement task-by-task using a general-purpose implementation skill. Each commit should reference the AC IDs from the satisfied task's `**Verifies:**` line."
+For options 2 and 3, do **not** invoke any downstream skill other than `specstudio:implement` — no `frontend-design`, no `mcp-builder`, no other implementation skill. While `specstudio:implement` is unshipped, hand back to the user instead with: "Plan approved. The `specstudio:implement` skill is not yet shipped — implement task-by-task using a general-purpose implementation skill. Each commit should reference the AC IDs from the satisfied task's `**Verifies:**` line."
+
+### Option 3 — detached background launch
+
+When the user chooses option 3, the host session runs this sequence. It MUST NOT change the host's current branch (`#ac:worktree-precreated-host-unchanged`):
+
+1. **Resolve the target branch.** Default to `feat/<plan-slug>`; let the user override with a branch name of their choice (`#ac:branch-defaults-and-overridable`).
+2. **Validate the branch is safe.** Refuse to launch — and report the conflict — if the target branch equals the host session's current branch (`git rev-parse --abbrev-ref HEAD`) or is already checked out in another worktree (`git worktree list`) (`#ac:refuse-same-or-checked-out-branch`).
+3. **Precreate the worktree.** `git worktree add <dir> <branch>` (existing branch) or `git worktree add <dir> -b <branch>` (new). Creating a worktree never changes the host's current branch, index, or files (`#ac:worktree-precreated-host-unchanged`).
+4. **Launch with `claude --bg`** (NOT `claude -p`, which is non-attachable) from inside the worktree, with `--permission-mode acceptEdits` and a scoped `--allowedTools`. An action outside the allowlist pauses the session for approval rather than failing the run (`#ac:launches-bg-session`, `#ac:permissions-pause-not-fail`). The launched prompt instructs `specstudio:implement` against the approved Plan, operating only inside the worktree and never checking out another branch (`#ac:launches-bg-session`, `#ac:background-stays-in-worktree`), and carries the autonomous progress contract.
+
+   > **Flag-order gotcha:** `--allowedTools` is variadic and will swallow the positional prompt if the prompt immediately follows it. Put `--allowedTools` before a non-variadic flag (e.g., `--permission-mode`), never directly before the prompt.
+
+   ```bash
+   BRANCH="feat/<plan-slug>"            # or user override; must differ from current branch
+   WT="$(git rev-parse --show-toplevel)/../wt-$BRANCH"
+   git show-ref --verify --quiet "refs/heads/$BRANCH" \
+     && git worktree add "$WT" "$BRANCH" \
+     || git worktree add "$WT" -b "$BRANCH"
+   ( cd "$WT" && claude --bg \
+       --allowedTools "Read Edit Write Bash(git *) Task Skill" \
+       --permission-mode acceptEdits \
+       "Run /implement on spec/plans/<slug>.md. You are an UNATTENDED background
+        session, already on branch '$BRANCH' in a dedicated worktree. Operate ONLY
+        inside this worktree; never 'git checkout' another branch or touch other
+        branches. Progress contract: complete every task you can; if a task is
+        blocked, skip it and continue with other unblocked tasks (only its
+        dependents are blocked) — do not abort the run; schedule approval-requiring
+        actions last; when only blocked tasks remain, PAUSE and wait for input —
+        do not improvise a human decision." )
+   ```
+
+5. **Tell the user how to steer** (`#ac:steer-controls-available`): `claude agents` (list), `claude attach <id>` (steer), `claude logs <id>` (watch), `claude stop <id>` (stop). Multiple background runs may run concurrently; the user can switch between them. Note: `--bg` runs are daemon-hosted — they survive the launching session but not a full quit of all Claude clients.
 
 ## Revise vs Supersede
 

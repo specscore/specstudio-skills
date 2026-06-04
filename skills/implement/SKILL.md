@@ -213,6 +213,18 @@ After the user addresses the cause, `implement` MUST NOT auto-resume when the an
 
 A re-arm re-enables autonomy for the **remainder of the current `implement` run only**. A subsequent run starts from the resolved `autonomy:` / `gates:` config — never from a prior run's re-armed state.
 
+## Detached / Background Execution
+
+When `implement` is launched as a detached background session (per [Feature: Detached Background Plan Implementation](../../spec/features/detached-background-implement/README.md) — a `claude --bg` process started from the plan-approval checkpoint, running in its own worktree), it follows an **autonomous progress contract** that maximizes forward progress instead of stopping at the first obstacle:
+
+- **Maximize progress.** Complete every task the run can. (`#ac:continues-past-a-blocker`)
+- **Defer blocked tasks — do not abort.** A task the run cannot complete (needs a human decision, missing information, an unresolved test failure, or a permission it lacks) is marked `**Status:** blocked` and skipped; the run continues with other unblocked tasks. Only the blocked task's own dependents are blocked. In this mode a deferrable blocked task is **not** a run-level anomaly-halt — this overrides the `BLOCKED`-subagent halt of [Anomaly Halts and Re-arm](#anomaly-halts-and-re-arm) for background runs. (`#ac:continues-past-a-blocker`)
+- **Approval-requiring actions last.** Schedule any action that will need human approval after all independently-completable work, so a pause does not stall work that could proceed. (`#ac:approval-work-deferred-last`)
+- **Pause — never improvise — when only blockers remain.** When no unblocked task is left, the run pauses and waits for input. It MUST NOT abort and MUST NOT improvise a decision that requires a human. (`#ac:pause-on-remaining-blockers`)
+- **Blocker surface (v1): the live session only.** Blockers are resolved by attaching to the paused session (`claude attach <id>`). The run is not required to produce a `BLOCKED.md` or any other durable blocker artifact. (`#ac:no-blocked-artifact-required`)
+
+The **integrity** anomaly-halts still apply unchanged even in background mode — a sibling integration conflict, a lint failure unresolved after the single `--fix` pass, and source-Feature drift all still halt the whole run. Only the deferrable "unfinishable task" case is relaxed here.
+
 ## Staging, Publication Policy, and Commit-Message Template
 
 Subagents stage their own changes so the parent can aggregate and review a consolidated diff. The parent skill applies [publication-policy.md](../shared/publication-policy.md) only after the consolidated diff has passed conflict detection, lint, self-review, and the `implementation.pre_commit` gate's release (step 13). Policy does not persist as an `implement`-specific override; durable preferences are saved only through `specscore publication set`.
