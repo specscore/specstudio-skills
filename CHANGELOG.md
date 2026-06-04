@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.0.10
+
+- **detached background implement** — the plan-approval checkpoint now offers a third option, "approve + implement in background": the host precreates a git worktree on `feat/<plan-slug>` (overridable; refused when it equals the current branch or is already checked out) and launches a detached, attachable `claude --bg` session (`--permission-mode acceptEdits` + scoped `--allowedTools`) that runs `specstudio:implement` inside that worktree, so the user keeps working and steers via `claude agents` / `attach` / `logs` / `stop`. `specstudio:implement` gains an autonomous progress contract for detached runs: defer blocked tasks (skip and continue; only dependents block), schedule approval-requiring actions last, pause-don't-abort when only blockers remain — while integrity anomaly-halts (sibling conflict / unresolved lint / source-Feature drift) still halt. New Feature `detached-background-implement`.
+- **ship skill shipped** — `specstudio:ship` runs the pre-launch checklist: `verify`-green and `recap`-no-contradiction pre-flight gates, a registered `ship.pre_dispatch` gate-point wired to the reviewer gate, a `ship:` config schema with optional delegated deploy dispatch, and the lifecycle transition to `Stable` emitting `ship.completed`.
+- **sidekick cross-repo back-link format** — `specstudio:sidekick` revision defining the back-link format for seeds relocated across SpecScore repos.
+- **seed-to-idea-promotion specs** — Idea, Feature, and Plan authored and approved for promoting sidekick seeds into Ideas (specifications only; not yet implemented).
+- **CI spec-lint gate** — GitHub Actions installs the released `specscore` CLI and runs `specscore spec lint`, with the push trigger scoped to `main`.
+
 ## 0.0.8
 
 - **reviewer-gates event-keyed revision** — gate keys migrate from command/skill names to events (`gates.feature.approved`); legacy command-keyed gates are rejected with a migration error. Adds `deterministic` (verdict from a `run:` command's exit code) and `noop` (always-approve placeholder) reviewer types, and registers the multi-fire gate-point events `implementation.pre_commit` / `implementation.pre_push`.
