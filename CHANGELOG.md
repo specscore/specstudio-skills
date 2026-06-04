@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.0.11
+
+- **pull-request skill shipped** — `specstudio:pull-request` is the gate-and-create-one-PR twin of `ship`: it runs the project's pre-PR gates on the current branch via the shared reviewer-gates layer (the verify check is expressed as the existing `type: deterministic` reviewer — no new reviewer type), then creates exactly one ready PR against the default branch (built-in `git push` + `gh pr create`, or an optional `pull_request:` delegate), and emits `pull_request.created`. It gates, creates one PR, and records — it never merges, deploys, stacks, or orchestrates. Registers the `pull_request.pre_dispatch` gate-point and `pull_request.created` lifecycle events. New Feature `skills/pull-request`.
+
 ## 0.0.10
 
 - **detached background implement** — the plan-approval checkpoint now offers a third option, "approve + implement in background": the host precreates a git worktree on `feat/<plan-slug>` (overridable; refused when it equals the current branch or is already checked out) and launches a detached, attachable `claude --bg` session (`--permission-mode acceptEdits` + scoped `--allowedTools`) that runs `specstudio:implement` inside that worktree, so the user keeps working and steers via `claude agents` / `attach` / `logs` / `stop`. `specstudio:implement` gains an autonomous progress contract for detached runs: defer blocked tasks (skip and continue; only dependents block), schedule approval-requiring actions last, pause-don't-abort when only blockers remain — while integrity anomaly-halts (sibling conflict / unresolved lint / source-Feature drift) still halt. New Feature `detached-background-implement`.
