@@ -43,7 +43,7 @@ In the same-repo path, the verb MUST rewrite every `## Sidekick Seeds Generated`
 
 #### REQ: cross-repo-keep-and-mark
 
-When any back-link to the seed originates in a different repo, the verb MUST NOT move the seed (a single-repo git operation cannot fix a sibling repo's link). Instead it MUST: create the new Idea at `spec/ideas/<slug>.md` by copying and transforming the seed body (same transform as `same-repo-move-and-transform`), leave the seed file in place with its frontmatter `status` set to `promoted`, and write a forward pointer on the retained seed identifying the created Idea. The retained seed and the new Idea both exist after this path.
+When any back-link to the seed originates in a different repo, the verb MUST NOT rewrite the sibling repo's back-link (a single-repo git operation cannot reach another repo). It MUST: create the new Idea at `spec/ideas/<slug>.md` by copying and transforming the seed body (same transform as `same-repo-move-and-transform`); `git mv` the seed to `spec/ideas/archived/<slug>.md` with its frontmatter `status` set to `promoted`; and write the forward pointer as a frontmatter key `promoted_to: <slug>` on the archived seed identifying the created Idea. The archived seed and the new Idea both exist after this path. Reconciling the cross-repo back-link to the moved seed is delegated to the lint/UI cross-repo reference resolution (see `## Open Questions`), not to this verb.
 
 #### REQ: promoted-vs-deprecated-distinct
 
@@ -51,7 +51,7 @@ A consumed seed has two distinct terminal states that MUST NOT be conflated: `pr
 
 #### REQ: verdict-carry-forward
 
-By default, the created Idea MUST carry the seed's consilium verdict forward as a single-line provenance pointer. The behavior MUST be configurable to instead copy the full `## Consilium Verdict` section, or to drop the verdict, via project configuration. When the seed has no verdict, the verb omits the pointer and proceeds normally.
+By default, the created Idea MUST carry the seed's consilium verdict forward as a single-line provenance pointer. The behavior MUST be selectable with both a project default and a per-invocation override: a `specscore.yaml` `promote.verdict_carry_forward` key (`pointer` | `full` | `drop`, default `pointer`) sets the project default, and a `--verdict=<pointer|full|drop>` flag overrides it for a single run (the flag wins when both are set). `full` copies the entire `## Consilium Verdict` section into the Idea; `drop` omits it. When the seed has no verdict, the verb omits the pointer regardless of the setting and proceeds normally.
 
 ### Skill-side promotion flow
 
@@ -59,7 +59,7 @@ Narrative: the CLI verb is non-interactive, so the human-in-the-loop consilium o
 
 #### REQ: offer-consilium-on-unreviewed
 
-When a user manually promotes a seed that has no `## Consilium Verdict` section, the skill MUST offer to run the consilium before promoting. The user MAY decline; on decline, promotion proceeds. The skill MUST NOT hard-require a verdict and MUST NOT block promotion when the user declines.
+When a user manually promotes a seed that has no `## Consilium Verdict` section, the skill MUST offer to run the consilium before promoting, defaulting to "yes" on an empty user response (offer-and-default-to-yes). The user MAY decline; on decline, promotion proceeds. The offer MUST be suppressible via configuration — a `specscore.yaml` `promote.offer_consilium: false` skips the offer entirely and promotes directly without asking. The skill MUST NOT hard-require a verdict and MUST NOT block promotion when the user declines.
 
 #### REQ: skill-invokes-cli-then-fills
 
@@ -95,7 +95,7 @@ The skill MUST perform promotion by invoking `specscore idea promote <slug>` (no
 
 **Given** a seed at `spec/ideas/seeds/baz.md` with at least one cross-repo back-link
 **When** `specscore idea promote baz` runs
-**Then** `spec/ideas/seeds/baz.md` still exists with frontmatter `status: promoted` and a forward pointer to `spec/ideas/baz.md`, and `spec/ideas/baz.md` exists as a lint-clean Idea skeleton.
+**Then** `spec/ideas/baz.md` exists as a lint-clean Idea skeleton, the seed has moved to `spec/ideas/archived/baz.md` with frontmatter `status: promoted` and `promoted_to: baz`, no file remains at `spec/ideas/seeds/baz.md`, and the verb did not rewrite the sibling repo's back-link.
 
 ### AC: never-marks-deprecated (verifies REQ:promoted-vs-deprecated-distinct)
 
@@ -107,13 +107,13 @@ The skill MUST perform promotion by invoking `specscore idea promote <slug>` (no
 
 **Given** a seed carrying a `## Consilium Verdict` section and default configuration
 **When** the seed is promoted
-**Then** the created Idea contains a single-line provenance pointer to that verdict, and configuration can switch the behavior to full-copy or drop.
+**Then** the created Idea contains a single-line provenance pointer to that verdict; setting `promote.verdict_carry_forward: full` (or `--verdict=full`) instead copies the full section, `drop` omits it, and the `--verdict` flag overrides the `specscore.yaml` default when both are present.
 
 ### AC: unreviewed-offer-consilium (verifies REQ:offer-consilium-on-unreviewed)
 
 **Given** a user manually promoting a seed with no `## Consilium Verdict`
 **When** the promotion flow starts
-**Then** the skill offers to run the consilium first, and on the user declining, promotion proceeds without a verdict.
+**Then** the skill offers to run the consilium first, defaulting to yes on an empty response; on the user declining, promotion proceeds without a verdict; and when `promote.offer_consilium` is `false`, no offer is shown and promotion proceeds directly.
 
 ### AC: skill-delegates-to-cli (verifies REQ:skill-invokes-cli-then-fills)
 
@@ -127,10 +127,8 @@ No `_tests/` stubs are scaffolded in this repo. The CLI ACs (`missing-seed-error
 
 ## Open Questions
 
-- What exact repo-qualified format identifies a cross-repo back-link so the verb can classify origin? (Depends on the parallel `sidekick-capture` cross-repo back-link revision.)
-- The verdict carry-forward configuration surface — a `specscore.yaml` block, a per-invocation flag, or both — and its precedence.
-- In the cross-repo keep path, does the retained `promoted` seed stay in `spec/ideas/seeds/` or move to `spec/ideas/archived/`?
-- Should the consilium offer be suppressible via configuration, and what is the default answer on an empty user response?
+- **Cross-repo back-link reconciliation (dependency).** After the seed moves to `spec/ideas/archived/<slug>.md`, the cross-repo back-link in the sibling repo still points at the old `spec/ideas/seeds/<slug>.md`. Promotion cannot reach that repo, so reconciliation is delegated to lint/UI cross-repo reference resolution. That mechanism is a separate, relied-upon capability (cf. the Idea's `Not Doing` on retro-reconcile rules): confirm it resolves a moved/archived seed reference and decide what it ultimately points at (the archived seed vs the promoted Idea).
+- Resolved and folded into the REQs above: cross-repo back-link format (`<repo-slug>:` prefix, defined in `sidekick-capture`); verdict carry-forward surface (config default + `--verdict` flag, flag wins); retained-seed location (`spec/ideas/archived/`); consilium-offer suppression (`promote.offer_consilium`) and empty-response default (yes).
 
 ---
 *This document follows the https://specscore.md/feature-specification*
