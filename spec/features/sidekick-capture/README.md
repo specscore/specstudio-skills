@@ -161,6 +161,16 @@ Each entry MUST follow the format:
 
 Entries are append-only (newest at the bottom). The skill MUST NOT reorder existing entries, remove entries, or modify any content in the source artifact outside this section.
 
+The entry format above (a bare relative-path target) applies when the seed and the source artifact live in the **same repo**. When they live in different repos, the repo-qualified variant in REQ `cross-repo-back-link-format` applies instead.
+
+#### REQ: cross-repo-back-link-format
+
+When the resolved destination repo (per the [destination-resolution](destination-resolution/README.md) child) differs from the repo containing the source artifact, the back-link entry the skill writes into the source artifact MUST use a **repo-qualified** target instead of a bare relative path, so downstream tooling (e.g., the `seed-to-idea-promotion` `promote` verb) can identify the seed's origin repo. The entry MUST follow the format:
+
+    - [<slug>](<dest-repo-slug>:spec/ideas/seeds/<slug>.md) — captured <ISO-8601 date> by <captured_by> (cross-repo)
+
+where `<dest-repo-slug>` is the destination repo's `project.repo` value from its `specscore.yaml`. The leading `<dest-repo-slug>:` prefix — a token containing no `/` before the colon — is the cross-repo discriminator: a target beginning with such a prefix denotes a cross-repo seed, whereas a bare relative path denotes a same-repo seed. All other entry rules (append-only ordering, section placement and creation per REQ `back-link-section-format`, no reordering, no out-of-section edits) apply identically.
+
 #### REQ: back-link-best-effort
 
 If the back-link write fails (parse error, write permission error, source artifact mutated unexpectedly mid-operation), the skill MUST report the failure to the caller as a warning but MUST NOT roll back the seed write and MUST proceed with event emission. The seed is the source of truth; the back-link is a discoverability convenience. Failed back-links are recoverable: a future `specscore spec lint --fix` rule that reconciles drift between `spec/ideas/seeds/` and source-artifact back-link sections is tracked as a follow-up (Outstanding Question), but the *immediate* write is in scope here so that users reviewing a freshly-spawned Feature, Idea, or Plan see the back-link list without waiting for a lint pass.
@@ -294,6 +304,12 @@ The five components are loosely coupled. The skill produces the seed and the eve
 **Given** a source artifact whose markdown body has no `## Sidekick Seeds Generated` section
 **When** the skill writes a seed pointing at that artifact
 **Then** the section is created with exactly one heading line (`## Sidekick Seeds Generated`) and one entry bullet beneath it; the section is positioned immediately before the SpecScore footer line if present, otherwise at end-of-file.
+
+### AC: cross-repo-back-link-repo-qualified (verifies REQ:cross-repo-back-link-format)
+
+**Given** a sideline idea captured during work on a source artifact in repo `A`, with the seed written to sibling repo `B` whose `specscore.yaml` `project.repo` is `B`
+**When** the skill writes the back-link into the source artifact in repo `A`
+**Then** the new entry's link target is `B:spec/ideas/seeds/<slug>.md` with a trailing `(cross-repo)` marker; and a same-repo capture in the same repo still produces a bare relative-path target (no `<repo-slug>:` prefix).
 
 ### AC: back-link-skipped-on-null-captured-during
 
