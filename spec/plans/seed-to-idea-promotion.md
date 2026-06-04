@@ -38,24 +38,23 @@ Using the classifier from Task 2, rewrite every same-repo `## Sidekick Seeds Gen
 
 **Verifies:** seed-to-idea-promotion#ac:cross-repo-keeps-seed, seed-to-idea-promotion#ac:never-marks-deprecated
 
-When the classifier finds any cross-repo back-link, take the no-move branch: create the new Idea by copying and transforming the seed body, leave the seed in place with frontmatter `status: promoted` and a forward pointer to the created Idea. The verb only ever sets `promoted` on a retained seed, never `deprecated`.
+When the classifier finds any cross-repo back-link, create the new Idea by copying and transforming the seed body, `git mv` the seed to `spec/ideas/archived/<slug>.md` with frontmatter `status: promoted` and `promoted_to: <slug>`, and never set `deprecated`. The verb does not rewrite the sibling repo's back-link (delegated to lint/UI cross-repo reference resolution).
 
 ### Task 5: Verdict carry-forward
 
 **Verifies:** seed-to-idea-promotion#ac:verdict-pointer-default
 
-Carry the seed's `## Consilium Verdict` forward into the created Idea as a single-line provenance pointer by default, with configuration to instead copy the full section or drop it; omit the pointer when the seed has no verdict.
+Carry the seed's `## Consilium Verdict` forward into the created Idea as a single-line provenance pointer by default, with configuration to instead copy the full section or drop it; omit the pointer when the seed has no verdict. Selection via `specscore.yaml promote.verdict_carry_forward` (default `pointer`) with a `--verdict` flag override (flag wins).
 
 ### Task 6: Skill-side promotion flow and consilium offer
 
 **Verifies:** seed-to-idea-promotion#ac:skill-delegates-to-cli, seed-to-idea-promotion#ac:unreviewed-offer-consilium
 
-Wire `specstudio:ideate` to perform promotion by invoking `specscore idea promote <slug>` (not hand-moving files) and then filling the returned skeleton; before promoting an unreviewed, manually-picked seed (no `## Consilium Verdict`), offer to run the consilium first, proceeding on decline.
+Wire `specstudio:ideate` to perform promotion by invoking `specscore idea promote <slug>` (not hand-moving files) and then filling the returned skeleton; before promoting an unreviewed, manually-picked seed (no `## Consilium Verdict`), offer to run the consilium first (defaulting to yes on an empty response, suppressible via `promote.offer_consilium: false`), proceeding on decline.
 
 ## Open Questions
 
-- Task 4's forward-pointer on-disk shape (frontmatter key vs body section) and whether the retained `promoted` seed stays in `spec/ideas/seeds/` or moves to `spec/ideas/archived/` — to be pinned before implementing Task 4 (tracked in the source Feature's Open Questions).
-- Task 5's verdict carry-forward configuration surface (`specscore.yaml` block vs per-invocation flag vs both) — to be pinned before implementing Task 5.
+- Task 4 cross-repo back-link reconciliation depends on lint/UI cross-repo reference resolution: after the seed moves to `spec/ideas/archived/<slug>.md`, the sibling repo's back-link still points at the old `seeds/` path and promotion cannot reach it. Confirm the lint/UI mechanism resolves the moved reference (tracked in the source Feature's Open Questions).
 
 ---
 *This document follows the https://specscore.md/plan-specification*
