@@ -19,6 +19,8 @@ Surfaced via /ideate: when a sidekick seed (spec/ideas/seeds/<slug>.md) becomes 
 
 Treat promotion as transform-then-relocate, not a pure move and not deprecate-and-recreate. DEFAULT (same-repo): git mv spec/ideas/seeds/<slug>.md -> spec/ideas/<slug>.md, rewrite the body into the Idea schema in the same commit (git rename-detection keeps the raw seed in history — provenance with zero standalone artifact), and reconcile the '## Sidekick Seeds Generated' back-links in source artifacts to point at the new Idea path. FALLBACK (cross-repo): when any back-link originates in another repo, a single-repo git mv cannot fix it, so the seed STAYS in place and is marked status: promoted with a forward pointer to the new Idea. Terminal seed states are distinct and never conflated: 'promoted' (became an Idea — the implemented analogue) vs 'deprecated' (consilium blocked it). The promoted Idea carries the consilium verdict forward via a one-line provenance pointer by DEFAULT, configurable to copy the full verdict section or drop it.
 
+Consilium review is the normal *triage-time* path (the consilium draining the seed queue), and promotion does NOT hard-require a prior verdict. But a manually-picked seed is effectively pulling from the queue out of band, so when a user promotes an *unreviewed* seed, promotion first OFFERS to run the consilium before transforming it into an Idea — an offer the user can decline. Because `sidekick` writes cross-repo back-links (in a repo-qualified, machine-distinguishable form), cross-repo references are first-class and detectable at promotion time — which is precisely why a cross-repo seed must stay in place rather than move.
+
 ## Alternatives Considered
 
 - **Pure `git mv`, no transform.** Tempting because it's one command and preserves history, but it loses: a seed's YAML frontmatter + free prose is not a lint-clean Idea (`# Idea:` heading, bold-prefix metadata, nine required sections, I-002 Not Doing). The result fails idea lint, so a transform is unavoidable regardless of how the file is relocated.
@@ -31,7 +33,7 @@ Two-week spike on the same-repo path only: a promotion operation (specscore idea
 
 ## Not Doing (and Why)
 
-- Cross-repo back-link rewriting — a single-repo git op cannot mutate sibling repos; keep + promoted instead
+- Cross-repo back-link rewriting at promotion time — a single-repo git op cannot mutate sibling repos; keep + promoted instead (note: sidekick *writing* cross-repo back-links at capture time is in scope, as a dependency)
 - Auto-promotion from a consilium verdict — promotion stays user-initiated (consilium already states 'no auto-promotion at this layer')
 - A lint --fix rule that retro-reconciles already-broken back-links — separate, deferred concern
 - Reverse demotion (Idea back to seed) — not a real workflow
@@ -42,20 +44,20 @@ Two-week spike on the same-repo path only: a promotion operation (specscore idea
 |------|------------|-----------------|
 | Must-be-true | Git rename-detection preserves the raw seed across a transform commit, so "git history only" is real provenance. | `git mv` a seed then heavily rewrite the body in the same commit; confirm `git log --follow` / `git blame` recovers the original seed text. |
 | Must-be-true | The `## Sidekick Seeds Generated` back-link bullets have a stable, machine-rewritable format and can be located in source artifacts. | Parse the section across existing Features/Plans that spawned seeds; confirm the bullet/relative-path shape is reliably matchable. |
-| Should-be-true | Same-repo vs cross-repo back-links are distinguishable at promotion time. | Inspect how sidekick computes back-link relative paths (the `../../ideas/seeds/<slug>.md` form assumes same repo); determine whether cross-repo back-links are written at all or already skipped. |
+| Should-be-true | Cross-repo back-links are written by sidekick in a repo-qualified form that promotion can classify by origin repo. | Define the cross-repo back-link format in `sidekick-capture`; confirm promotion can split same-repo (reconcile) from cross-repo (keep) reliably. |
 | Might-be-true | Users want verdict carry-forward configurable rather than always-on (pointer). | Defaults usage feedback once promotion ships; revisit if nobody changes the default. |
 
 
 ## SpecScore Integration
 
 - **New Features this would create:** a seed-promotion capability, likely split between a `specscore` CLI verb (e.g. `idea promote <seed-slug>`) that owns the git mv + schema scaffold + back-link rewrite, and skill wiring (ideate/consilium) that invokes it.
-- **Existing Features affected:** `sidekick-capture` (the `## Sidekick Seeds Generated` back-link format becomes a load-bearing contract, not just discoverability); `sidekick-consilium` (this is its deferred "Phase 2 promotion"; defines verdict carry-forward); `relocate-idea` (shares move + link-reconcile mechanics — possible code reuse); `ideate` (gains "promote an existing seed" as an entry path).
+- **Existing Features affected:** `sidekick-capture` (the `## Sidekick Seeds Generated` back-link format becomes a load-bearing contract, AND it must be extended to write cross-repo back-links in a repo-qualified form); `sidekick-consilium` (this is its deferred "Phase 2 promotion"; defines verdict carry-forward, and the promotion-offers-consilium handshake for unreviewed manually-picked seeds); `relocate-idea` (shares move + link-reconcile mechanics — possible code reuse); `ideate` (gains "promote an existing seed" as an entry path).
 - **Dependencies:** a consilium review typically precedes promotion (open question below); a `specscore` CLI version that ships the promote verb.
 
 ## Open Questions
 
-- Does sidekick currently write cross-repo back-links at all, or are they already skipped because the relative-path computation assumes same-repo? This determines whether "cross-repo → keep + promoted" is active detection or just the natural fallback.
-- Must promotion require a prior consilium verdict, or can a raw (un-reviewed) seed be promoted directly?
+- What repo-qualified format should `sidekick` write for cross-repo back-links (e.g. `<repo-slug>:spec/ideas/seeds/<slug>.md`) so promotion can classify each back-link's origin repo? (Decision taken: sidekick *will* write them; format is open.)
+- The promotion-offers-consilium handshake for an unreviewed, manually-picked seed: offer by default — but is the offer suppressible via config, and what is the default answer if the user just hits enter?
 - What is the config surface for verdict carry-forward — a `specscore.yaml` block, a per-invocation flag, or both?
 - In the cross-repo keep case, does the retained `promoted` seed stay in `spec/ideas/seeds/` or move to `spec/ideas/archived/`?
 
