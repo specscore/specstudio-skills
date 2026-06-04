@@ -198,5 +198,9 @@ Rehearse scenarios are deferred for this Feature pending the dependency resoluti
 - Where do the `ship:` and the new `recap:` config schemas durably live — defined by this Feature, or owned by a dedicated config Feature alongside `reviewer-gates` and `change-publication-policy`? (The `recap.required_for_ship` field is documented here for now; durable schema ownership tracks this question.)
 - When the `review` stage ships, should a waived recap (`recap.required_for_ship: false`) also relax `review`'s own recap expectations, or does `review` keep an independent recap policy?
 
+## Sidekick Seeds Generated
+
+- [run-recap-s-per-ac-drift-narrators-via-dynamic-parallel](../../../ideas/seeds/run-recap-s-per-ac-drift-narrators-via-dynamic-parallel.md) — captured 2026-06-04 by specstudio:specify
+
 ---
 *This document follows the https://specscore.md/feature-specification*
