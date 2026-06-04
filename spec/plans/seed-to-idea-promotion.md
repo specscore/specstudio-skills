@@ -1,6 +1,6 @@
 # Plan: Seed-to-Idea Promotion
 
-**Status:** Under Review
+**Status:** Approved
 **Source Feature:** seed-to-idea-promotion
 **Date:** 2026-06-04
 **Owner:** alexander.trakhimenok
