@@ -192,5 +192,9 @@ No executable Rehearse stubs are scaffolded. Every AC is a documentation-conform
 - How the CLI sources its scaffold templates (e.g. from specscore.md with an embedded offline fallback) is **out of scope** here — it is internal CLI behavior tracked in the `specscore` / `specscore.md` repos.
 - Whether to later add a lint rule flagging `command -v specscore` or an embedded schema block for automatic drift detection (out of scope here; prose enforcement chosen).
 
+## Sidekick Seeds Generated
+
+- [specscore-cli-needs-a-seed-scaffold-verb-e-g-specscore-seed](../../../../specscore-cli/spec/ideas/seeds/specscore-cli-needs-a-seed-scaffold-verb-e-g-specscore-seed.md) — captured 2026-06-05 by specstudio:plan
+
 ---
 *This document follows the https://specscore.md/feature-specification*
