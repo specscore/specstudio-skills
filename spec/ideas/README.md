@@ -19,6 +19,7 @@ Pre-spec one-pagers for SpecStudio. Each Idea is the output of `specstudio:ideat
 | [implement-workflow-execution-engine](implement-workflow-execution-engine.md) | Approved | 2026-06-04 | alexander.trakhimenok | — |
 | [manual-review-and-score-commands](manual-review-and-score-commands.md) | Implementing | 2026-05-28 | alex | score-command |
 | [pull-request-skill](pull-request-skill.md) | Specified | 2026-06-04 | alexander.trakhimenok | skills/pull-request |
+| [require-cli-for-new-artifacts](require-cli-for-new-artifacts.md) | Specified | 2026-06-05 | alexander.trakhimenok | cli-detection-convention |
 | [retrofit-evaluation-skill](retrofit-evaluation-skill.md) | Draft | 2026-05-22 | alex | — |
 | [retrofit-skill](retrofit-skill.md) | Draft | 2026-05-22 | alex | — |
 | [reviewer-gates](reviewer-gates.md) | Specified | 2026-05-22 | alex | reviewer-gates |

@@ -5,7 +5,8 @@ description: |
   current project state by direct repo inspection, asks 3-4 batched wizard
   questions with defaults pre-filled from detection, then idempotently
   scaffolds: specscore.yaml + spec/{,ideas,features}/README.md (via
-  `specscore init`, with AI-agent fallback when the CLI is absent), and pastes
+  `specscore init` only — the CLI scaffold is the single source of truth; no
+  hand-scaffold fallback), and pastes
   the canonical Producer-shape instruction snippet into the right platform
   agent-instructions file. Two modes: default (full wizard) and `--update`
   (drift-only reconciliation, no wizard). Delegates CLI installation to
@@ -41,7 +42,7 @@ The mode is determined by invocation argument, not by detected state.
 
 ### Default mode — `specstudio:init`
 
-Full wizard flow: state detection → CLI prerequisite check + install delegation → 3–4-question wizard → bootstrap actions (`specscore init` or AI-agent fallback) → snippet install with consent → event emission.
+Full wizard flow: state detection → CLI prerequisite check + install delegation → 3–4-question wizard → bootstrap actions (`specscore init`) → snippet install with consent → event emission.
 
 Greenfield AND brownfield repos both flow through this mode; brownfield reuses defaults derived from detected state.
 
@@ -60,7 +61,7 @@ Before any user-facing prompt, inspect the repo to record:
 - `specscore_yaml_status` — does `<root>/specscore.yaml` exist? If yes, is line 1 the canonical schema-pointer comment?
 - `agent_instruction_files` — for each of `CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, files under `.cursor/rules/`, record whether the file exists at repo root (or under `.cursor/rules/`).
 - `snippet_versions_per_file` — for each existing agent-instructions file, scan for the snippet block (delimited by the version comment). If found, record the version. If absent, record `none`.
-- `cli_versions` — `command -v specscore`. Record `present` (with version from `specscore --version`) or `missing`.
+- `cli_versions` — branch on `specscore --version` per [`shared/cli-detection.md`](../shared/cli-detection.md) (Wizard-class row): exit `0` → record `present` with the parsed version; `127` → record `missing`. Do **not** use a standalone `command -v` probe.
 
 **No state file.** Detection is via filesystem inspection only — never via a hidden `.specstudio/init-state.yaml` or similar. The repo's actual state IS the state.
 
@@ -73,13 +74,13 @@ Use the result to drive the rest of the flow:
 
 ## Step 2 — CLI prerequisite check & install delegation
 
-If `specscore` is missing, ask explicit consent before delegating to its install skill. The install delegation runs at most once per invocation.
+If `specscore` is missing, ask explicit consent before delegating to its install skill. The install delegation runs at most once per invocation. The scaffold in Step 4 hard-requires the CLI — there is no hand-scaffold fallback — so the cold-start path (brand-new repo, no CLI) is handled here by **install-then-retry**, not by hand-writing artifacts.
 
 **`specscore` missing**:
 1. Surface to user: "specscore is not on PATH. Invoke `specscore:install` to install it now? (yes / no)"
 2. On `yes` → invoke the `specscore:install` skill via the platform's skill-invocation mechanism (Claude Code `Skill` tool, or equivalent). Wait for return.
-3. After return → re-run `command -v specscore`. If present, continue. If still missing, abort with "specscore install completed but binary still not on PATH; check `PATH` or open a new shell, then re-run init."
-4. On `no` → continue with AI-agent fallback for the specscore-side bootstrap (Step 4). Surface to user: "Continuing without specscore CLI; using AI-agent fallback. Some operations will be slower and produce schema-equivalent (not byte-identical) artifacts."
+3. After return → re-branch on `specscore --version`. If exit `0`, continue. If still `127`, abort with "specscore install completed but binary still not on PATH; check `PATH` or open a new shell, then re-run init."
+4. On `no` → stop with "specstudio:init scaffolds via the `specscore init` CLI, which is required and has no hand-scaffold fallback. Install it (`/specscore:install`), then re-run init." Do not hand-write any artifacts.
 
 ## Step 3 — Wizard (default mode only)
 
@@ -104,11 +105,13 @@ This rule is canonical for SpecStudio (the [`third-party-integration`](../../spe
    - If `CLAUDE.md` exists AND its content references `AGENTS.md` (literal `AGENTS.md` mention, `@AGENTS.md` import, or "see AGENTS.md" pointer) → target only `AGENTS.md` (CLAUDE.md is a redirect).
    - Otherwise → ask the user which to update (with multi-select option to update all).
 
-## Step 4 — Bootstrap via `specscore init` (preferred) or AI-agent fallback
+## Step 4 — Bootstrap via `specscore init` (required; no fallback)
 
-### Preferred path: invoke `specscore init`
+`specscore init` is the **only** scaffolding path. This step follows the Required-CLI Artifact Creation policy in [`shared/cli-detection.md`](../shared/cli-detection.md) (Creation-class row): the CLI scaffold is the single source of truth for `specscore.yaml` and the `spec/` indexes, and the skill **never** hand-scaffolds them.
 
-When `specscore` is on PATH (after Step 2), invoke `specscore init` as a subprocess from the project root. Pass the wizard's resolved answers as documented CLI flags:
+**The CLI is a black box.** The skill does not depend on HOW `specscore init` produces the files — it makes no template-sourcing assumptions and does not read, mirror, or reconstruct the CLI's output shape. It invokes the command and inspects the result; that is all.
+
+Invoke `specscore init` as a subprocess from the project root, passing the wizard's resolved answers as documented CLI flags:
 
 ```bash
 specscore init --project <root> [--title <title>] [--host <host>] [--org <org>] [--repo <repo>] [--force]
@@ -116,18 +119,12 @@ specscore init --project <root> [--title <title>] [--host <host>] [--org <org>] 
 
 Use `--force` only when state detection found an existing `specscore.yaml` AND the user explicitly opted into overwriting it. Never invent flags `specscore init` does not document; if a wizard answer has no matching flag, write that field via `Edit` after the CLI returns.
 
-Capture stdout/stderr/exit-code. Surface failures cleanly to the user with the underlying message.
+Capture stdout/stderr/exit-code and branch on the exit status (no `command -v` probe):
 
-### Fallback path: AI-agent direct write
-
-When `specscore` is missing AND the user declined to install (Step 2), write the artifacts directly:
-
-1. **`specscore.yaml`**: line 1 is exactly `# SpecScore Repo Config Schema: https://specscore.md/repo-config`. Lines 2+ are an optional `project:` block with whichever fields the wizard supplied (and any inferred from `git remote get-url origin` for `host`/`org`/`repo`, basename for `title`). Omit empty fields rather than emit them as empty strings.
-2. **`spec/README.md`**, **`spec/ideas/README.md`**, **`spec/features/README.md`**: lint-clean indexes per the canonical [Index Feature](https://github.com/specscore/specscore/blob/main/spec/features/index/README.md), [Ideas Index](https://github.com/specscore/specscore/blob/main/spec/features/ideas-index/README.md), [Features Index](https://github.com/specscore/specscore/blob/main/spec/features/features-index/README.md). Use the same content shape `specscore init` produces.
-
-The fallback path MUST produce schema-equivalent artifacts to the CLI path: identical mandatory content, identical section structure, identical metadata fields. Cosmetic differences (whitespace, blank-line counts) are permitted.
-
-After writing, run `specscore spec lint` (if `specscore` is somehow on PATH despite the earlier detection — re-check) and surface any violations.
+- **exit `0`** → scaffold succeeded; continue.
+- **`127`** (binary not on PATH — the command never ran, nothing mutated) → install message pointing at `/specscore:install`, then offer **install-then-retry**: on consent, delegate to `specscore:install` (Step 2 mechanism, at most once per invocation) and re-run `specscore init`. This is how the cold-start path (brand-new repo, no CLI) is handled — never a hand-scaffold.
+- **exit `8`** (binary present but too old / missing the `init` subcommand) → upgrade message naming the missing subcommand, then offer **upgrade-then-retry**: on consent, re-run `specscore init` after the upgrade.
+- **any other non-zero** → surface the error cleanly with the underlying message. **Never** fall back to a hand-written artifact — a fallback on a non-`127` error would mask a real CLI bug and risk a double-write after a partial mutation.
 
 ## Step 5 — Snippet installation (canonical Producer-shape snippet)
 
@@ -159,7 +156,7 @@ The skill MUST NOT distinguish between "version drift" and "user-edit drift" —
 
 After all bootstrap steps complete:
 
-- **First successful greenfield init** (state detection found nothing initialized; bootstrap created `specscore.yaml` AND at least one index AND optionally the snippet): emit `project.initialized` exactly once. Payload includes `project_id` (slug derived from `project.repo`), `revision` (current git SHA after staging), `cli_versions` (object with `specscore` version or `null` for fallback), `snippet_target_file` (path or `null` if skipped), `artifacts_created` (list of paths written this invocation).
+- **First successful greenfield init** (state detection found nothing initialized; bootstrap created `specscore.yaml` AND at least one index AND optionally the snippet): emit `project.initialized` exactly once. Payload includes `project_id` (slug derived from `project.repo`), `revision` (current git SHA after staging), `cli_versions` (object with the `specscore` version), `snippet_target_file` (path or `null` if skipped), `artifacts_created` (list of paths written this invocation).
 - **Subsequent state-changing run** (`--update` resolving drift, default-mode rerun resuming partial bootstrap, snippet replacement): emit `project.updated`. Payload mirrors `project.initialized` plus `change_summary` (≤2 factual sentences).
 - **No-op rerun** (skip condition triggered, nothing changed): emit no event.
 
@@ -177,7 +174,7 @@ The skill MUST NOT distinguish "user-edit drift" from "version drift" — both u
 
 ## Auto-stage in git
 
-When the skill creates files (via `specscore init`, AI-agent fallback writes, snippet install), stage the affected paths with `git add` and report the staged paths to the user in the same response. Never commit on the user's behalf — commits are the user's call.
+When the skill creates files (via `specscore init`, snippet install), stage the affected paths with `git add` and report the staged paths to the user in the same response. Never commit on the user's behalf — commits are the user's call.
 
 If the project root is not a git repository, surface "not a git repository — skipping auto-stage; you can `git init` if you want versioned spec history" and continue.
 
@@ -203,8 +200,8 @@ Direct, helpful, honest about partial states and degraded paths. The skill is a 
 - [ ] Skip condition (fully initialized + no drift) exits no-op without event
 - [ ] CLI install delegation went to `specscore:install`, not direct install commands
 - [ ] Wizard asked at most 5 batched questions with defaults visible
-- [ ] `specscore init` invoked when CLI present; AI-agent fallback otherwise
-- [ ] CLI and fallback paths produce schema-equivalent artifacts
+- [ ] `specscore init` is the only scaffolding path; on `127` it offers install-then-retry (no hand-scaffold fallback)
+- [ ] Scaffold step treats the CLI as a black box and cites `shared/cli-detection.md`
 - [ ] Snippet install displayed snippet + target + action, then waited for consent
 - [ ] Pasted snippet preserved the version comment unmodified
 - [ ] Drift detection used diff-and-confirm; no auto-merge
