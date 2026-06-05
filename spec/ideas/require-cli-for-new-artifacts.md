@@ -1,6 +1,6 @@
 # Idea: Require the specscore CLI for New Artifacts — Drop Fallbacks and Embedded Templates
 
-**Status:** Draft
+**Status:** Approved
 **Date:** 2026-06-05
 **Owner:** alexander.trakhimenok
 **Promotes To:** —
