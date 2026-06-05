@@ -53,7 +53,7 @@ Create a task for each and complete in order:
 4. **Ask clarifying questions** — one at a time, multiple-choice preferred. See [question-cadence.md](../shared/question-cadence.md).
 5. **Propose 2–3 approaches** with trade-offs; lead with your recommendation. Use `specstudio:ideate` lenses (inversion, constraint removal, simplification) where useful.
 6. **Present spec sections** one at a time, get approval after each.
-7. **Author the Feature artifact** — single `README.md` with topic-grouped `### <Topic>` headings inside `## Behavior`, each containing one or more `#### REQ: <slug>` requirements.
+7. **Create the Feature artifact** — run `specscore feature new <slug>` (the required-CLI creation path; see `## Artifact Creation`), then FILL the scaffolded sections (REQs, ACs, etc.) via `Edit`. Topics group under `### <Topic>` headings inside `## Behavior`, each containing one or more `#### REQ: <slug>` requirements.
 8. **Rehearse stub decision** — per-AC heuristic. See [rehearse-heuristic.md](../shared/rehearse-heuristic.md).
 9. **Lint** — `specscore spec lint`.
 10. **Inline self-review** — placeholders, consistency, scope, ambiguity.
@@ -75,7 +75,7 @@ Create a task for each and complete in order:
 
 ## Artifact Layout
 
-The schema follows canonical SpecScore: title prefix `# Feature: …` is the dispatch key, body metadata is bold-prefixed lines immediately after the title, requirements are inline `#### REQ: <slug>` sub-headings under topic `### <Topic>` headings inside `## Behavior` — **no YAML front-matter, no separate requirement files**.
+A Feature is a single `README.md` (plus optional `_tests/` and `assets/`):
 
 ```
 spec/features/<slug>/
@@ -86,73 +86,24 @@ spec/features/<slug>/
 └── assets/                  # Optional — diagrams, mockups
 ```
 
-**`README.md` schema (authoritative):**
+The skill carries **no embedded schema** — `specscore feature new` is the single source of truth for the Feature's structure (title prefix, body metadata, `## Behavior` / `#### REQ:` / `## Acceptance Criteria` sections). For a read-only spec reference, see [`https://specscore.md/feature-specification`](https://specscore.md/feature-specification) — never fetch it to write the file; the CLI scaffold produces the canonical structure.
 
-```markdown
-# Feature: <Title>
+## Artifact Creation
 
-**Status:** Draft
-**Date:** YYYY-MM-DD
-**Owner:** <author identifier>
-**Source Ideas:** —              <!-- or: <idea-slug>, <idea-slug> when this Feature originates from one or more Ideas -->
-**Supersedes:** —                <!-- or: <old-feature-slug> on wholesale replacement -->
+**Creation is required-CLI.** `specscore feature new <slug>` is the ONLY way to create the Feature artifact — it produces a lint-clean skeleton by construction and updates the features index for you. There is **no direct-write fallback**: the CLI scaffold is the single source of truth for the Feature's structure. This follows the Required-CLI Artifact Creation policy — see the **Creation-class row** in [`../shared/cli-detection.md`](../shared/cli-detection.md).
 
-## Summary
+### Step 1 — Run the creation call and branch on exit status
 
-1–3 sentences. What this Feature is and who it serves.
+Do **not** run a standalone `command -v` probe. Invoke `specscore feature new <slug>` (passing the fields you already have) and branch on its exit status per [`../shared/cli-detection.md`](../shared/cli-detection.md):
 
-## Problem
+- **success (exit `0`)** — the scaffold was written. Continue to Step 2.
+- **exit `127`** (binary not on PATH — the command never ran, nothing was written) — emit the install message pointing the user at **`/specscore:install`**, then offer **install-then-retry**: once the user confirms the CLI is installed, re-run `specscore feature new <slug>`. Do **NOT** hand-write the Feature as a fallback.
+- **exit `8`** (`UnsupportedCommand` — binary present but predates `feature new`) — emit the upgrade message naming the missing `feature new` subcommand, then offer **upgrade-then-retry**: once the user confirms the upgrade, re-run `specscore feature new <slug>`. Do **NOT** hand-write the Feature as a fallback.
+- **any other non-zero** — the CLI ran and genuinely failed. **Surface the error verbatim and do NOT take a direct-write fallback** (a hand-written file would mask a real CLI bug and risk a double-write after a partial mutation).
 
-Why this Feature exists. What gap or pain it addresses.
+### Step 2 — Fill the scaffolded sections
 
-## Behavior
-
-How the Feature works. Topics use `###` headings; individual rules use `#### REQ: <slug>` under their topic.
-
-### <Topic-1>
-
-Narrative context for this group of rules.
-
-#### REQ: <req-slug-1>
-
-The system MUST/MAY/SHOULD … (one enforceable rule, prose).
-
-#### REQ: <req-slug-2>
-
-…
-
-### <Topic-2>
-
-…
-
-## Acceptance Criteria
-
-Each REQ has ≥1 AC in `Given / When / Then` form. ACs may be inline under each REQ or grouped here with explicit REQ back-references — both forms are valid; pick one and be consistent.
-
-### AC: <ac-slug-1> (verifies REQ:<req-slug-1>)
-
-**Given** <precondition>
-**When** <action>
-**Then** <observable outcome>
-
-### AC: <ac-slug-2> (verifies REQ:<req-slug-2>)
-
-…
-
-## Open Questions
-
-- <Open question that doesn't block approval but should be tracked>
-
-(Or: "None at this time." — the section is never omitted.)
-
----
-*This document follows the https://specscore.md/feature-specification*
-```
-
-Notes:
-- The canonical id is the directory slug; there is no separate `id` field.
-- `**Source Ideas:**` and `**Supersedes:**` MUST be present with value `—` when empty.
-- Topics inside `## Behavior` MUST have a `###` heading; requirements (`#### REQ:`) MUST be scoped under a topic — never directly under `## Behavior`.
+With the lint-clean skeleton in place, FILL its sections via `Edit`: the `## Summary`, `## Problem`, `## Behavior` topics with their `#### REQ: <slug>` rules, and the `## Acceptance Criteria` in `Given / When / Then` form. Preserve the scaffold's lint-clean structure — never replace it with a hand-authored layout.
 
 ## Acceptance Criterion Format
 

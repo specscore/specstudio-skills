@@ -63,7 +63,7 @@ Create a task for each and complete in order:
 2. **Scope decomposition check** — if the request describes multiple independent subsystems, stop and help the user split into multiple Ideas before proceeding.
 3. **Phase 1 — Understand & Expand** (divergent).
 4. **Phase 2 — Evaluate & Converge**.
-5. **Phase 3 — Crystallize** as a SpecScore Idea artifact. Bootstrap `spec/ideas/` if missing. Prefer the `specscore idea new` CLI scaffold over a direct file write when the CLI is available (see Phase 3 below).
+5. **Phase 3 — Crystallize** as a SpecScore Idea artifact. Bootstrap `spec/ideas/` if missing. Create the artifact with the `specscore idea new` CLI scaffold — the required creation path (see Phase 3 below).
 6. **Lint** the artifact: `specscore spec lint`. On failure, run `specscore spec lint --fix` once, re-lint; surface remaining violations to the user.
 7. **Publication checkpoint** — add every file you created or edited (`spec/ideas/<slug>.md`, plus bootstrap files if any) to the checkpoint manifest and apply [publication-policy.md](../shared/publication-policy.md) for the lifecycle event being emitted.
 8. **Inline self-review** — placeholders, contradictions, ambiguity, scope.
@@ -116,24 +116,25 @@ After the user reacts to Phase 1, shift to convergent mode. Cadence becomes **si
 
 ## Phase 3 — Crystallize as a SpecScore Idea
 
-**Prefer the CLI when available.** `specscore idea new <slug>` produces a lint-clean skeleton by construction and updates `spec/ideas/README.md` for you. Subsequent edits must preserve that lint-clean state.
+**Creation is required-CLI.** `specscore idea new <slug>` is the ONLY way to create the artifact — it produces a lint-clean skeleton by construction and updates `spec/ideas/README.md` for you. There is no direct-write fallback: the CLI scaffold is the single source of truth for the Idea's structure. Subsequent edits must preserve that lint-clean state. This follows the Required-CLI Artifact Creation policy — see the Creation-class row in [`../shared/cli-detection.md`](../shared/cli-detection.md).
 
 ### Step 3.0 — Bootstrap `spec/ideas/` if missing
 
-Before invoking the CLI or writing the file directly, check that `spec/ideas/` exists. If not:
+Before invoking the CLI, check that `spec/ideas/` exists. If not:
 
 1. Create the directory.
-2. Create `spec/ideas/README.md` as a lint-clean Index artifact (title `# Ideas Index`, `**Status:** Stable`, empty Contents table, `Open Questions: None at this time.`, adherence footer). The CLI will append to this index when it scaffolds the artifact; the fallback path appends manually.
+2. Create `spec/ideas/README.md` as a lint-clean Index artifact (title `# Ideas Index`, `**Status:** Stable`, empty Contents table, `Open Questions: None at this time.`, adherence footer). The CLI will append to this index when it scaffolds the artifact.
 3. Tell the user, e.g., *"Bootstrapped `spec/ideas/` and `spec/ideas/README.md` (this project didn't have an ideas tree yet)."*
 
 This step MUST NOT happen silently.
 
 ### Step 3a — Detect the CLI (per the shared convention)
 
-`ideate` is an **optional-class** skill: the CLI is preferred but a direct-write fallback exists. Follow [`../shared/cli-detection.md`](../shared/cli-detection.md) — do **not** run a standalone `command -v` probe. Instead, attempt the CLI path's scaffold call (Step 3b's `specscore idea new`) and branch on its exit status:
+`ideate` is a **creation-class** skill: the CLI is required and there is no direct-write fallback. Follow the Creation-class row in [`../shared/cli-detection.md`](../shared/cli-detection.md) — do **not** run a standalone `command -v` probe. Instead, invoke the scaffold call (Step 3b's `specscore idea new`) and branch on its exit status:
 
-- **exit `127`** (binary not installed) → take the **fallback path** (Step 3c). A `127` means the command never ran, so nothing was written — the fallback is safe.
-- **any other non-zero** → the CLI is present but the call genuinely failed; **surface the error and do NOT fall back** (a hand-written file would mask a real CLI bug).
+- **exit `127`** (binary not on PATH / not installed) → emit the install message (`/specscore:install`) and **offer install-then-retry**. A `127` means the command never ran, so nothing was written — retry once the user installs.
+- **exit `8`** (`UnsupportedCommand` — CLI present but predates `idea new`) → emit the **upgrade** message naming the missing subcommand and **offer upgrade-then-retry**.
+- **any other non-zero** → the CLI is present but the call genuinely failed; **surface the error and stop**. Never fall back to a hand-written file.
 - **success** → continue on the CLI path (Step 3b, step 2).
 
 ### Step 3b (CLI path) — Scaffold, then fill
@@ -166,15 +167,16 @@ This step MUST NOT happen silently.
 
    The command writes `spec/ideas/<slug>.md`, runs lint-fix, and exits non-zero if the result isn't lint-clean.
 
-2. **Fill remaining sections with `Edit`.** Sections with no matching flag — `Alternatives Considered`, `Key Assumptions to Validate` (the Must/Should/Might table), `SpecScore Integration`, `Open Questions` — land in the file as HTML-comment prompts. Replace each prompt with real content via `Edit`. Sections you *did* pass via flags are already filled.
+2. **Fill the scaffold's sections with `Edit`.** The scaffold lands sections with no matching flag — `Alternatives Considered`, `Key Assumptions to Validate` (the Must/Should/Might table), `SpecScore Integration`, `Open Questions` — as HTML-comment prompts. Replace each prompt with real content via `Edit`. Sections you *did* pass via flags are already filled. For the meaning of each section, treat the specification page `https://specscore.md/idea-specification` as a **read-only reference** — never fetch that URL to write or generate the file; the scaffold the CLI produced is the authoritative structure.
 
-### Step 3c (fallback path) — Direct write
+   A few section semantics to keep in mind while filling the prompts:
 
-If the CLI is not on PATH, write the file directly using the schema below. The content must be identical to what the CLI would produce.
+   - `**Promotes To:**` is **managed state** — Lifecycle tooling populates it when a Feature references this Idea. Authors MUST NOT edit it manually.
+   - The **"Not Doing"** section is mandatory — lint rule `I-002` fails without it. Fill its entries; never leave it empty.
 
-### Step 3d — Lint (with bounded auto-recovery)
+### Step 3c — Lint (with bounded auto-recovery)
 
-In both paths, after the artifact is complete, run `specscore spec lint`. The CLI scaffold is lint-clean on generation; your subsequent `Edit`s must not break that.
+After the artifact is complete, run `specscore spec lint`. The CLI scaffold is lint-clean on generation; your subsequent `Edit`s must not break that.
 
 **On lint failure:**
 
@@ -185,7 +187,7 @@ In both paths, after the artifact is complete, run `specscore spec lint`. The CL
 
 **Trust the CLI's fix policy.** The skill does NOT carry its own list of which lint rules are safely auto-fixable — that policy lives in the `specscore` CLI. If `--fix` silently repairs a violation that should require human input, file the issue against `specscore`, not this skill.
 
-### Step 3e — Publication checkpoint
+### Step 3d — Publication checkpoint
 
 After every successful artifact write or edit, build a checkpoint manifest containing the affected paths:
 
@@ -196,67 +198,6 @@ spec/ideas/README.md
 ```
 
 Resolve and apply [publication-policy.md](../shared/publication-policy.md) for `idea.drafted` before emitting that event. The disclosure must name the policy source when known, resolved actions, any branch-safety effect, and the manifest paths. If the policy includes `stage`, stage only manifest paths. If it includes `commit` or `push`, run the manifest and branch safety checks from the shared protocol first. If publication fails (no git repo, detached worktree, lock contention, branch refusal), surface the failure and continue without aborting the artifact write or bypassing the user review gate.
-
-### Schema (authoritative — used by both paths)
-
-Write to `spec/ideas/<slug>.md` using **exactly this schema**. The schema follows canonical SpecScore: title prefix is the dispatch key (`# Idea: …`), and metadata lives in bold-prefixed body lines immediately after the title — **no YAML front-matter**.
-
-```markdown
-# Idea: <Idea Name>
-
-**Status:** Draft
-**Date:** YYYY-MM-DD
-**Owner:** <author identifier>
-**Promotes To:** —
-**Supersedes:** —
-**Related Ideas:** —
-
-## Problem Statement
-<One "How Might We…" sentence>
-
-## Context
-<Triggering observation, related specs, prior art>
-
-## Recommended Direction
-<2–3 paragraphs: what and why, over the alternatives>
-
-## Alternatives Considered
-<2–3 directions that lost, and why each lost>
-
-## MVP Scope
-<The single job the MVP nails. Timeboxed, not feature-listed. "If it's not embarrassing, you waited too long.">
-
-## Not Doing (and Why)
-- <Thing 1> — <reason>
-- <Thing 2> — <reason>
-- <Thing 3> — <reason>
-
-## Key Assumptions to Validate
-| Tier | Assumption | How to validate |
-|------|------------|-----------------|
-| Must-be-true | … | … |
-| Should-be-true | … | … |
-| Might-be-true | … | … |
-
-## SpecScore Integration
-- **New Features this would create:** <list or "TBD at spec time">
-- **Existing Features affected:** <list or "none">
-- **Dependencies:** <other Ideas or in-flight work>
-
-## Open Questions
-- <Question that needs answering before promotion to Feature(s)>
-
----
-*This document follows the https://specscore.md/idea-specification*
-```
-
-Notes:
-- The canonical id is the filename slug; there is no separate `id` field.
-- `**Promotes To:**` is **managed state** — Lifecycle tooling populates it when a Feature is created that references this Idea. Authors MUST NOT edit it manually.
-- `**Supersedes:**` and `**Related Ideas:**` MUST be present with value `—` when empty.
-- `**Archive Reason:**` MUST be present when (and only when) `**Status:** Archived`.
-
-**The "Not Doing" list is mandatory** — lint rule `I-002` will fail without it.
 
 ## Inline Self-Review
 
