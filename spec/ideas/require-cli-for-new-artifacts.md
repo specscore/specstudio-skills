@@ -21,7 +21,7 @@ Promote new-artifact creation in every producer skill from Optional-class to CLI
 
 The template-sourcing problem moves down a layer, into the CLI. The CLI fetches the canonical scaffold template from specscore.md (one published source of truth, updatable without shipping a new binary), and falls back to a copy embedded in the binary when there is no network. Skills stay oblivious to either path — they only ever call `specscore <noun> new`. This keeps the offline case working (the embedded template), keeps the canonical template centrally managed (the web copy), and keeps the skills free of any template knowledge at all.
 
-The canonical templates are addressable at a stable per-type URL — `https://specscore.md/new/idea`, `https://specscore.md/new/feature`, and so on — which serves two roles at once: it is where the CLI fetches, and a human-clickable reference. Each producer skill MAY carry a one-line read-only pointer to its artifact's template URL in place of the deleted inline schema, so an author can see the canonical shape on demand without the skill holding a copy that drifts. The pointer is reference-only: artifact creation still runs exclusively through `specscore <noun> new`; the skill never fetches the URL and writes the file itself — that would re-introduce the rejected skills-download path.
+Two stable per-type URL families are in play, doing different jobs. The **template** URL — `https://specscore.md/new/idea`, `https://specscore.md/new/feature`, and so on — is the blank skeleton the CLI fetches. The **specification** URL — `https://specscore.md/idea-specification`, `https://specscore.md/feature-specification` — documents each section's meaning and lint rules, and is already emitted as the artifact's footer by the CLI scaffold (so deleting the embedded schema from skills loses it nowhere). Each producer skill MAY carry a one-line read-only pointer to its artifact's **specification** page in place of the deleted inline schema, so an author can see the canonical shape *and its semantics* on demand without the skill holding a copy that drifts. The pointer is reference-only: artifact creation still runs exclusively through `specscore <noun> new`; the skill never fetches a URL and writes the file itself — that would re-introduce the rejected skills-download path.
 
 ## Alternatives Considered
 
@@ -41,7 +41,7 @@ A convention update plus representative conversion: revise shared/cli-detection.
 - Rewriting all producer skills in one pass — MVP converts three representatives; plan/init follow
 - Adding new CLI scaffold verbs — this idea assumes/depends on them existing; the CLI work is a separate dependency
 - Changing exit-code semantics — relies on existing 127-absent and exit-8-too-old behavior from cli-detection.md
-- Having the skill fetch the template URL and write the file — the per-type URL is a read-only reference for humans; creation always goes through the CLI
+- Having the skill fetch a URL and write the file — the specification/template URLs are read-only references for humans; creation always goes through the CLI
 
 ## Key Assumptions to Validate
 
@@ -53,7 +53,7 @@ A convention update plus representative conversion: revise shared/cli-detection.
 | Should-be-true | Forcing the CLI does not strand offline / air-gapped users, because the binary carries an embedded template fallback once installed (only the *install* step needs network, not each creation) | Install in a sandbox, drop the network, create an artifact; confirm the embedded-template path produces a lint-clean file |
 | Should-be-true | The web-published template and the CLI's embedded fallback (and the CLI's own lint rules) stay compatible, so a newer web template never produces a file an installed CLI then rejects | Define a versioning/compatibility contract between specscore.md templates and CLI versions; test creating with an old CLI against a newer published template |
 | Should-be-true | `init` can require the CLI despite being the project-bootstrap entry point, without making first-run worse than today's AI-agent fallback | Walk the cold-start path: brand-new repo, no CLI; confirm install-then-retry is no worse than the current fallback bootstrap |
-| Might-be-true | Authors will not miss an inline schema reference once it is removed, because running the scaffold once — or opening the per-type template URL — shows the shape | Convert the three MVP skills; ask a maintainer to author an artifact with the converted skills and report whether the missing inline schema hurt |
+| Might-be-true | Authors will not miss an inline schema reference once it is removed, because running the scaffold once — or opening the per-type specification page — shows the shape and section semantics | Convert the three MVP skills; ask a maintainer to author an artifact with the converted skills and report whether the missing inline schema hurt |
 
 
 ## SpecScore Integration
@@ -64,7 +64,7 @@ A convention update plus representative conversion: revise shared/cli-detection.
 
 ## Open Questions
 
-- Where on specscore.md do canonical templates live, and what is the fetch contract? **Proposed:** a stable per-type URL `https://specscore.md/new/<artifact-type>` (e.g. `/new/idea`, `/new/feature`) used both as the CLI fetch endpoint and a human reference link. Still open: caching, content negotiation (raw template vs. rendered page), versioning, auth (likely none).
+- Where on specscore.md do canonical templates live, and what is the fetch contract? **Proposed:** a stable per-type template URL `https://specscore.md/new/<artifact-type>` (e.g. `/new/idea`, `/new/feature`) as the CLI fetch endpoint, distinct from the existing per-type specification URL `https://specscore.md/<artifact-type>-specification` used as the human reference link. Still open: caching, content negotiation (raw template vs. rendered page), versioning, auth (likely none).
 - What is the compatibility/versioning rule between a web-published template and an installed CLI's lint rules, so a newer template never yields a file the local CLI rejects? Does the CLI pin to a template version matching its own?
 - Does `init` requiring the CLI create an unacceptable cold-start (project bootstrap before any tooling exists), or is install-then-retry good enough there?
 - Should the CLI template-sourcing work be tracked as a `specscore` / `specscore.md` sidekick seed (as `cli-detection-convention` did for its CLI dependency)?
