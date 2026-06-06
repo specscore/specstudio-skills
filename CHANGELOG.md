@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.0.12
+
+- **multi-agent install support** — the plugin now ships manifests for Gemini CLI (`gemini-extension.json`) and GitHub Copilot CLI (`.github/plugin.json`) alongside the existing Claude Code and Codex manifests, plus Cursor install docs in the README. The same `skills/` payload is shared across all agents; only the per-agent manifest differs.
+
 ## 0.0.11
 
 - **pull-request skill shipped** — `specstudio:pull-request` is the gate-and-create-one-PR twin of `ship`: it runs the project's pre-PR gates on the current branch via the shared reviewer-gates layer (the verify check is expressed as the existing `type: deterministic` reviewer — no new reviewer type), then creates exactly one ready PR against the default branch (built-in `git push` + `gh pr create`, or an optional `pull_request:` delegate), and emits `pull_request.created`. It gates, creates one PR, and records — it never merges, deploys, stacks, or orchestrates. Registers the `pull_request.pre_dispatch` gate-point and `pull_request.created` lifecycle events. New Feature `skills/pull-request`.
