@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: skill exits non-zero when any AC has verdict fail or error
 
 **Validates:** [verify#ac:exit-non-zero-on-fail-or-error](../README.md#ac-exit-non-zero-on-fail-or-error-verifies-reqexit-code-semantics)

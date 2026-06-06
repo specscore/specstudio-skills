@@ -1,8 +1,9 @@
 ---
 type: rehearse-stub
-status: pending
+stub_status: pending
 ac: empty-or-whitespace-input-rejected
 feature: sidekick-capture
+format: https://specscore.md/scenario-specification
 ---
 
 # Rehearse: empty-or-whitespace-input-rejected

@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: two same-type entries that both omit `name:` collide and are refused
 
 **Status:** pending

@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: unmapped ACs are informational, not contradictions
 
 **Validates:** [recap#ac:unmapped-not-contradiction](../README.md#ac-unmapped-not-contradiction-verifies-requnmapped-detection-reqexit-code-semantics)

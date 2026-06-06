@@ -40,7 +40,7 @@ jobs:
       - name: Install specscore CLI
         # Pinned to a known-good release; bump as newer CLI fixes land.
         run: |
-          go install github.com/specscore/specscore-cli/cmd/specscore@v0.6.0
+          go install github.com/specscore/specscore-cli/cmd/specscore@v0.7.1
           echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
       - name: Lint spec tree
         run: specscore spec lint

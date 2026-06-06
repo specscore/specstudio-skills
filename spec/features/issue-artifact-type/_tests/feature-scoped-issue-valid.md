@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: feature-scoped-issue-valid
 
 **Status:** passing

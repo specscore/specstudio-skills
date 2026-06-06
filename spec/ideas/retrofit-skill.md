@@ -1,3 +1,8 @@
+---
+format: https://specscore.md/idea-specification
+status: Draft
+---
+
 # Idea: Retrofit Skill — Specifications for Existing Spec-less Projects
 
 **Status:** Draft

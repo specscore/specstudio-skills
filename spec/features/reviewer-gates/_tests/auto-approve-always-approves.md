@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: a `type: auto-approve` reviewer always approves and dispatches nothing
 
 **Status:** pending

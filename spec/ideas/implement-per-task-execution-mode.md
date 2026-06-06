@@ -1,3 +1,8 @@
+---
+format: https://specscore.md/idea-specification
+status: Approved
+---
+
 # Idea: Per-Task Execution Mode for implement
 
 **Status:** Approved

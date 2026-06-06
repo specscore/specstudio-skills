@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: recap resolves the verify report to the one at HEAD (or most recent in branch history)
 
 **Validates:** [recap#ac:verify-report-resolved-to-latest-at-head](../README.md#ac-verify-report-resolved-to-latest-at-head-verifies-reqverify-report-resolution)

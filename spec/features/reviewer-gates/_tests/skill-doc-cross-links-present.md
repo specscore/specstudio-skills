@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: `skills/specify/SKILL.md`, `spec/features/skills/specify/README.md`, and `spec/features/README.md` each link to this Feature
 
 **Status:** pending

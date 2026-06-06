@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: first-seen-wrong-type-rejected
 
 **Status:** passing

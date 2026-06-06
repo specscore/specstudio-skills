@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: a structural-section fix re-dispatches previously-approved reviewers alongside the failing one
 
 **Status:** pending

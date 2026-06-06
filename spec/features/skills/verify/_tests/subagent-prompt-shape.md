@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: dispatched subagent prompt contains AC text, commits, fetch-on-demand instruction, and verdict contract
 
 **Validates:** [verify#ac:subagent-prompt-shape](../README.md#ac-subagent-prompt-shape-verifies-reqsubagent-prompt-reqsubagent-verdict-contract)

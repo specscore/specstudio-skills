@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: valid-minimal-open-issue
 
 **Status:** passing

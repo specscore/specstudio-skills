@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: reviewers in a gate are dispatched serially in list order with no concurrent dispatches
 
 **Status:** pending

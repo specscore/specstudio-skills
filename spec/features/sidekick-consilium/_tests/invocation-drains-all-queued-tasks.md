@@ -1,8 +1,9 @@
 ---
 type: rehearse-stub
-status: pending
+stub_status: pending
 ac: invocation-drains-all-queued-tasks
 feature: sidekick-consilium
+format: https://specscore.md/scenario-specification
 ---
 
 # Rehearse: invocation-drains-all-queued-tasks

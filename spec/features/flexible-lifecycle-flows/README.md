@@ -1,3 +1,8 @@
+---
+format: https://specscore.md/feature-specification
+status: Approved
+---
+
 # Feature: Flexible Lifecycle Flows
 
 > [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/specscore/specstudio-skills/spec/features/flexible-lifecycle-flows?op=explore) | [Edit](https://specscore.studio/app/github.com/specscore/specstudio-skills/spec/features/flexible-lifecycle-flows?op=edit) | [Ask question](https://specscore.studio/app/github.com/specscore/specstudio-skills/spec/features/flexible-lifecycle-flows?op=ask) | [Request change](https://specscore.studio/app/github.com/specscore/specstudio-skills/spec/features/flexible-lifecycle-flows?op=request-change) |

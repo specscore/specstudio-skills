@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: Explicit "approve" phrase transitions status without confirmation prompt
 
 **Validates:** [ideate#ac:approval-detection](../README.md#ac-approval-detection)

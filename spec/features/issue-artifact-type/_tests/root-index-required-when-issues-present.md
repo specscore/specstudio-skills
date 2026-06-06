@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: root-index-required-when-issues-present
 
 **Status:** passing

@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: a legacy command-keyed gate key is rejected with a migration error
 
 **Status:** pending

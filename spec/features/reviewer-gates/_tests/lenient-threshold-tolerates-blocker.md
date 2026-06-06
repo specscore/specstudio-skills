@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: a lenient threshold C releases an artifact with grade C
 
 **Status:** pending

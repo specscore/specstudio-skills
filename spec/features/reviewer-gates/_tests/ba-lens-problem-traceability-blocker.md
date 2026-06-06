@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: the BA lens raises a Blocker when requirements do not address the stated Problem
 
 **Status:** pending

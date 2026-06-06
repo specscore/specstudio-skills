@@ -1,3 +1,8 @@
+---
+format: https://specscore.md/idea-specification
+status: Implemented
+---
+
 # Idea: Sidekick Issue-Tracker Destinations
 
 **Status:** Implemented

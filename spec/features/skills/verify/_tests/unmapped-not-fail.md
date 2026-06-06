@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: an unmapped AC does not cause non-zero exit when all mapped ACs pass
 
 **Validates:** [verify#ac:unmapped-not-fail](../README.md#ac-unmapped-not-fail-verifies-requnmapped-detection-reqexit-code-semantics)

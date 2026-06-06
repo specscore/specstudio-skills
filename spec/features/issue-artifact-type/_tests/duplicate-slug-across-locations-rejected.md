@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: duplicate-slug-across-locations-rejected
 
 **Status:** passing

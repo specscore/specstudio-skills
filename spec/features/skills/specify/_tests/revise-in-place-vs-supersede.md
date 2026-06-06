@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: Revise-in-place is the default; supersede is reserved for scope-invalidating changes
 
 **Validates:** [specify#req:revise-vs-supersede](../README.md#req-revise-vs-supersede)

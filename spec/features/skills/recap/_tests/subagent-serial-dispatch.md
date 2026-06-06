@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: drift-narrator subagents are dispatched one at a time, in AC order
 
 **Validates:** [recap#ac:subagent-serial-dispatch](../README.md#ac-subagent-serial-dispatch-verifies-reqsubagent-dispatch-serial)

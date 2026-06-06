@@ -1,3 +1,8 @@
+---
+format: https://specscore.md/idea-specification
+status: Draft
+---
+
 # Idea: Synchestra Removal — Follow-up
 
 **Status:** Draft

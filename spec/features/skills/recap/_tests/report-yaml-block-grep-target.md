@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: the recap report begins with a grep-friendly YAML summary block
 
 **Validates:** [recap#ac:report-yaml-block-grep-target](../README.md#ac-report-yaml-block-grep-target-verifies-reqreport-yaml-summary-reqreport-body)

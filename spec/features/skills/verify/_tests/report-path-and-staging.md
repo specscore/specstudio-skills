@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: report is written to the canonical path and staged but not committed
 
 **Validates:** [verify#ac:report-path-and-staging](../README.md#ac-report-path-and-staging-verifies-reqreport-path-reqreport-staged)

@@ -1,3 +1,8 @@
+---
+format: https://specscore.md/idea-specification
+status: Specified
+---
+
 # Idea: Auto-stage lint --fix changes via the CLI fixed-files report
 
 **Status:** Specified

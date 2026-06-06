@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: verify refuses a Draft Feature
 
 **Validates:** [verify#ac:refuses-draft-feature](../README.md#ac-refuses-draft-feature-verifies-reqrequires-approved-feature)

@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: a gate on a multi-occurrence gate-point event is evaluated independently per occurrence
 
 **Status:** pending

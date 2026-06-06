@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: confirm at threshold prompts
 
 **Status:** pending

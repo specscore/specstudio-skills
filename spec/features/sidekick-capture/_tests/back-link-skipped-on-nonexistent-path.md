@@ -1,8 +1,9 @@
 ---
 type: rehearse-stub
-status: pending
+stub_status: pending
 ac: back-link-skipped-on-nonexistent-path
 feature: sidekick-capture
+format: https://specscore.md/scenario-specification
 ---
 
 # Rehearse: back-link-skipped-on-nonexistent-path

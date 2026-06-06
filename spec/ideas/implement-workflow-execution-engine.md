@@ -1,3 +1,8 @@
+---
+format: https://specscore.md/idea-specification
+status: Approved
+---
+
 # Idea: Workflow-Driven Batch Execution for implement
 
 **Status:** Approved

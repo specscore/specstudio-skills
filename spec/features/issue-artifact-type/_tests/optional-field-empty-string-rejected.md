@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: optional-field-empty-string-rejected
 
 **Status:** passing

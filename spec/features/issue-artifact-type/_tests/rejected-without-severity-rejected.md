@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: rejected-without-severity-rejected
 
 **Status:** passing

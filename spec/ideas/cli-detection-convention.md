@@ -1,3 +1,8 @@
+---
+format: https://specscore.md/idea-specification
+status: Specified
+---
+
 # Idea: CLI Detection Convention — Match the Check to the Skill's Dependency on the CLI
 
 **Status:** Specified

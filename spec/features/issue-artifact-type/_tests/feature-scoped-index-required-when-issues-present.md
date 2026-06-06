@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: feature-scoped-index-required-when-issues-present
 
 **Status:** passing

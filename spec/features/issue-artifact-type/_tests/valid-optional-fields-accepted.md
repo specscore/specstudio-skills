@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: valid-optional-fields-accepted
 
 **Status:** passing

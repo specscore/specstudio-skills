@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: slug-mismatch-rejected
 
 **Status:** passing

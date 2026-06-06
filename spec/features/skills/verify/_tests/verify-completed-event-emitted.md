@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: exactly one verify.completed event is emitted per successful run with the documented payload
 
 **Validates:** [verify#ac:verify-completed-event-emitted](../README.md#ac-verify-completed-event-emitted-verifies-reqverify-completed-event)

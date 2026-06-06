@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: repo-root `README.md` contains a link to this Feature and the pipeline sentence no longer includes `review` as a discrete step
 
 **Status:** pending

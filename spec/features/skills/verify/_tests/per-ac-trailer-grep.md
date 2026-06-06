@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: per-AC git-log walk collects matching commits and dispatches only mapped ACs
 
 **Validates:** [verify#ac:per-ac-trailer-grep](../README.md#ac-per-ac-trailer-grep-verifies-reqtrailer-grep-per-ac-reqfeature-parse)

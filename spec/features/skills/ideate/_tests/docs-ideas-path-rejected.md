@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: Writing to docs/ideas/ is rejected
 
 **Validates:** [ideate#req:no-docs-path](../README.md#req-no-docs-path)

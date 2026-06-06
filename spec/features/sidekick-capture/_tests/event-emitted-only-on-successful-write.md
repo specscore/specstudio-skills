@@ -1,8 +1,9 @@
 ---
 type: rehearse-stub
-status: pending
+stub_status: pending
 ac: event-emitted-only-on-successful-write
 feature: sidekick-capture
+format: https://specscore.md/scenario-specification
 ---
 
 # Rehearse: event-emitted-only-on-successful-write

@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: Hard gate blocks writing-plans until lint, reviewer, and user all pass
 
 **Validates:** [specify#ac:hard-gate-enforced](../README.md#ac-hard-gate-enforced)

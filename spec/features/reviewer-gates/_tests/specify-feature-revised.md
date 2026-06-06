@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: `specify` Feature is revised in place to remove the five reviewer-related REQs and collapse the gate topics
 
 **Status:** pending

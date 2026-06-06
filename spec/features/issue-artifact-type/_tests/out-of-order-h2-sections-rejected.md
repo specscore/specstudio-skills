@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: out-of-order-h2-sections-rejected
 
 **Status:** passing

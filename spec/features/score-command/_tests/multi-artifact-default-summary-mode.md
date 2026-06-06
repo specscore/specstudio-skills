@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: multi artifact default summary mode
 
 **Status:** pending

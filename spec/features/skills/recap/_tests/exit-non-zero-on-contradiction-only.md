@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: recap exits non-zero only on `contradiction` or `error` drift verdicts
 
 **Validates:** [recap#ac:exit-non-zero-on-contradiction-only](../README.md#ac-exit-non-zero-on-contradiction-only-verifies-reqexit-code-semantics)

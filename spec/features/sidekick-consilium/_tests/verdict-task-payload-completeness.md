@@ -1,8 +1,9 @@
 ---
 type: rehearse-stub
-status: pending
+stub_status: pending
 ac: verdict-task-payload-completeness
 feature: sidekick-consilium
+format: https://specscore.md/scenario-specification
 ---
 
 # Rehearse: verdict-task-payload-completeness

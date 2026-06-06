@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: invalid-status-value-rejected
 
 **Status:** passing

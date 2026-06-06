@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: Vague positive signals require explicit confirmation before status transition
 
 **Validates:** [ideate#ac:approval-detection](../README.md#ac-approval-detection)

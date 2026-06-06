@@ -1,8 +1,9 @@
 ---
 type: rehearse-stub
-status: pending
+stub_status: pending
 ac: malformed-vote-fails-pipeline
 feature: sidekick-consilium
+format: https://specscore.md/scenario-specification
 ---
 
 # Rehearse: malformed-vote-fails-pipeline

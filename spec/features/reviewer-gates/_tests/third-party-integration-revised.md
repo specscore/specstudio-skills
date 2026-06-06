@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: `third-party-integration` is revised in place to remove all Reviewer-shape REQs and the registration AC
 
 **Status:** pending

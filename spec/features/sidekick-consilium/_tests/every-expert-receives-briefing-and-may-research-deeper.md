@@ -1,8 +1,9 @@
 ---
 type: rehearse-stub
-status: pending
+stub_status: pending
 ac: every-expert-receives-briefing-and-may-research-deeper
 feature: sidekick-consilium
+format: https://specscore.md/scenario-specification
 ---
 
 # Rehearse: every-expert-receives-briefing-and-may-research-deeper

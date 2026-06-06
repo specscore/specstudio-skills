@@ -1,8 +1,9 @@
 ---
 type: rehearse-stub
-status: pending
+stub_status: pending
 ac: host-skill-references-directive
 feature: sidekick-capture
+format: https://specscore.md/scenario-specification
 ---
 
 # Rehearse: host-skill-references-directive

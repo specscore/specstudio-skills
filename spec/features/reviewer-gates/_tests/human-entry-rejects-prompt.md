@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: `type: human` entry declaring a `prompt:` field is rejected at consumer load time
 
 **Status:** pending

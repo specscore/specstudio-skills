@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: bugs-field-empty-list-accepted
 
 **Status:** passing

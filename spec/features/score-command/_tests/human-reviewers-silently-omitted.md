@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: human reviewers silently omitted
 
 **Status:** pending

@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: Built-in reviewer enforces the six baseline blocker categories
 
 **Validates:** [specify#req:reviewer-baseline-blockers](../README.md#req-reviewer-baseline-blockers)

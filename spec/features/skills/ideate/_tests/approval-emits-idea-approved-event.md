@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: User approval transitions status and emits idea.approved
 
 **Validates:** [ideate#ac:lifecycle-events](../README.md#ac-lifecycle-events)

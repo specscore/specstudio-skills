@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: change_summary stays factual — no speculation or editorializing
 
 **Validates:** [ideate#req:change-summary-discipline](../README.md#req-change-summary-discipline)

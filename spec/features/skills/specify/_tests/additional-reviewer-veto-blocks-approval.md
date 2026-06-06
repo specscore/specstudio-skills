@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: Any single registered reviewer's Issues Found blocks the User Review Gate (AND composition)
 
 **Validates:** [specify#req:reviewer-composition](../README.md#req-reviewer-composition)

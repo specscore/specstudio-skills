@@ -1,8 +1,9 @@
 ---
 type: rehearse-stub
-status: pending
+stub_status: pending
 ac: scribe-verdict-field-ignored
 feature: sidekick-consilium
+format: https://specscore.md/scenario-specification
 ---
 
 # Rehearse: scribe-verdict-field-ignored

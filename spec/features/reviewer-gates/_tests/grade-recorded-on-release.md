@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: the released grade is recorded in the event payload and on the artifact
 
 **Status:** pending

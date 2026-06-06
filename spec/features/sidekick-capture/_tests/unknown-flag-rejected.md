@@ -1,8 +1,9 @@
 ---
 type: rehearse-stub
-status: pending
+stub_status: pending
 ac: unknown-flag-rejected
 feature: sidekick-capture
+format: https://specscore.md/scenario-specification
 ---
 
 # Rehearse: unknown-flag-rejected

@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: `gates:` block is preserved verbatim across SpecScore tooling read/write cycles
 
 **Status:** pending

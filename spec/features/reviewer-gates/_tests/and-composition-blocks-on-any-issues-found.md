@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: any single `Issues Found` verdict blocks the gate and halts the current pass
 
 **Status:** pending

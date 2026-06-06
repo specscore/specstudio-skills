@@ -1,3 +1,8 @@
+---
+format: https://specscore.md/feature-specification
+status: Stable
+---
+
 # Feature: Sidekick Destination Resolution
 
 > [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/specscore/specstudio-skills/spec/features/sidekick-capture/destination-resolution?op=explore) | [Edit](https://specscore.studio/app/github.com/specscore/specstudio-skills/spec/features/sidekick-capture/destination-resolution?op=edit) | [Ask question](https://specscore.studio/app/github.com/specscore/specstudio-skills/spec/features/sidekick-capture/destination-resolution?op=ask) | [Request change](https://specscore.studio/app/github.com/specscore/specstudio-skills/spec/features/sidekick-capture/destination-resolution?op=request-change) |

@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: invalid ref falls back to empty diff
 
 **Status:** pending

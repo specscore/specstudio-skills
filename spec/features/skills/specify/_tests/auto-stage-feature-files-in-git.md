@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: All Feature files the skill creates are auto-staged in git
 
 **Validates:** [specify#req:auto-stage-on-create](../README.md#req-auto-stage-on-create)

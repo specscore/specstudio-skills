@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: Source Ideas references must resolve to existing Approved/Specified Ideas
 
 **Validates:** [specify#ac:source-idea-linkage](../README.md#ac-source-idea-linkage)

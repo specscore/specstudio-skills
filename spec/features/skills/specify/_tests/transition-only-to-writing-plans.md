@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: After feature.approved, the only sanctioned transition is to writing-plans
 
 **Validates:** [specify#ac:promotion-boundary-held](../README.md#ac-promotion-boundary-held)

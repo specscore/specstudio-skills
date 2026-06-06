@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: a `type: deterministic` reviewer's verdict is derived from its command's exit code
 
 **Status:** pending

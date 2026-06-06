@@ -1,3 +1,8 @@
+---
+format: https://specscore.md/feature-specification
+status: Approved
+---
+
 # Feature: Third-Party Skill Integration
 
 > [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/specscore/specstudio-skills/spec/features/third-party-integration?op=explore) | [Edit](https://specscore.studio/app/github.com/specscore/specstudio-skills/spec/features/third-party-integration?op=edit) | [Ask question](https://specscore.studio/app/github.com/specscore/specstudio-skills/spec/features/third-party-integration?op=ask) | [Request change](https://specscore.studio/app/github.com/specscore/specstudio-skills/spec/features/third-party-integration?op=request-change) |

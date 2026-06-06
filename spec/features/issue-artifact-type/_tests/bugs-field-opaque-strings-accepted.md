@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: bugs-field-opaque-strings-accepted
 
 **Status:** passing

@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: Lint failure triggers one --fix pass, then surfaces remaining violations
 
 **Validates:** [ideate#ac:lint-failure-recovery](../README.md#ac-lint-failure-recovery)

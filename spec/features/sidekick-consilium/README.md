@@ -1,3 +1,8 @@
+---
+format: https://specscore.md/feature-specification
+status: Approved
+---
+
 # Feature: Sidekick Consilium
 
 > [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/specscore/specstudio-skills/spec/features/sidekick-consilium?op=explore) | [Edit](https://specscore.studio/app/github.com/specscore/specstudio-skills/spec/features/sidekick-consilium?op=edit) | [Ask question](https://specscore.studio/app/github.com/specscore/specstudio-skills/spec/features/sidekick-consilium?op=ask) | [Request change](https://specscore.studio/app/github.com/specscore/specstudio-skills/spec/features/sidekick-consilium?op=request-change) |

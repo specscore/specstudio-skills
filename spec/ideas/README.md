@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/ideas-index-specification
+---
+
 # Ideas
 
 > [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/p/github.com/specscore/specstudio-skills/spec/ideas?op=explore) | [Edit](https://specscore.studio/app/p/github.com/specscore/specstudio-skills/spec/ideas?op=edit) | [Ask question](https://specscore.studio/app/p/github.com/specscore/specstudio-skills/spec/ideas?op=ask) | [Request change](https://specscore.studio/app/p/github.com/specscore/specstudio-skills/spec/ideas?op=request-change) |

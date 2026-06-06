@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: an entry with no `name:` defaults its effective name to `type:`
 
 **Status:** pending

@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: Feature with zero matching trailers produces a report with all ACs unmapped and exits zero
 
 **Validates:** [verify#ac:no-commits-still-reports](../README.md#ac-no-commits-still-reports-verifies-reqno-commits-edge-case)

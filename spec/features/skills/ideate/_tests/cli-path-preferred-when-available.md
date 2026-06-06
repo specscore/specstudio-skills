@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: CLI path is preferred when specscore is available
 
 **Validates:** [ideate#ac:cli-vs-fallback](../README.md#ac-cli-vs-fallback)

@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: the recap report is written to the canonical path and staged without committing
 
 **Validates:** [recap#ac:report-path-and-staging](../README.md#ac-report-path-and-staging-verifies-reqreport-path-reqreport-staged)

@@ -1,3 +1,8 @@
+---
+format: https://specscore.md/feature-specification
+status: Approved
+---
+
 # Feature: Worktree-Per-Agent Topology (Single Machine)
 
 > [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/specscore/specstudio-skills/spec/features/implement-execution-topology/worktree-per-agent?op=explore) | [Edit](https://specscore.studio/app/github.com/specscore/specstudio-skills/spec/features/implement-execution-topology/worktree-per-agent?op=edit) | [Ask question](https://specscore.studio/app/github.com/specscore/specstudio-skills/spec/features/implement-execution-topology/worktree-per-agent?op=ask) | [Request change](https://specscore.studio/app/github.com/specscore/specstudio-skills/spec/features/implement-execution-topology/worktree-per-agent?op=request-change) |

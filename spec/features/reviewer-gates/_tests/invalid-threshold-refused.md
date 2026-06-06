@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: a threshold value outside {A,B,C,D,F} is refused at load time
 
 **Status:** pending

@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: affected-component-references-real-feature
 
 **Status:** passing

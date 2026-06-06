@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: `specstudio:specify` dispatches only registry entries; no hidden built-in baseline runs
 
 **Status:** pending
