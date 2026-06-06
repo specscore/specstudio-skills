@@ -94,12 +94,7 @@ The skill carries **no embedded schema** — `specscore feature new` is the sing
 
 ### Step 1 — Run the creation call and branch on exit status
 
-Do **not** run a standalone `command -v` probe. Invoke `specscore feature new <slug>` (passing the fields you already have) and branch on its exit status per [`../shared/cli-detection.md`](../shared/cli-detection.md):
-
-- **success (exit `0`)** — the scaffold was written. Continue to Step 2.
-- **exit `127`** (binary not on PATH — the command never ran, nothing was written) — emit the install message pointing the user at **`/specscore:install`**, then offer **install-then-retry**: once the user confirms the CLI is installed, re-run `specscore feature new <slug>`. Do **NOT** hand-write the Feature as a fallback.
-- **exit `8`** (`UnsupportedCommand` — binary present but predates `feature new`) — emit the upgrade message naming the missing `feature new` subcommand, then offer **upgrade-then-retry**: once the user confirms the upgrade, re-run `specscore feature new <slug>`. Do **NOT** hand-write the Feature as a fallback.
-- **any other non-zero** — the CLI ran and genuinely failed. **Surface the error verbatim and do NOT take a direct-write fallback** (a hand-written file would mask a real CLI bug and risk a double-write after a partial mutation).
+Do **not** run a standalone `command -v` probe. Invoke `specscore feature new <slug>` (passing the fields you already have) and branch on its exit status per the **Creation-class row** in [`../shared/cli-detection.md`](../shared/cli-detection.md) (which carries the per-outcome rationale): **`0`** → scaffold written, continue to Step 2; **`127`** → install message (`/specscore:install`), then **install-then-retry**; **exit `8`** → **upgrade-then-retry**, naming the missing `feature new` subcommand; **any other non-zero** → surface verbatim, **never** a direct-write fallback.
 
 ### Step 2 — Fill the scaffolded sections
 

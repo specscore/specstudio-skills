@@ -107,7 +107,7 @@ The lint rule (per REQ `seed-lint-rule`) MUST reject unknown frontmatter keys an
 
 #### REQ: seed-slug-derivation
 
-The slug MUST be derived deterministically from the one-liner by: (a) lowercasing, (b) replacing any character outside `[a-z0-9]` with a single hyphen, (c) collapsing consecutive hyphens into one, (d) trimming leading and trailing hyphens, (e) truncating to at most 60 characters at the nearest preceding hyphen (word boundary). On slug collision with an existing file in `spec/ideas/seeds/`, the skill MUST append `-2` and retry; on further collision `-3`; and so on. The final slug MUST match the regex `^[a-z0-9]+(-[a-z0-9]+)*$` and MUST NOT exceed 64 characters (60 + room for `-NN` disambiguator).
+The seed slug is derived deterministically from the one-liner, but the derivation (and the slug-format validation) is **owned by `specscore sidekick new`** — the canonical algorithm lives in the `cli/sidekick/new` Feature, and the skill MUST delegate to it rather than carrying its own copy. The default invocation omits `--slug`, so the CLI derives the slug; the result MUST match `^[a-z0-9]+(-[a-z0-9]+)*$` and MUST NOT exceed 60 characters (the CLI enforces both). On slug collision with an existing file in `spec/ideas/seeds/`, the CLI exits `1` (Conflict) without writing; the skill MUST resolve a free slug by retrying with `--slug <base>-2`, then `-3`, … (never `--force`, never overwriting an existing seed). The skill MAY also pass `--slug` to honor a user-requested slug; the CLI validates it (an invalid slug exits `2`).
 
 #### REQ: seed-lint-rule
 
@@ -366,7 +366,7 @@ Most ACs are testable via filesystem and event-payload observation; per the rehe
 - `host-skill-references-directive` — file-content check on host SKILL.md files
 - `same-session-no-double-capture` — transcript-pattern check; observable via host-skill agent behavior
 - `lint-rejects-malformed-seed` — fixture seeds + `specscore spec lint` invocation
-- `slug-is-url-safe-lowercase` — pure-function check against the slug deriver
+- `slug-is-url-safe-lowercase` — observable: the CLI-written seed's slug matches the URL-safe-lowercase regex (derivation owned by `cli/sidekick/new`)
 - `third-party-skill-can-invoke` — fixture invocation with synthetic `captured_by`
 - `back-link-appended-on-capture` — fixture Feature with footer; assert section + entry appear at expected location after capture
 - `back-link-section-created-when-absent` — fixture artifact without the section; assert section is created

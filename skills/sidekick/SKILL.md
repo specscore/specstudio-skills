@@ -51,29 +51,7 @@ On rejection, the skill MUST NOT create any file, MUST NOT emit any event, and M
 
 ## Slug derivation (REQ `seed-slug-derivation`)
 
-Given a one-liner `S`:
-
-1. Lowercase `S` using Unicode default casefolding.
-2. Replace every character outside `[a-z0-9]` with `-`.
-3. Collapse runs of `-` into a single `-`.
-4. Trim leading and trailing `-`.
-5. If length > 60, truncate to the nearest preceding `-` boundary that produces a slug ≤ 60 chars.
-
-Pseudocode (bash with GNU coreutils; adapt to environment):
-
-```bash
-slug=$(printf '%s' "$ONE_LINER" \
-  | tr '[:upper:]' '[:lower:]' \
-  | sed -E 's/[^a-z0-9]+/-/g' \
-  | sed -E 's/^-+|-+$//g')
-if [ ${#slug} -gt 60 ]; then
-  # truncate at the nearest hyphen ≤ 60
-  slug=$(printf '%s' "$slug" | cut -c1-60)
-  slug="${slug%-*}"   # drop trailing partial word
-fi
-```
-
-The skill owns this derivation (and the `-N` collision policy below) so it can hand the resolved `<final-slug>` to `specscore sidekick new --slug`. The CLI applies the identical algorithm when `--slug` is omitted, so the two agree for the no-collision case; the skill passes `--slug` to retain control of the `-N` disambiguator.
+The skill does **not** derive the slug — `specscore sidekick new` does, from the one-liner. The canonical algorithm **and** the slug-format validation live in the CLI (the `cli/sidekick/new` Feature), so the skill carries no copy to keep in sync. In the common case the skill omits `--slug` and lets the CLI derive. It supplies `--slug <slug>` to override — either a specific slug the user asked for, or a `-N` disambiguator for a [collision](#collision-disambiguation-req-writes-seed-artifact) — and lets the CLI validate it (an invalid slug exits `2`). The skill does **not** restate the format rules.
 
 ## Destination resolution (multi-repo workspaces)
 
@@ -193,21 +171,18 @@ No seed file is written on invalid override. Re-prompts always use the SAME conf
 
 ## Collision disambiguation (REQ `writes-seed-artifact`)
 
-The destination directory is `<destination-repo-root>/spec/ideas/seeds/` — `<destination-repo-root>` is the repo resolved by [Destination resolution](#destination-resolution-multi-repo-workspaces), or the source project root when that section was skipped (single-repo workspace).
+The skill never overwrites an existing seed, and it does **not** pre-scan the filesystem: it lets the creation call surface a collision and resolves it through the CLI.
 
-If `<destination-repo-root>/spec/ideas/seeds/<slug>.md` already exists:
+- The default call omits `--slug`. The CLI derives the slug and, when `<destination-repo-root>/spec/ideas/seeds/<slug>.md` already exists, exits `1` (Conflict) naming that path — nothing is written.
+- On Conflict, take the base slug from the reported path and retry the same call with `--slug <base>-2`; if that also conflicts, `-3`, `-4`, … until it succeeds. **Never** pass `--force`.
 
-1. Try `<slug>-2.md`. If that exists, try `-3`, `-4`, …
-2. Use the first available suffix.
-3. The skill MUST NEVER overwrite an existing file.
-
-The final file name's slug (with any `-N` disambiguator) is the `<final-slug>` the skill passes to `specscore sidekick new --slug` (see [Creating the seed](#creating-the-seed-required-cli-req-writes-seed-artifact-req-seed-frontmatter-schema)) — the CLI uses it verbatim for the file name and frontmatter `slug`. The skill resolves the free slug *before* the CLI call (so it can pass it via `--slug` and never needs `--force`), and the same slug is used in the event payload.
+(The same `--slug` seam carries a user-requested slug — see [Slug derivation](#slug-derivation-req-seed-slug-derivation); a `-N` disambiguator is just one use of it.) The slug of the written seed (with any `-N` suffix) is read back from the seed for the event payload.
 
 ## Creating the seed (required-CLI) (REQ `writes-seed-artifact`, REQ `seed-frontmatter-schema`)
 
 **Creation is required-CLI.** `specscore sidekick new` is the ONLY way to write the seed file — it produces a lint-clean seed (the closed 8-key `sidekick-seed` frontmatter + the `# <one-liner>` H1 body) by construction and bootstraps `spec/ideas/seeds/` and the ancestor indexes for you. The skill carries **no embedded seed template**: the CLI scaffold is the single source of truth for the seed's structure. This follows the Required-CLI Artifact Creation policy — see the **Creation-class row** in [`../shared/cli-detection.md`](../shared/cli-detection.md).
 
-The skill still owns the *orchestration the CLI does not*: *where* the seed lands ([Destination resolution](#destination-resolution-multi-repo-workspaces) → `--project`), *what slug* it gets (derivation + `-N` [collision disambiguation](#collision-disambiguation-req-writes-seed-artifact) → `--slug`), the capture metadata (`--captured-by`, `--captured-during`, `--trigger`), the [back-link](#source-artifact-back-link-reqs-writes-back-link-to-source-artifact-source-artifact-path-resolution-back-link-section-format-back-link-best-effort), and the [event](#event-emission-req-emits-captured-event-req-event-payload-schema). It passes the metadata as flags rather than hand-writing the file.
+The skill still owns the *orchestration the CLI does not*: *where* the seed lands ([Destination resolution](#destination-resolution-multi-repo-workspaces) → `--project`), the capture metadata (`--captured-by`, `--captured-during`, `--trigger`), an optional slug override (`--slug` — a user-requested slug or a `-N` [collision](#collision-disambiguation-req-writes-seed-artifact) suffix; the CLI derives the slug otherwise), the [back-link](#source-artifact-back-link-reqs-writes-back-link-to-source-artifact-source-artifact-path-resolution-back-link-section-format-back-link-best-effort), and the [event](#event-emission-req-emits-captured-event-req-event-payload-schema). It passes these as flags rather than hand-writing the file.
 
 ### Determining `captured_by`
 
@@ -227,24 +202,19 @@ The skill still owns the *orchestration the CLI does not*: *where* the seed land
 
 ### Invoke the creation call and branch on exit status
 
-With `<final-slug>` resolved (derivation + any `-N` disambiguator) and `<destination-repo-root>` resolved, invoke:
+With `<destination-repo-root>` resolved, invoke the default call — **no `--slug`**, so the CLI derives the slug from the one-liner:
 
 ```bash
 specscore sidekick new "<one-liner>" \
-  --slug "<final-slug>" \
   --project "<destination-repo-root>" \
   --captured-by "<captured_by>" \
   --trigger "<heuristic|explicit>"
   # --captured-during "<active-spec-path>"   # add ONLY when captured_during is not null
   # --body "<markdown>"                       # add ONLY when the host supplied --body
+  # --slug "<slug>"                           # add ONLY to override: a user-requested slug, or a -N collision suffix
 ```
 
-The one-liner becomes the `# <one-liner>` H1; the CLI emits the frontmatter and enforces the ≤500-char one-liner and ≤2000-char body caps. Do **not** run a standalone `command -v` probe, and do **not** pass `--force` — the skill never overwrites, and the `-N` disambiguation already guarantees a free slug. Branch on the exit status per [`../shared/cli-detection.md`](../shared/cli-detection.md):
-
-- **success (exit `0`)** — the CLI prints the seed path. Continue to the back-link and event steps.
-- **exit `127`** (binary not on PATH — the command never ran, nothing was written) — emit the install message pointing the user at **`/specscore:install`**, then offer **install-then-retry**: once the user confirms the CLI is installed, re-run the same call. Do **NOT** hand-write the seed as a fallback.
-- **exit `8`** (`UnsupportedCommand` — binary present but predates `sidekick new` or `--slug`) — emit the upgrade message naming the missing subcommand/flag, then offer **upgrade-then-retry**. Do **NOT** hand-write the seed as a fallback.
-- **any other non-zero** — the CLI ran and genuinely failed (e.g. exit `1` Conflict from a race on the slug). **Surface the error verbatim and do NOT take a direct-write fallback.**
+The one-liner becomes the `# <one-liner>` H1; the CLI emits the frontmatter and enforces the ≤500-char one-liner and ≤2000-char body caps (and validates any `--slug`). Do **not** run a standalone `command -v` probe, and do **not** pass `--force`. Branch on the exit status per the **Creation-class row** in [`../shared/cli-detection.md`](../shared/cli-detection.md) (which carries the per-outcome rationale): **`0`** → the CLI prints the seed path, continue to the back-link and event steps; **exit `1`** (Conflict — the slug is already taken) → resolve via [Collision disambiguation](#collision-disambiguation-req-writes-seed-artifact) (retry with `--slug <base>-N`); **`127`** → install message (`/specscore:install`), then **install-then-retry**; **exit `8`** → **upgrade-then-retry**, naming the missing `sidekick new` / `--slug`; **any other non-zero** → surface verbatim, **never** a direct-write fallback.
 
 After a successful write, read `captured_at` and `slug` back from the written seed's frontmatter — the [back-link](#source-artifact-back-link-reqs-writes-back-link-to-source-artifact-source-artifact-path-resolution-back-link-section-format-back-link-best-effort) and [event](#event-emission-req-emits-captured-event-req-event-payload-schema) steps need them, and the CLI owns the `captured_at` timestamp. The CLI's printed path (relative to `<destination-repo-root>`) is the skill's return value.
 

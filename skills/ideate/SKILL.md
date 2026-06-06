@@ -130,12 +130,7 @@ This step MUST NOT happen silently.
 
 ### Step 3a — Detect the CLI (per the shared convention)
 
-`ideate` is a **creation-class** skill: the CLI is required and there is no direct-write fallback. Follow the Creation-class row in [`../shared/cli-detection.md`](../shared/cli-detection.md) — do **not** run a standalone `command -v` probe. Instead, invoke the scaffold call (Step 3b's `specscore idea new`) and branch on its exit status:
-
-- **exit `127`** (binary not on PATH / not installed) → emit the install message (`/specscore:install`) and **offer install-then-retry**. A `127` means the command never ran, so nothing was written — retry once the user installs.
-- **exit `8`** (`UnsupportedCommand` — CLI present but predates `idea new`) → emit the **upgrade** message naming the missing subcommand and **offer upgrade-then-retry**.
-- **any other non-zero** → the CLI is present but the call genuinely failed; **surface the error and stop**. Never fall back to a hand-written file.
-- **success** → continue on the CLI path (Step 3b, step 2).
+`ideate` is a **creation-class** skill: the CLI is required and there is no direct-write fallback. Do **not** run a standalone `command -v` probe. Invoke the scaffold call (Step 3b's `specscore idea new`) and branch on its exit status per the **Creation-class row** in [`../shared/cli-detection.md`](../shared/cli-detection.md) (which carries the per-outcome rationale): **`0`** → continue on the CLI path (Step 3b, step 2); **`127`** → install message (`/specscore:install`), then **install-then-retry**; **exit `8`** → **upgrade-then-retry**, naming the missing `idea new` subcommand; **any other non-zero** → surface verbatim, **never** a hand-written fallback.
 
 ### Step 3b (CLI path) — Scaffold, then fill
 
