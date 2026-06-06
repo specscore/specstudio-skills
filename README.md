@@ -4,7 +4,7 @@
 
 AI skills (and a coming Web UI) for efficient spec-driven development — the full lifecycle: **ideate ⇒ specify ⇒ plan ⇒ implement ⇒ verify ⇒ recap ⇒ ship.** SpecStudio turns vague ideas into lintable, testable specifications and gates implementation on those specifications being clear, complete, and approved. Reviews are stage-internal — see [Reviewer Gates](spec/features/reviewer-gates/README.md).
 
-This repo (`specstudio-skills`) is the AI-agent plugin surface of SpecScore Studio: skills, commands, and supporting tooling for Claude Code and Codex. The web client lives at [`specstudio-web`](https://github.com/specscore/specstudio-web) (planned) and will deploy to [`specscore.studio`](https://specscore.studio).
+This repo (`specstudio-skills`) is the AI-agent plugin surface of SpecScore Studio: skills, commands, and supporting tooling for Claude Code, Codex, Gemini CLI, GitHub Copilot CLI, and Cursor. The web client lives at [`specstudio-web`](https://github.com/specscore/specstudio-web) (planned) and will deploy to [`specscore.studio`](https://specscore.studio).
 
 ## Why a studio
 
@@ -48,6 +48,31 @@ For a local Codex marketplace entry, use plugin name `specstudio` with a local s
   },
   "category": "Productivity"
 }
+```
+
+### Gemini CLI
+
+```
+gemini extensions install https://github.com/specscore/specstudio-skills
+```
+
+Gemini reads [`gemini-extension.json`](gemini-extension.json) and auto-discovers the bundled [`skills/`](./skills/) tree.
+
+### GitHub Copilot CLI
+
+```
+copilot plugin install specscore/specstudio-skills
+```
+
+Copilot reads [`.github/plugin.json`](.github/plugin.json).
+
+### Cursor
+
+Cursor has no remote-install command — it loads skills from `.cursor/skills/` (project) or `~/.cursor/skills/` (global). Add these skills by copying them in:
+
+```
+git clone https://github.com/specscore/specstudio-skills
+mkdir -p .cursor/skills && cp -R specstudio-skills/skills/* .cursor/skills/
 ```
 
 ### Dependencies
