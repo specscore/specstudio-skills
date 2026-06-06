@@ -1,6 +1,6 @@
 ---
 type: rehearse-stub
-status: pending
+stub_status: pending
 ac: token-usage-recorded-on-task
 feature: sidekick-consilium
 format: https://specscore.md/scenario-specification

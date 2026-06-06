@@ -1,6 +1,6 @@
 ---
 type: rehearse-stub
-status: pending
+stub_status: pending
 ac: invocation-rejects-per-slug-argument
 feature: sidekick-consilium
 format: https://specscore.md/scenario-specification

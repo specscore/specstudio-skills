@@ -1,6 +1,6 @@
 ---
 type: rehearse-stub
-status: pending
+stub_status: pending
 ac: seed-gets-consilium-verdict-section
 feature: sidekick-consilium
 format: https://specscore.md/scenario-specification

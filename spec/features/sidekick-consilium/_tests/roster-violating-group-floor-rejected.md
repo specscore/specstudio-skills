@@ -1,6 +1,6 @@
 ---
 type: rehearse-stub
-status: pending
+stub_status: pending
 ac: roster-violating-group-floor-rejected
 feature: sidekick-consilium
 format: https://specscore.md/scenario-specification

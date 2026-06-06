@@ -1,6 +1,6 @@
 ---
 type: rehearse-stub
-status: pending
+stub_status: pending
 ac: slug-is-url-safe-lowercase
 feature: sidekick-capture
 format: https://specscore.md/scenario-specification

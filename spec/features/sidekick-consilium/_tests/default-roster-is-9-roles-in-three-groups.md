@@ -1,6 +1,6 @@
 ---
 type: rehearse-stub
-status: pending
+stub_status: pending
 ac: default-roster-is-9-roles-in-three-groups
 feature: sidekick-consilium
 format: https://specscore.md/scenario-specification

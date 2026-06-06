@@ -1,6 +1,6 @@
 ---
 type: rehearse-stub
-status: pending
+stub_status: pending
 ac: back-link-write-failure-does-not-roll-back-seed
 feature: sidekick-capture
 format: https://specscore.md/scenario-specification

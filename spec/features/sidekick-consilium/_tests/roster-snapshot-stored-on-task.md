@@ -1,6 +1,6 @@
 ---
 type: rehearse-stub
-status: pending
+stub_status: pending
 ac: roster-snapshot-stored-on-task
 feature: sidekick-consilium
 format: https://specscore.md/scenario-specification

@@ -1,6 +1,6 @@
 ---
 type: rehearse-stub
-status: pending
+stub_status: pending
 ac: third-party-skill-can-invoke
 feature: sidekick-capture
 format: https://specscore.md/scenario-specification

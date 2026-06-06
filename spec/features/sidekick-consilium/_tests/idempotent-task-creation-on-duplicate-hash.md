@@ -1,6 +1,6 @@
 ---
 type: rehearse-stub
-status: pending
+stub_status: pending
 ac: idempotent-task-creation-on-duplicate-hash
 feature: sidekick-consilium
 format: https://specscore.md/scenario-specification

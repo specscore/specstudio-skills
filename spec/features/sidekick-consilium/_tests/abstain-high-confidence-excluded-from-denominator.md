@@ -1,6 +1,6 @@
 ---
 type: rehearse-stub
-status: pending
+stub_status: pending
 ac: abstain-high-confidence-excluded-from-denominator
 feature: sidekick-consilium
 format: https://specscore.md/scenario-specification
