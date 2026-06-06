@@ -1,6 +1,6 @@
 # Plan: CLI-Required Artifact Creation Rollout
 
-**Status:** Implementing
+**Status:** Completed
 **Source Feature:** cli-detection-convention
 **Date:** 2026-06-05
 **Owner:** alexander.trakhimenok
