@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenarios-index-specification
+---
+
 # Scenarios — `ideate` skill
 
 Scenarios validating the [Ideate Skill feature](../README.md). Each scenario references the AC or REQ it validates and uses `Given / When / Then` form per the [SpecScore Scenario specification](https://specscore.md/scenario-specification).

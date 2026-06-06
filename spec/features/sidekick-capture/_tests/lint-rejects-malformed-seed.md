@@ -3,6 +3,7 @@ type: rehearse-stub
 status: pending
 ac: lint-rejects-malformed-seed
 feature: sidekick-capture
+format: https://specscore.md/scenario-specification
 ---
 
 # Rehearse: lint-rejects-malformed-seed

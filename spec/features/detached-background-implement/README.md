@@ -1,3 +1,8 @@
+---
+format: https://specscore.md/feature-specification
+status: Approved
+---
+
 # Feature: Detached Background Plan Implementation
 
 > [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/specscore/specstudio-skills/spec/features/detached-background-implement?op=explore) | [Edit](https://specscore.studio/app/github.com/specscore/specstudio-skills/spec/features/detached-background-implement?op=edit) | [Ask question](https://specscore.studio/app/github.com/specscore/specstudio-skills/spec/features/detached-background-implement?op=ask) | [Request change](https://specscore.studio/app/github.com/specscore/specstudio-skills/spec/features/detached-background-implement?op=request-change) |

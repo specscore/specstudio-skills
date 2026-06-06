@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: missing-required-h2-section-rejected
 
 **Status:** passing

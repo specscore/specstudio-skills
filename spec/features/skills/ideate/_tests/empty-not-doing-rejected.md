@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: Empty Not-Doing list is rejected
 
 **Validates:** [ideate#req:not-doing-required](../README.md#req-not-doing-required)

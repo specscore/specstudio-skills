@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: extra-h2-sections-allowed
 
 **Status:** passing

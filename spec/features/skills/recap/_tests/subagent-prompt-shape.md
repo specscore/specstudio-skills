@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: the drift-narrator subagent prompt contains the AC, verify verdict, commits, contract, and on-demand fetch instruction
 
 **Validates:** [recap#ac:subagent-prompt-shape](../README.md#ac-subagent-prompt-shape-verifies-reqsubagent-prompt-reqsubagent-drift-contract)

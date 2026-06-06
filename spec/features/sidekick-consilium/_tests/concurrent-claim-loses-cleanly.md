@@ -3,6 +3,7 @@ type: rehearse-stub
 status: pending
 ac: concurrent-claim-loses-cleanly
 feature: sidekick-consilium
+format: https://specscore.md/scenario-specification
 ---
 
 # Rehearse: concurrent-claim-loses-cleanly

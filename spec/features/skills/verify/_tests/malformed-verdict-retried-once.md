@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: malformed subagent verdict is retried once, then recorded as error
 
 **Validates:** [verify#ac:malformed-verdict-retried-once](../README.md#ac-malformed-verdict-retried-once-verifies-reqsubagent-verdict-contract)

@@ -3,6 +3,7 @@ type: rehearse-stub
 status: pending
 ac: back-link-appended-on-capture
 feature: sidekick-capture
+format: https://specscore.md/scenario-specification
 ---
 
 # Rehearse: back-link-appended-on-capture

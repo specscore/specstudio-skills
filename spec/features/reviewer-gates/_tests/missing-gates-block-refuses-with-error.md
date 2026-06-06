@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: missing/empty `gates.specify.reviewers` makes `specstudio:specify` refuse to run with a clear error
 
 **Status:** pending

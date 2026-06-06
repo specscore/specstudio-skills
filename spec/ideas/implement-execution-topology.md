@@ -1,3 +1,8 @@
+---
+format: https://specscore.md/idea-specification
+status: Specified
+---
+
 # Idea: Implement Execution Topology & Branch Model
 
 **Status:** Specified

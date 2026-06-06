@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: Every requirement has at least one Given/When/Then acceptance criterion
 
 **Validates:** [specify#req:ac-format](../README.md#req-ac-format)

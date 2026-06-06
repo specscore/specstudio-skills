@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenarios-index-specification
+---
+
 # Scenarios — `specify` skill
 
 Scenarios validating the [Specify Skill feature](../README.md). Each scenario references the AC or REQ it validates and uses `Given / When / Then` form per the [SpecScore Scenario specification](https://specscore.md/scenario-specification).

@@ -3,6 +3,7 @@ type: rehearse-stub
 status: pending
 ac: researcher-briefing-contains-no-judgment
 feature: sidekick-consilium
+format: https://specscore.md/scenario-specification
 ---
 
 # Rehearse: researcher-briefing-contains-no-judgment

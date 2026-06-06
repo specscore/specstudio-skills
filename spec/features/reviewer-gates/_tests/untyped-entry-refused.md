@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: reviewer entry without an explicit `type:` field is rejected at consumer load time
 
 **Status:** pending

@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: Every AC has a recorded Rehearse decision (stub or skip-reason)
 
 **Validates:** [specify#ac:rehearse-coverage](../README.md#ac-rehearse-coverage)

@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: reviewer entry with a `type:` outside the MVP set is rejected at consumer load time
 
 **Status:** pending

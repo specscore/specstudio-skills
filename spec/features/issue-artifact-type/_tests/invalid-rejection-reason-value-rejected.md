@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: invalid-rejection-reason-value-rejected
 
 **Status:** passing

@@ -3,6 +3,7 @@ type: rehearse-stub
 status: pending
 ac: reviewed-event-emitted-on-success
 feature: sidekick-consilium
+format: https://specscore.md/scenario-specification
 ---
 
 # Rehearse: reviewed-event-emitted-on-success

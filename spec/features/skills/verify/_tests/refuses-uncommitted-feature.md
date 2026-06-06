@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: verify refuses a Feature that is not committed to git HEAD
 
 **Validates:** [verify#ac:refuses-uncommitted-feature](../README.md#ac-refuses-uncommitted-feature-verifies-reqrequires-feature-in-git-head)

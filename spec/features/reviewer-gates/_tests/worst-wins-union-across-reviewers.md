@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: the Blocker union across panel reviewers drives the grade (worst-wins)
 
 **Status:** pending

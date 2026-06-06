@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: idea.drafted and idea.updated payloads carry change-context fields
 
 **Validates:** [ideate#req:event-payload-change-context](../README.md#req-event-payload-change-context)

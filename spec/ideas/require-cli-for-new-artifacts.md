@@ -1,3 +1,8 @@
+---
+format: https://specscore.md/idea-specification
+status: Specified
+---
+
 # Idea: Require the specscore CLI for New Artifacts — Drop Fallbacks and Embedded Templates
 
 **Status:** Specified

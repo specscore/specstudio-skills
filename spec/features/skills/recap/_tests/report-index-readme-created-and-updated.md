@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: `_recap/README.md` index is created on first run and appended on subsequent runs
 
 **Validates:** [recap#ac:report-index-readme-created-and-updated](../README.md#ac-report-index-readme-created-and-updated-verifies-reqreport-index-readme-reqreport-staged)

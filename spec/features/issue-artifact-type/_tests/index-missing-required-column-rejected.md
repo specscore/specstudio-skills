@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: index-missing-required-column-rejected
 
 **Status:** passing

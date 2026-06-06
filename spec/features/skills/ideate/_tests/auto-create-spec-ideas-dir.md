@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: spec/ideas/ is auto-created when missing
 
 **Validates:** [ideate#req:auto-create-ideas-dir](../README.md#req-auto-create-ideas-dir)

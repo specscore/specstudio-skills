@@ -1,3 +1,8 @@
+---
+format: https://specscore.md/feature-specification
+status: Draft
+---
+
 # Feature: Change Publication Policy
 
 > [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/specscore/specstudio-skills/spec/features/change-publication-policy?op=explore) | [Edit](https://specscore.studio/app/github.com/specscore/specstudio-skills/spec/features/change-publication-policy?op=edit) | [Ask question](https://specscore.studio/app/github.com/specscore/specstudio-skills/spec/features/change-publication-policy?op=ask) | [Request change](https://specscore.studio/app/github.com/specscore/specstudio-skills/spec/features/change-publication-policy?op=request-change) |

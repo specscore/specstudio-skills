@@ -1,3 +1,8 @@
+---
+format: https://specscore.md/idea-specification
+status: Implementing
+---
+
 # Idea: Add a manual /score command over reviewer-gates
 
 **Status:** Implementing

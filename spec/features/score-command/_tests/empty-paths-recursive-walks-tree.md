@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: empty paths recursive walks tree
 
 **Status:** pending

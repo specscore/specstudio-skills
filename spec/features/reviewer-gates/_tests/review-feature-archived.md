@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: draft `review` Feature is transitioned to `Archived` with an archive-reason citing this Feature
 
 **Status:** pending

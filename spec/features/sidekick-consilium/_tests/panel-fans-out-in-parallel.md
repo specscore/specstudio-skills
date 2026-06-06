@@ -3,6 +3,7 @@ type: rehearse-stub
 status: pending
 ac: panel-fans-out-in-parallel
 feature: sidekick-consilium
+format: https://specscore.md/scenario-specification
 ---
 
 # Rehearse: panel-fans-out-in-parallel

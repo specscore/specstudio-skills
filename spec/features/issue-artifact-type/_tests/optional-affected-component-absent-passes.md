@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: optional-affected-component-absent-passes
 
 **Status:** passing

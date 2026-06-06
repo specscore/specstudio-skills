@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: invalid-h1-rejected
 
 **Status:** passing

@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: a malformed drift verdict is retried exactly once
 
 **Validates:** [recap#ac:malformed-drift-verdict-retried-once](../README.md#ac-malformed-drift-verdict-retried-once-verifies-reqsubagent-drift-contract)

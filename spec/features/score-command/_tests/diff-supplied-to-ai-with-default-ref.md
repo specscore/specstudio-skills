@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: diff supplied to ai with default ref
 
 **Status:** pending

@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: recap refuses when no verify report exists
 
 **Validates:** [recap#ac:refuses-when-no-verify-report](../README.md#ac-refuses-when-no-verify-report-verifies-reqrequires-verify-report)

@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: spec/features/ is auto-created when missing
 
 **Validates:** [specify#req:auto-create-features-dir](../README.md#req-auto-create-features-dir)

@@ -1,3 +1,8 @@
+---
+format: https://specscore.md/idea-specification
+status: Implemented
+---
+
 # Idea: Multi-Repo Destination Resolution for Idea-Creation Skills
 
 **Status:** Implemented

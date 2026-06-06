@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: Created files are auto-staged in git with explicit user notification
 
 **Validates:** [ideate#req:auto-stage-on-create](../README.md#req-auto-stage-on-create)

@@ -3,6 +3,7 @@ type: rehearse-stub
 status: pending
 ac: seed-mutation-blocks-review
 feature: sidekick-consilium
+format: https://specscore.md/scenario-specification
 ---
 
 # Rehearse: seed-mutation-blocks-review

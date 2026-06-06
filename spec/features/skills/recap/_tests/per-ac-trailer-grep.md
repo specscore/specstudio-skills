@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: recap walks `git log --grep` for each AC's Verifies trailer
 
 **Validates:** [recap#ac:per-ac-trailer-grep](../README.md#ac-per-ac-trailer-grep-verifies-reqtrailer-grep-per-ac-reqfeature-parse)

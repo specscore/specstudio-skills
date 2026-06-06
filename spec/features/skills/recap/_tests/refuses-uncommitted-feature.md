@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: recap refuses a Feature that exists only in the working tree
 
 **Validates:** [recap#ac:refuses-uncommitted-feature](../README.md#ac-refuses-uncommitted-feature-verifies-reqrequires-feature-in-git-head)

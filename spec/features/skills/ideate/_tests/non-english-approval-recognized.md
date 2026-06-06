@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: Direct semantic equivalents in non-English languages count as explicit approval
 
 **Validates:** [ideate#req:approval-explicit-phrase](../README.md#req-approval-explicit-phrase)

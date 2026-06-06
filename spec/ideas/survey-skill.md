@@ -1,3 +1,8 @@
+---
+format: https://specscore.md/idea-specification
+status: Specified
+---
+
 # Idea: Survey Skill — Fast Architecture Summary & Research Zone Proposal
 
 **Status:** Specified

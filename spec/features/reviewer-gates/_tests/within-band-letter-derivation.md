@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: the within-band letter is lowest-wins across reviewers, defaulting to B
 
 **Status:** pending

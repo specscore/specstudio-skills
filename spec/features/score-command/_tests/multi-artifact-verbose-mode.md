@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: multi artifact verbose mode
 
 **Status:** pending

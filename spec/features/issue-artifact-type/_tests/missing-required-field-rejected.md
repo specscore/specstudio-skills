@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: missing-required-field-rejected
 
 **Status:** passing

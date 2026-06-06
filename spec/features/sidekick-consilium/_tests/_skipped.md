@@ -1,6 +1,7 @@
 ---
 type: rehearse-skip-record
 feature: sidekick-consilium
+format: https://specscore.md/scenario-specification
 ---
 
 # Rehearse: Skipped ACs

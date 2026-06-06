@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: `type: ai` entry with shape violations (missing prompt, escaping repo, undocumented taxonomy) is rejected
 
 **Status:** pending

@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: issue-at-invalid-path-rejected
 
 **Status:** passing

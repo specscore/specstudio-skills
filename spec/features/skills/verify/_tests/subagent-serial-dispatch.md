@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: subagents are dispatched serially, never concurrently
 
 **Validates:** [verify#ac:subagent-serial-dispatch](../README.md#ac-subagent-serial-dispatch-verifies-reqsubagent-dispatch-serial)

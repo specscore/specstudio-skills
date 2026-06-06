@@ -3,6 +3,7 @@ type: rehearse-stub
 status: pending
 ac: pipeline-transcript-payload-shape
 feature: sidekick-consilium
+format: https://specscore.md/scenario-specification
 ---
 
 # Rehearse: pipeline-transcript-payload-shape

@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: Manual Promotes To edits are out of scope for ideate
 
 **Validates:** [ideate#ac:promotion-boundary-held](../README.md#ac-promotion-boundary-held)

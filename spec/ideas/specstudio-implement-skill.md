@@ -1,3 +1,8 @@
+---
+format: https://specscore.md/idea-specification
+status: Implementing
+---
+
 # Idea: SpecStudio implement skill
 
 **Status:** Implementing

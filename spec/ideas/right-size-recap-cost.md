@@ -1,3 +1,8 @@
+---
+format: https://specscore.md/idea-specification
+status: Specified
+---
+
 # Idea: Right-Size Recap Cost (Configurable Skip + Incremental Re-Recap)
 
 **Status:** Specified

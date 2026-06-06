@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: after a successful run the skill transitions only to specstudio:review and to no other skill
 
 **Validates:** [recap#ac:transition-to-review-only](../README.md#ac-transition-to-review-only-verifies-reqtransition-to-review-reqhard-gate)

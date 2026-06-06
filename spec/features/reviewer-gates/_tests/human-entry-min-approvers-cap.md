@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: `type: human` entry with `min_approvers > 1` is rejected at consumer load time in MVP
 
 **Status:** pending

@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: report opens with a fenced YAML block listing per-AC verdicts and followed by per-AC body sections
 
 **Validates:** [verify#ac:report-yaml-block-grep-target](../README.md#ac-report-yaml-block-grep-target-verifies-reqreport-yaml-summary-reqreport-body)

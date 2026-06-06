@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: Post-approval edits emit idea.updated, never re-emit idea.drafted or idea.approved
 
 **Validates:** [ideate#ac:lifecycle-events](../README.md#ac-lifecycle-events)

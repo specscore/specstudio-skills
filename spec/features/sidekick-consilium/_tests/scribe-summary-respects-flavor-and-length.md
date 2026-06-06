@@ -3,6 +3,7 @@ type: rehearse-stub
 status: pending
 ac: scribe-summary-respects-flavor-and-length
 feature: sidekick-consilium
+format: https://specscore.md/scenario-specification
 ---
 
 # Rehearse: scribe-summary-respects-flavor-and-length

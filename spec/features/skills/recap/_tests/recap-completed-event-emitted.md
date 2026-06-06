@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: a `recap.completed` event is emitted exactly once per successful run
 
 **Validates:** [recap#ac:recap-completed-event-emitted](../README.md#ac-recap-completed-event-emitted-verifies-reqrecap-completed-event)

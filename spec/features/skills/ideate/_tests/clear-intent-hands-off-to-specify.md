@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: Clear intent triggers explicit hand-off to specify
 
 **Validates:** [ideate#ac:skip-condition-respected](../README.md#ac-skip-condition-respected)

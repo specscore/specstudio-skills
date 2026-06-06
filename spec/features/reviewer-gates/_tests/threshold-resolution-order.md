@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: Approve threshold resolves per-stage first, then top-level, then default
 
 **Status:** pending

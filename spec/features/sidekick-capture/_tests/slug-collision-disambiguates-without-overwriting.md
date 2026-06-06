@@ -3,6 +3,7 @@ type: rehearse-stub
 status: pending
 ac: slug-collision-disambiguates-without-overwriting
 feature: sidekick-capture
+format: https://specscore.md/scenario-specification
 ---
 
 # Rehearse: slug-collision-disambiguates-without-overwriting

@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: Clear-intent path surfaces related Approved Ideas before writing the Feature
 
 **Validates:** [specify#req:related-idea-surfacing](../README.md#req-related-idea-surfacing)

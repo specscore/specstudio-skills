@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: rejection-reason-outside-rejected-rejected
 
 **Status:** passing

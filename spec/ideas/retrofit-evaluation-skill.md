@@ -1,3 +1,8 @@
+---
+format: https://specscore.md/idea-specification
+status: Draft
+---
+
 # Idea: Retrofit Evaluation Skill — Automated Quality Scoring & Self-Improvement Loop
 
 **Status:** Draft

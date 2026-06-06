@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/plans-index-specification
+---
+
 # SpecStudio Plans
 
 > [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/p/github.com/specscore/specstudio-skills/spec/plans?op=explore) | [Edit](https://specscore.studio/app/p/github.com/specscore/specstudio-skills/spec/plans?op=edit) | [Ask question](https://specscore.studio/app/p/github.com/specscore/specstudio-skills/spec/plans?op=ask) | [Request change](https://specscore.studio/app/p/github.com/specscore/specstudio-skills/spec/plans?op=request-change) |

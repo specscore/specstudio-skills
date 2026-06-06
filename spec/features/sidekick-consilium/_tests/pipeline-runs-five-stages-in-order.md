@@ -3,6 +3,7 @@ type: rehearse-stub
 status: pending
 ac: pipeline-runs-five-stages-in-order
 feature: sidekick-consilium
+format: https://specscore.md/scenario-specification
 ---
 
 # Rehearse: pipeline-runs-five-stages-in-order

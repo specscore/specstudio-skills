@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenarios-index-specification
+---
+
 # Rehearse stubs — `sidekick-consilium` Feature
 
 Rehearse stubs validating the [Sidekick Consilium feature](../README.md). Each stub references an Acceptance Criterion from the Feature spec, copies its Given/When/Then verbatim, and sketches a 2–4-sentence verification approach. Stubs land with `status: pending`; authoring the actual scenario steps follows the implementation plan.

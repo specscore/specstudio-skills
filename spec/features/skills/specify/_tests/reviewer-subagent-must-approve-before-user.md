@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: Reviewer subagent must approve before the User Review Gate runs
 
 **Validates:** [specify#ac:reviewer-then-user](../README.md#ac-reviewer-then-user)

@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: stage mapping resolves correctly
 
 **Status:** pending

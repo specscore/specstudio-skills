@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: bugs-field-non-string-element-rejected
 
 **Status:** passing

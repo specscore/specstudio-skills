@@ -1,3 +1,8 @@
+---
+format: https://specscore.md/idea-specification
+status: Approved
+---
+
 # Idea: Remove "Synchestra" from SpecScore Repos
 
 **Status:** Approved

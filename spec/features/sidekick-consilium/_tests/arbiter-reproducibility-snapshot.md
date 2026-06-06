@@ -3,6 +3,7 @@ type: rehearse-stub
 status: pending
 ac: arbiter-reproducibility-snapshot
 feature: sidekick-consilium
+format: https://specscore.md/scenario-specification
 ---
 
 # Rehearse: arbiter-reproducibility-snapshot

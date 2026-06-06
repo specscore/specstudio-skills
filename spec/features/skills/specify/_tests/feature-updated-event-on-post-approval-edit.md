@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: Post-approval Feature edits emit feature.updated, never re-emit feature.specified or feature.approved
 
 **Validates:** [specify#ac:lifecycle-events](../README.md#ac-lifecycle-events)

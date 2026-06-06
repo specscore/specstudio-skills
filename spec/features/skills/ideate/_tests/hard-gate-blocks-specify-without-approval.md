@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: Hard gate blocks specify until lint and user approval
 
 **Validates:** [ideate#ac:hard-gate-enforced](../README.md#ac-hard-gate-enforced)

@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: the grade band is fixed deterministically by aggregated Blocker count
 
 **Status:** pending

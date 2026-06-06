@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: empty paths defaults to spec
 
 **Status:** pending

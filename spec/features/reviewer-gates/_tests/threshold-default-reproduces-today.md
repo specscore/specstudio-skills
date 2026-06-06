@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: at the default threshold B the grade gate reproduces today's binary behavior
 
 **Status:** pending

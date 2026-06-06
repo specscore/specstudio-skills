@@ -1,3 +1,8 @@
+---
+format: https://specscore.md/idea-specification
+status: Specified
+---
+
 # Idea: Approval Autonomy for implement & plan (Commit-Autonomous, Push-Gated)
 
 **Status:** Specified

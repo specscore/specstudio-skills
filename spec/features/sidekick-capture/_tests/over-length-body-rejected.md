@@ -3,6 +3,7 @@ type: rehearse-stub
 status: pending
 ac: over-length-body-rejected
 feature: sidekick-capture
+format: https://specscore.md/scenario-specification
 ---
 
 # Rehearse: over-length-body-rejected

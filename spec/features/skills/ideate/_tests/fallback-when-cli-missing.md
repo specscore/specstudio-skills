@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/scenario-specification
+---
+
 # Scenario: Fallback to direct write when specscore CLI is missing
 
 **Validates:** [ideate#ac:cli-vs-fallback](../README.md#ac-cli-vs-fallback)
