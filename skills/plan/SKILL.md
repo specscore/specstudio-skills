@@ -60,8 +60,8 @@ Create a task for each and complete in order:
 1. **Pre-flight** (steps above).
 2. **Convergent task-breakdown dialogue.** In Feature-sourced mode: walk the AC list with the user. For each AC, decide: dedicated task / bundled into a multi-AC task / deferred to `## Deferred AC Coverage` with a reason. In Idea-sourced mode: walk the Idea's goals and scope with the user, decomposing into concrete tasks without AC mapping. Keep the conversation tight — batched questions, multiple-choice where possible.
 3. **Order tasks linearly 1..N.** Respect inferable dependencies (an AC whose precondition is established by another AC's task). No gaps, no DAG, no parallel branches in the MVP.
-4. **Author the Plan artifact** — single `spec/plans/<slug>.md` per the schema below.
-5. **Auto-create `spec/plans/`** + index `README.md` if absent. Tell the user the directory is being bootstrapped.
+4. **Create the Plan artifact** — run `specscore plan new <slug>` with its source flag (the required-CLI creation path; see `## Artifact Creation`), then FILL the scaffolded sections via `Edit`.
+5. **Directory + index** — `specscore plan new` creates `spec/plans/` and its `README.md` index if absent. Tell the user the directory is being bootstrapped.
 6. **Checkpoint manifest** — add all created or edited Plan paths and CLI-reported touched paths to the publication manifest.
 7. **Lint** — `specscore spec lint`. On failure, run `specscore spec lint --fix` exactly once and re-lint; on persistent failure, surface violations with rule IDs and stop.
 8. **Inline self-review** — placeholders, empty `**Verifies:**` lines, AC IDs that look misspelled vs the source Feature, task-name vs `**Verifies:**` contradictions.
@@ -84,97 +84,19 @@ spec/plans/
 └── <slug>.md                # The Plan artifact (single file per plan)
 ```
 
-**Plan `.md` schema — Feature-sourced (default):**
+The skill carries **no embedded schema** — `specscore plan new` is the single source of truth for the Plan's structure (title prefix, body metadata, the `## Summary` / `## Approach` / `## Tasks` / `## Deferred AC Coverage` / `## Open Questions` sections, and the adherence footer). For a read-only spec reference, see [`https://specscore.md/plan-specification`](https://specscore.md/plan-specification) — never fetch it to write the file; the CLI scaffold produces the canonical structure.
 
-```markdown
-# Plan: <Title>
+## Artifact Creation
 
-**Status:** Draft
-**Source Feature:** <feature-slug>
-**Date:** YYYY-MM-DD
-**Owner:** <author identifier>
-**Supersedes:** —              <!-- or: <old-plan-slug> on wholesale replacement -->
+**Creation is required-CLI.** `specscore plan new <slug>` is the ONLY way to create the Plan artifact — it produces a lint-clean skeleton by construction and bootstraps `spec/plans/` and its `README.md` index for you. There is **no direct-write fallback**: the CLI scaffold is the single source of truth for the Plan's structure. This follows the Required-CLI Artifact Creation policy — see the **Creation-class row** in [`../shared/cli-detection.md`](../shared/cli-detection.md).
 
-## Summary
+### Step 1 — Run the creation call and branch on exit status
 
-1–3 sentences. What this Plan covers and how it decomposes the source Feature.
+Do **not** run a standalone `command -v` probe. Invoke `specscore plan new <slug>` with **exactly one** source flag — `--feature <feature-slug>` (default) or `--idea <idea-slug>` — and branch on its exit status per the **Creation-class row** in [`../shared/cli-detection.md`](../shared/cli-detection.md) (which carries the per-outcome rationale): **`0`** → scaffold written, continue to Step 2; **`127`** → install message (`/specscore:install`), then **install-then-retry**; **exit `8`** → **upgrade-then-retry**, naming the missing `plan new` subcommand; **any other non-zero** → surface verbatim, **never** a direct-write fallback.
 
-## Approach
+### Step 2 — Fill the scaffolded sections
 
-≤1 paragraph on the decomposition strategy. What grouped what, what got deferred and why.
-
-## Tasks
-
-### Task 1: <task-name>
-
-**Verifies:** <feature-slug>#ac:<ac-slug>, <feature-slug>#ac:<ac-slug>
-
-1–3 sentence description of what this task does.
-
-### Task 2: <task-name>
-
-**Verifies:** <feature-slug>#ac:<ac-slug>
-
-…
-
-## Deferred AC Coverage
-
-<!-- Omit this section entirely when no ACs are deferred. -->
-
-- <feature-slug>#ac:<ac-slug> — <one-sentence reason that specifies why and when>
-
-## Open Questions
-
-- <Open question that doesn't block approval but should be tracked>
-
-(Or: "None at this time." — the section is never omitted.)
-
----
-*This document follows the https://specscore.md/plan-specification*
-```
-
-**Plan `.md` schema — Idea-sourced variant:**
-
-```markdown
-# Plan: <Title>
-
-**Status:** Draft
-**Source:** idea:<slug>
-**Date:** YYYY-MM-DD
-**Owner:** <author identifier>
-**Supersedes:** —              <!-- or: <old-plan-slug> on wholesale replacement -->
-
-## Summary
-
-1–3 sentences. What this Plan covers and how it decomposes the source Idea.
-
-## Approach
-
-≤1 paragraph on the decomposition strategy.
-
-## Tasks
-
-### Task 1: <task-name>
-
-**Source:** idea:<slug>
-
-1–3 sentence description of what this task does.
-
-### Task 2: <task-name>
-
-**Source:** idea:<slug>
-
-…
-
-## Open Questions
-
-- <Open question that doesn't block approval but should be tracked>
-
-(Or: "None at this time." — the section is never omitted.)
-
----
-*This document follows the https://specscore.md/plan-specification*
-```
+With the lint-clean skeleton in place, FILL its sections via `Edit`: the `## Summary`, the `## Approach`, each `### Task N` entry with its `**Verifies:** <feature-slug>#ac:<ac-slug>` line (Feature-sourced) or `**Source:** idea:<slug>` line (Idea-sourced), the `## Deferred AC Coverage` section (Feature-sourced only; omit when no ACs are deferred), and `## Open Questions`. Preserve the scaffold's lint-clean structure — never replace it with a hand-authored layout.
 
 **Idea-sourced differences:** `**Source:** idea:<slug>` replaces `**Source Feature:**` in body metadata. Tasks use `**Source:** idea:<slug>` instead of `**Verifies:**`. The `## Deferred AC Coverage` section is omitted (there are no ACs to defer).
 

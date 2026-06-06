@@ -51,27 +51,7 @@ On rejection, the skill MUST NOT create any file, MUST NOT emit any event, and M
 
 ## Slug derivation (REQ `seed-slug-derivation`)
 
-Given a one-liner `S`:
-
-1. Lowercase `S` using Unicode default casefolding.
-2. Replace every character outside `[a-z0-9]` with `-`.
-3. Collapse runs of `-` into a single `-`.
-4. Trim leading and trailing `-`.
-5. If length > 60, truncate to the nearest preceding `-` boundary that produces a slug ≤ 60 chars.
-
-Pseudocode (bash with GNU coreutils; adapt to environment):
-
-```bash
-slug=$(printf '%s' "$ONE_LINER" \
-  | tr '[:upper:]' '[:lower:]' \
-  | sed -E 's/[^a-z0-9]+/-/g' \
-  | sed -E 's/^-+|-+$//g')
-if [ ${#slug} -gt 60 ]; then
-  # truncate at the nearest hyphen ≤ 60
-  slug=$(printf '%s' "$slug" | cut -c1-60)
-  slug="${slug%-*}"   # drop trailing partial word
-fi
-```
+The skill does **not** derive the slug — `specscore sidekick new` does, from the one-liner. The canonical algorithm **and** the slug-format validation live in the CLI (the `cli/sidekick/new` Feature), so the skill carries no copy to keep in sync. In the common case the skill omits `--slug` and lets the CLI derive. It supplies `--slug <slug>` to override — either a specific slug the user asked for, or a `-N` disambiguator for a [collision](#collision-disambiguation-req-writes-seed-artifact) — and lets the CLI validate it (an invalid slug exits `2`). The skill does **not** restate the format rules.
 
 ## Destination resolution (multi-repo workspaces)
 
@@ -191,69 +171,52 @@ No seed file is written on invalid override. Re-prompts always use the SAME conf
 
 ## Collision disambiguation (REQ `writes-seed-artifact`)
 
-The destination directory is `<destination-repo-root>/spec/ideas/seeds/` — `<destination-repo-root>` is the repo resolved by [Destination resolution](#destination-resolution-multi-repo-workspaces), or the source project root when that section was skipped (single-repo workspace).
+The skill never overwrites an existing seed, and it does **not** pre-scan the filesystem: it lets the creation call surface a collision and resolves it through the CLI.
 
-If `<destination-repo-root>/spec/ideas/seeds/<slug>.md` already exists:
+- The default call omits `--slug`. The CLI derives the slug and, when `<destination-repo-root>/spec/ideas/seeds/<slug>.md` already exists, exits `1` (Conflict) naming that path — nothing is written.
+- On Conflict, take the base slug from the reported path and retry the same call with `--slug <base>-2`; if that also conflicts, `-3`, `-4`, … until it succeeds. **Never** pass `--force`.
 
-1. Try `<slug>-2.md`. If that exists, try `-3`, `-4`, …
-2. Use the first available suffix.
-3. The skill MUST NEVER overwrite an existing file.
+(The same `--slug` seam carries a user-requested slug — see [Slug derivation](#slug-derivation-req-seed-slug-derivation); a `-N` disambiguator is just one use of it.) The slug of the written seed (with any `-N` suffix) is read back from the seed for the event payload.
 
-The final file name's slug (with any `-N` disambiguator) is used in the frontmatter `slug` field and in the event payload.
+## Creating the seed (required-CLI) (REQ `writes-seed-artifact`, REQ `seed-frontmatter-schema`)
 
-## Frontmatter assembly (REQ `seed-frontmatter-schema`)
+**Creation is required-CLI.** `specscore sidekick new` is the ONLY way to write the seed file — it produces a lint-clean seed (the closed 8-key `sidekick-seed` frontmatter + the `# <one-liner>` H1 body) by construction and bootstraps `spec/ideas/seeds/` and the ancestor indexes for you. The skill carries **no embedded seed template**: the CLI scaffold is the single source of truth for the seed's structure. This follows the Required-CLI Artifact Creation policy — see the **Creation-class row** in [`../shared/cli-detection.md`](../shared/cli-detection.md).
 
-After validation and slug derivation, assemble the YAML frontmatter:
-
-```yaml
----
-type: sidekick-seed
-slug: <derived-slug-with-any-disambiguator>
-captured_at: <ISO-8601 UTC, e.g., 2026-05-18T14:32:00Z>
-captured_by: <invoker identifier — see "Determining captured_by" below>
-captured_during: <active spec path, or null>
-trigger: <heuristic|explicit>
-status: queued
-synchestra_task: null
----
-```
+The skill still owns the *orchestration the CLI does not*: *where* the seed lands ([Destination resolution](#destination-resolution-multi-repo-workspaces) → `--project`), the capture metadata (`--captured-by`, `--captured-during`, `--trigger`), an optional slug override (`--slug` — a user-requested slug or a `-N` [collision](#collision-disambiguation-req-writes-seed-artifact) suffix; the CLI derives the slug otherwise), the [back-link](#source-artifact-back-link-reqs-writes-back-link-to-source-artifact-source-artifact-path-resolution-back-link-section-format-back-link-best-effort), and the [event](#event-emission-req-emits-captured-event-req-event-payload-schema). It passes these as flags rather than hand-writing the file.
 
 ### Determining `captured_by`
 
 - If invoked from inside another skill, `captured_by` is the invoking skill's id in `<plugin>:<skill>` form (e.g., `specstudio:specify`).
 - If invoked directly by the user (typed `/sidekick`), `captured_by` is the literal string `user`.
-- The skill does not validate the format — the caller supplies the value. The skill writes it verbatim. (Free-form per REQ `seed-frontmatter-schema`.)
+- The skill does not validate the format — the caller supplies the value, passed verbatim via `--captured-by`. (Free-form per REQ `seed-frontmatter-schema`.)
 
 ### Determining `captured_during`
 
 - Invoking skill or caller supplies the spec path of the active artifact (e.g., `spec/features/skills/init`), or `null` if there is no active spec context (e.g., a bare `/sidekick` from the user outside a host session).
-- The skill writes the supplied value verbatim.
+- Pass it verbatim via `--captured-during` when present; **omit the flag** when it is `null` (the CLI then writes the literal `null`).
 
 ### Determining `trigger`
 
-- If the invocation came from a host skill's heuristic-capture path (matching a cue from `sidekick-capture.md`), `trigger: heuristic`.
-- If the invocation came from `/sidekick` (user-typed) or an explicit `specstudio:sidekick` invocation in any host context, `trigger: explicit`.
+- If the invocation came from a host skill's heuristic-capture path (matching a cue from `sidekick-capture.md`), `--trigger heuristic`.
+- If the invocation came from `/sidekick` (user-typed) or an explicit `specstudio:sidekick` invocation in any host context, `--trigger explicit`.
 
-## Body assembly (REQ `writes-seed-artifact`)
+### Invoke the creation call and branch on exit status
 
-The body has two parts, both optional in form but the first is required in content:
+With `<destination-repo-root>` resolved, invoke the default call — **no `--slug`**, so the CLI derives the slug from the one-liner:
 
-1. **H1 line** (required): exactly `# <one-liner>` where `<one-liner>` is the trimmed user input, written verbatim. Markdown-special characters in the one-liner are written as-is; the file's renderer interprets them. (Known limitation: one-liners starting with backticks or containing constructs that would break CommonMark heading parsing produce malformed headings; this is not a Phase 0 concern.)
-2. **Optional body** (only if `--body` was provided): a blank line, then the supplied markdown content.
+```bash
+specscore sidekick new "<one-liner>" \
+  --project "<destination-repo-root>" \
+  --captured-by "<captured_by>" \
+  --trigger "<heuristic|explicit>"
+  # --captured-during "<active-spec-path>"   # add ONLY when captured_during is not null
+  # --body "<markdown>"                       # add ONLY when the host supplied --body
+  # --slug "<slug>"                           # add ONLY to override: a user-requested slug, or a -N collision suffix
+```
 
-Total length of the body region (everything after the closing `---`, inclusive of the H1 line and any optional content) MUST be ≤ 2000 characters.
+The one-liner becomes the `# <one-liner>` H1; the CLI emits the frontmatter and enforces the ≤500-char one-liner and ≤2000-char body caps (and validates any `--slug`). Do **not** run a standalone `command -v` probe, and do **not** pass `--force`. Branch on the exit status per the **Creation-class row** in [`../shared/cli-detection.md`](../shared/cli-detection.md) (which carries the per-outcome rationale): **`0`** → the CLI prints the seed path, continue to the back-link and event steps; **exit `1`** (Conflict — the slug is already taken) → resolve via [Collision disambiguation](#collision-disambiguation-req-writes-seed-artifact) (retry with `--slug <base>-N`); **`127`** → install message (`/specscore:install`), then **install-then-retry**; **exit `8`** → **upgrade-then-retry**, naming the missing `sidekick new` / `--slug`; **any other non-zero** → surface verbatim, **never** a direct-write fallback.
 
-## Writing the seed file (REQ `writes-seed-artifact`)
-
-1. Ensure `<destination-repo-root>/spec/ideas/seeds/` exists; create it if not:
-
-   ```bash
-   mkdir -p <destination-repo-root>/spec/ideas/seeds
-   ```
-
-2. Write the file at `<destination-repo-root>/spec/ideas/seeds/<final-slug>.md` using atomic write semantics (write to a temporary file in the same directory, then rename). This prevents readers from observing a half-written seed.
-
-3. The skill MUST return the seed path relative to `<destination-repo-root>` on success.
+After a successful write, read `captured_at` and `slug` back from the written seed's frontmatter — the [back-link](#source-artifact-back-link-reqs-writes-back-link-to-source-artifact-source-artifact-path-resolution-back-link-section-format-back-link-best-effort) and [event](#event-emission-req-emits-captured-event-req-event-payload-schema) steps need them, and the CLI owns the `captured_at` timestamp. The CLI's printed path (relative to `<destination-repo-root>`) is the skill's return value.
 
 ## Source-artifact back-link (REQs `writes-back-link-to-source-artifact`, `source-artifact-path-resolution`, `back-link-section-format`, `back-link-best-effort`)
 
@@ -380,9 +343,10 @@ These patterns indicate misuse of this skill; refuse or refactor:
 
 ## References
 
+- [`shared/cli-detection.md`](../shared/cli-detection.md) — the Required-CLI Artifact Creation policy and Creation-class exit-status response (`127` install-then-retry, `8` upgrade-then-retry, other non-zero surface) the seed-creation call follows.
 - [`shared/sidekick-capture.md`](../shared/sidekick-capture.md) — when and why hosts invoke this skill.
 - [`shared/destination-resolution.md`](../shared/destination-resolution.md) — the deliberation-prompt template invoked from "Destination resolution" step 2.
 - [`shared/events.md`](../shared/events.md) — event envelope and emission transport.
-- [`references/seed-template.md`](references/seed-template.md) — example seed files.
+- [`references/seed-template.md`](references/seed-template.md) — illustrative example only; `specscore sidekick new` is the authoritative source of seed structure.
 - [Feature: `sidekick-capture`](../../spec/features/sidekick-capture/README.md) — the parent spec this skill implements.
 - [Feature: `sidekick-capture/destination-resolution`](../../spec/features/sidekick-capture/destination-resolution/README.md) — the sub-Feature for the multi-repo destination-resolution flow.

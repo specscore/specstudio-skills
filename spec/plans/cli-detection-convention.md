@@ -44,7 +44,7 @@ Convert `init` to scaffold the project via `specscore init` only — remove the 
 
 **Verifies:** cli-detection-convention#ac:producers-cite
 
-**Notes:** Blocked — `specscore` has no seed-scaffold verb yet (tracked by seed `specscore-cli-needs-a-seed-scaffold-verb-e-g-specscore-seed` in the `specscore-cli` repo). Implement once the verb ships; until then `sidekick` keeps its current direct seed write.
+**Notes:** Implemented — `specscore sidekick new` shipped in CLI v0.7.2, and the `--slug` override (needed for the skill's `-N` collision disambiguation) shipped in v0.7.3. `skills/sidekick/SKILL.md` converted to required-CLI creation: it now derives the slug, resolves the `-N`-free slug, and delegates the write to `specscore sidekick new "<one-liner>" --slug <final-slug> --project <dest> …`, keeping destination resolution, back-link, and event emission as skill orchestration.
 
 Replace the hand-written seed assembly with the CLI seed-scaffold call, remove the embedded seed template, wire install/upgrade-then-retry, and cite `cli-detection.md`.
 
@@ -52,7 +52,7 @@ Replace the hand-written seed assembly with the CLI seed-scaffold call, remove t
 
 **Verifies:** cli-detection-convention#ac:producers-cite
 
-**Notes:** Blocked — `specscore plan new` does not exist yet (in progress in the `specscore` CLI separately). Implement once the verb ships; until then `plan` keeps its current direct Plan write.
+**Notes:** Implemented — `specscore plan new` shipped in `specscore` CLI v0.7.0 (`--feature`/`--idea` source flags, gallery template with embedded fallback). `skills/plan/SKILL.md` converted to required-CLI creation.
 
 Replace the embedded Plan schema and direct write with `specscore plan new`, wire install/upgrade-then-retry and the surface-on-other-error branch, and cite `cli-detection.md`.
 
@@ -66,7 +66,7 @@ Replace the embedded Plan schema and direct write with `specscore plan new`, wir
 
 ## Open Questions
 
-- Tasks 5 and 6 stay blocked until the `specscore` CLI ships a seed-scaffold verb and `plan new` respectively; this Plan should be re-opened to implement them once those land.
+- Task 6 (`plan`) was implemented once `specscore plan new` shipped in CLI v0.7.0. Task 5 (`sidekick`) was implemented once `specscore sidekick new` (v0.7.2) and its `--slug` override (v0.7.3) shipped. All tasks in this Plan are now complete.
 
 ---
 *This document follows the https://specscore.md/plan-specification*

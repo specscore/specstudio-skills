@@ -119,12 +119,12 @@ specscore init --project <root> [--title <title>] [--host <host>] [--org <org>] 
 
 Use `--force` only when state detection found an existing `specscore.yaml` AND the user explicitly opted into overwriting it. Never invent flags `specscore init` does not document; if a wizard answer has no matching flag, write that field via `Edit` after the CLI returns.
 
-Capture stdout/stderr/exit-code and branch on the exit status (no `command -v` probe):
+Capture stdout/stderr/exit-code and branch on the exit status (no `command -v` probe) per the **Creation-class row** in [`shared/cli-detection.md`](../shared/cli-detection.md) (which carries the per-outcome rationale):
 
 - **exit `0`** → scaffold succeeded; continue.
-- **`127`** (binary not on PATH — the command never ran, nothing mutated) → install message pointing at `/specscore:install`, then offer **install-then-retry**: on consent, delegate to `specscore:install` (Step 2 mechanism, at most once per invocation) and re-run `specscore init`. This is how the cold-start path (brand-new repo, no CLI) is handled — never a hand-scaffold.
-- **exit `8`** (binary present but too old / missing the `init` subcommand) → upgrade message naming the missing subcommand, then offer **upgrade-then-retry**: on consent, re-run `specscore init` after the upgrade.
-- **any other non-zero** → surface the error cleanly with the underlying message. **Never** fall back to a hand-written artifact — a fallback on a non-`127` error would mask a real CLI bug and risk a double-write after a partial mutation.
+- **`127`** → install message (`/specscore:install`), then **install-then-retry**: on consent, delegate to `specscore:install` (Step 2 mechanism, at most once per invocation) and re-run `specscore init`. This is the cold-start path (brand-new repo, no CLI) — never a hand-scaffold.
+- **exit `8`** → **upgrade-then-retry**, naming the missing `init` subcommand: on consent, re-run `specscore init` after the upgrade.
+- **any other non-zero** → surface the error cleanly; **never** a hand-written fallback.
 
 ## Step 5 — Snippet installation (canonical Producer-shape snippet)
 
