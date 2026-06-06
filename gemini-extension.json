@@ -1,0 +1,5 @@
+{
+  "name": "specstudio",
+  "version": "0.0.11",
+  "description": "SpecScore Studio skills for Gemini CLI: ideate, specify, plan, implement, verify, recap, review, and ship. Gemini auto-discovers the bundled skills/ tree."
+}

@@ -1,0 +1,33 @@
+{
+  "name": "specstudio",
+  "description": "SpecScore Studio skills for spec-driven development: ideate, specify, plan, implement, verify, recap, review, and ship.",
+  "version": "0.0.11",
+  "author": {
+    "name": "SpecScore"
+  },
+  "license": "MIT",
+  "keywords": [
+    "specstudio",
+    "specscore",
+    "spec-driven-development",
+    "sdd",
+    "spec",
+    "agent-skills"
+  ],
+  "skills": [
+    "./skills/consilium",
+    "./skills/ideate",
+    "./skills/implement",
+    "./skills/init",
+    "./skills/plan",
+    "./skills/pull-request",
+    "./skills/recap",
+    "./skills/relocate-idea",
+    "./skills/score",
+    "./skills/ship",
+    "./skills/sidekick",
+    "./skills/specify",
+    "./skills/survey",
+    "./skills/verify"
+  ]
+}
