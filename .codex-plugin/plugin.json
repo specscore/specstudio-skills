@@ -1,0 +1,50 @@
+{
+  "name": "specstudio",
+  "version": "0.0.11",
+  "description": "SpecScore Studio skills for spec-driven development: ideate, specify, plan, implement, verify, recap, review, and ship.",
+  "author": {
+    "name": "Alexander Trakhimenok",
+    "url": "https://github.com/atrakhimenok"
+  },
+  "homepage": "https://github.com/specscore/specstudio-skills",
+  "repository": "https://github.com/specscore/specstudio-skills",
+  "license": "MIT",
+  "keywords": [
+    "spec-driven-development",
+    "specification-driven-development",
+    "sdd",
+    "spec",
+    "specscore",
+    "specstudio",
+    "ideation",
+    "brainstorming",
+    "prd",
+    "ai",
+    "ai-coding",
+    "codex",
+    "codex-plugin",
+    "agent-skills",
+    "engineering",
+    "development"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "SpecStudio",
+    "shortDescription": "Spec-driven development skills for Codex.",
+    "longDescription": "SpecScore Studio guides a project from raw idea to shipped code through lintable SpecScore artifacts: ideate, specify, plan, implement, verify, recap, review, and ship.",
+    "developerName": "SpecScore",
+    "category": "Productivity",
+    "capabilities": [
+      "Write",
+      "Workflow",
+      "Review"
+    ],
+    "websiteURL": "https://github.com/specscore/specstudio-skills",
+    "defaultPrompt": [
+      "Set up SpecStudio in this repo.",
+      "Turn this idea into a SpecScore feature.",
+      "Plan this approved SpecScore feature."
+    ],
+    "brandColor": "#2563EB"
+  }
+}

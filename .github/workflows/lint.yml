@@ -13,12 +13,14 @@ on:
       - 'spec/**'
       - 'skills/**'
       - '.claude-plugin/**'
+      - '.codex-plugin/**'
       - '.github/workflows/lint.yml'
   pull_request:
     paths:
       - 'spec/**'
       - 'skills/**'
       - '.claude-plugin/**'
+      - '.codex-plugin/**'
       - '.github/workflows/lint.yml'
   workflow_dispatch:
 

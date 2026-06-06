@@ -4,7 +4,7 @@
 
 AI skills (and a coming Web UI) for efficient spec-driven development — the full lifecycle: **ideate ⇒ specify ⇒ plan ⇒ implement ⇒ verify ⇒ recap ⇒ ship.** SpecStudio turns vague ideas into lintable, testable specifications and gates implementation on those specifications being clear, complete, and approved. Reviews are stage-internal — see [Reviewer Gates](spec/features/reviewer-gates/README.md).
 
-This repo (`specstudio-skills`) is the Claude Code plugin surface of SpecScore Studio: skills, commands, and supporting tooling for AI coding agents. The web client lives at [`specstudio-web`](https://github.com/specscore/specstudio-web) (planned) and will deploy to [`specscore.studio`](https://specscore.studio).
+This repo (`specstudio-skills`) is the AI-agent plugin surface of SpecScore Studio: skills, commands, and supporting tooling for Claude Code and Codex. The web client lives at [`specstudio-web`](https://github.com/specscore/specstudio-web) (planned) and will deploy to [`specscore.studio`](https://specscore.studio).
 
 ## Why a studio
 
@@ -14,9 +14,11 @@ Alongside it:
 
 - [**SpecScore**](https://specscore.org/) — the open protocol every spec artifact conforms to.
   - **Rehearse** — the markdown-native test framework for SpecScore specs. SpecStudio scaffolds Rehearse test stubs from acceptance criteria.
-- [**SpecScore AI Marketplace**](https://github.com/specscore/ai-marketplace) — the dedicated Claude Code marketplace for SpecScore-aligned plugins (`specstudio` and `specscore`).
+- [**SpecScore AI Marketplace**](https://github.com/specscore/ai-marketplace) — the dedicated marketplace for SpecScore-aligned AI-agent plugins (`specstudio` and `specscore`).
 
 ## Install
+
+### Claude Code
 
 Published on the [SpecScore AI Marketplace](https://github.com/specscore/ai-marketplace). Install into Claude Code in two steps:
 
@@ -27,13 +29,36 @@ Published on the [SpecScore AI Marketplace](https://github.com/specscore/ai-mark
 
 The first command registers the marketplace once; the second installs (and later updates) the plugin. Run `/plugin uninstall specstudio` to remove it.
 
+### Codex
+
+This repo also includes a Codex plugin manifest at [`.codex-plugin/plugin.json`](./.codex-plugin/plugin.json). A Codex marketplace can point at this plugin source and ingest the existing [`skills/`](./skills/) tree.
+
+For a local Codex marketplace entry, use plugin name `specstudio` with a local source path that resolves to this repo. For a repo/team marketplace following Codex's conventional layout, place or symlink this repo at `plugins/specstudio` and add:
+
+```json
+{
+  "name": "specstudio",
+  "source": {
+    "source": "local",
+    "path": "./plugins/specstudio"
+  },
+  "policy": {
+    "installation": "AVAILABLE",
+    "authentication": "ON_INSTALL"
+  },
+  "category": "Productivity"
+}
+```
+
 ### Dependencies
 
 The `specstudio` plugin declares one dependency on a sibling plugin:
 
 - **`specscore`** — wraps the `specscore` CLI as agent skills for SpecScore lint, navigation, and lifecycle operations. Lives in the same SpecScore marketplace (`/plugin install specscore@specscore`). Repo: [`ai-plugin-specscore`](https://github.com/specscore/ai-plugin-specscore).
 
-It's **installed automatically** when you install `specstudio` — Claude Code resolves the dependency graph by plugin name across any marketplaces the user has registered. Uninstalling `specstudio` does not remove the dependency; run `claude plugin prune` (or `claude plugin uninstall specstudio --prune`) to clean it up if you don't want it around.
+In Claude Code, it's **installed automatically** when you install `specstudio` — Claude Code resolves the dependency graph by plugin name across any marketplaces the user has registered. Uninstalling `specstudio` does not remove the dependency; run `claude plugin prune` (or `claude plugin uninstall specstudio --prune`) to clean it up if you don't want it around.
+
+In Codex, install the `specscore` companion plugin from the same marketplace when available. The Codex manifest intentionally omits a dependency field because Codex plugin validation does not currently accept Claude-style plugin dependencies.
 
 Once installed, the two plugins coexist as independent slash-command namespaces:
 
@@ -44,7 +69,7 @@ Once installed, the two plugins coexist as independent slash-command namespaces:
 
 ## What's in the box
 
-`specstudio-skills` ships as a Claude Code plugin (skills, commands, and supporting tooling) that sits on top of the `specscore` CLI. Today:
+`specstudio-skills` ships as an AI-agent plugin (skills, commands, and supporting tooling) that sits on top of the `specscore` CLI. Today:
 
 | Skill | Purpose |
 |---|---|
