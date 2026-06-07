@@ -1,12 +1,6 @@
 ---
-type: sidekick-seed
-slug: idea-skills-should-pick-destination-repo-not-default-to-cwd
-captured_at: 2026-05-20T16:42:56Z
 captured_by: user
-captured_during: null
-trigger: explicit
 status: queued
-synchestra_task: null
 ---
 
 # Idea skills should pick destination repo, not default to cwd

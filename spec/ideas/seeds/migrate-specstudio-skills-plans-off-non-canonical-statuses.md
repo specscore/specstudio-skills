@@ -1,12 +1,6 @@
 ---
-type: sidekick-seed
-slug: migrate-specstudio-skills-plans-off-non-canonical-statuses
-captured_at: 2026-06-04T20:33:20Z
 captured_by: user
-captured_during: null
-trigger: explicit
 status: queued
-synchestra_task: null
 ---
 # Migrate specstudio-skills plans off non-canonical statuses to the plan-status-lifecycle vocabulary
 

@@ -1,12 +1,6 @@
 ---
-type: sidekick-seed
-slug: implement-skill-checklist-missing-plan-body-status-transition
-captured_at: 2026-05-19T19:01:10Z
 captured_by: user
-captured_during: spec/features/skills/implement
-trigger: explicit
 status: queued
-synchestra_task: null
 ---
 
 # implement skill: per-batch checklist is missing the Plan body-metadata Status transition step (Approved→Implementing on first dispatch; Implementing→Completed on final task)

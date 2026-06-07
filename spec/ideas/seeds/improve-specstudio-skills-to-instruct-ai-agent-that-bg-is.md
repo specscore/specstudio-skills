@@ -1,12 +1,6 @@
 ---
-type: sidekick-seed
-slug: improve-specstudio-skills-to-instruct-ai-agent-that-bg-is
-captured_at: 2026-06-04T16:04:36Z
 captured_by: user
-captured_during: null
-trigger: explicit
 status: queued
-synchestra_task: null
 ---
 
 # improve specstudio-skills to instruct Ai agent that --bg is undocummented argument and agent should try to run it instead of relying on --help.

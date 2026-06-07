@@ -63,7 +63,7 @@ Bootstraps a SpecScore-managed project in one wizard-driven step. Detects curren
 - **Output:** `specscore.yaml` + lint-clean `spec/{,ideas,features}/README.md` + the canonical snippet pasted into one of `CLAUDE.md` / `AGENTS.md` / `GEMINI.md` / `.cursor/rules/specstudio.md` per the explicit platform-detection rule.
 - **Triggers:** `specstudio:init`, `/specstudio:init`, "set up specstudio", "bootstrap a spec repo".
 - **Two modes:** default (full wizard) and `--update` (drift-only reconciliation).
-- **CLI delegation:** prefers `specscore init`; AI-agent fallback when the CLI is absent. CLI installation is delegated to `specscore:install` with explicit user consent.
+- **CLI delegation:** requires `specscore init`; there is no AI-agent scaffold fallback. CLI installation is delegated to `specscore:install` with explicit user consent, then init is retried.
 - **Source:** [`init/SKILL.md`](./init/SKILL.md)
 
 ### `survey` — Shipped

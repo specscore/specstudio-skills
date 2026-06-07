@@ -91,7 +91,7 @@ Use a single batched `AskUserQuestion` call. **Maximum four questions.** Each qu
 The fixed four:
 
 1. **Platform agent-instructions target.** Which file to install the canonical snippet into. Skipped when only one platform file exists. Apply the platform-detection rule below.
-2. **Optional spec subdirectories.** Single batched question presenting both `spec/research/` and `spec/decisions/` with their visible defaults (decisions=yes, research=no). Implementation note: today the `specscore init` CLI does NOT scaffold these (out of MVP scope upstream); the skill MAY create empty placeholders if requested, OR defer until upstream Indexes ship. Default behavior: defer.
+2. **Optional spec subdirectories.** Single batched question presenting both `spec/research/` and `spec/decisions/` with their visible defaults (decisions=yes, research=no). Implementation note: today the `specscore init` CLI does NOT scaffold these (out of MVP scope upstream), so the skill defers them until upstream Indexes ship. Do not create placeholder directories or indexes by hand.
 3. **Custom viewer.** Whether to register a non-default `viewer:` block in `specscore.yaml`. Default: no (Repo Config defaults apply).
 4. **Greenfield confirmation.** When state detection finds non-trivial pre-existing structure (e.g., a `docs/` tree with what look like spec artifacts), confirm before scaffolding. Skipped when greenfield is unambiguous.
 

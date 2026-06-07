@@ -53,7 +53,7 @@ See [philosophy.md](../shared/philosophy.md). Key tenets here: *simplicity is th
 
 Artifacts land at `spec/ideas/<slug>.md`. See [path-conventions.md](../shared/path-conventions.md). Never use `docs/ideas/`.
 
-If `spec/ideas/` does not exist when the skill is invoked, **bootstrap it** before writing the first artifact: create the directory and a lint-clean `spec/ideas/README.md` index (`type: index`, empty Contents table, `Open Questions: None at this time.`). Tell the user explicitly that you bootstrapped it. Never silent.
+If `spec/ideas/` does not exist when the skill is invoked, do not hand-bootstrap it. `specscore idea new <slug>` owns the artifact and ancestor-index creation path; tell the user that the CLI will bootstrap the ideas tree if needed.
 
 ## Checklist
 
@@ -63,9 +63,9 @@ Create a task for each and complete in order:
 2. **Scope decomposition check** — if the request describes multiple independent subsystems, stop and help the user split into multiple Ideas before proceeding.
 3. **Phase 1 — Understand & Expand** (divergent).
 4. **Phase 2 — Evaluate & Converge**.
-5. **Phase 3 — Crystallize** as a SpecScore Idea artifact. Bootstrap `spec/ideas/` if missing. Create the artifact with the `specscore idea new` CLI scaffold — the required creation path (see Phase 3 below).
+5. **Phase 3 — Crystallize** as a SpecScore Idea artifact. Create the artifact with the `specscore idea new` CLI scaffold — the required creation path that also bootstraps missing ancestor indexes (see Phase 3 below).
 6. **Lint** the artifact: `specscore spec lint`. On failure, run `specscore spec lint --fix` once, re-lint; surface remaining violations to the user.
-7. **Publication checkpoint** — add every file you created or edited (`spec/ideas/<slug>.md`, plus bootstrap files if any) to the checkpoint manifest and apply [publication-policy.md](../shared/publication-policy.md) for the lifecycle event being emitted.
+7. **Publication checkpoint** — add every file the CLI created and every file you edited (`spec/ideas/<slug>.md`, plus CLI-reported ancestor indexes if any) to the checkpoint manifest and apply [publication-policy.md](../shared/publication-policy.md) for the lifecycle event being emitted.
 8. **Inline self-review** — placeholders, contradictions, ambiguity, scope.
 9. **User review** — ask the user to review and approve the Recommended Direction. Recognize explicit approval phrases (`approve`, `approved`, `accept`, `accepted`, `lgtm`, plus their semantic equivalents in the user's language); treat vague positive signals as soft and ask one explicit confirmation question.
 10. **Emit events** — `idea.drafted` on every successful lint pass while `**Status:** Draft`; `idea.approved` exactly once on approval; `idea.updated` on every successful lint pass while `**Status:** Approved`. Apply publication policy before emission so each event carries `publication_result`. Both `drafted` and `updated` payloads carry `changed_sections`, `previous_revision`, and a factual `change_summary` (≤2 sentences). See [events.md](../shared/events.md).
@@ -118,15 +118,9 @@ After the user reacts to Phase 1, shift to convergent mode. Cadence becomes **si
 
 **Creation is required-CLI.** `specscore idea new <slug>` is the ONLY way to create the artifact — it produces a lint-clean skeleton by construction and updates `spec/ideas/README.md` for you. There is no direct-write fallback: the CLI scaffold is the single source of truth for the Idea's structure. Subsequent edits must preserve that lint-clean state. This follows the Required-CLI Artifact Creation policy — see the Creation-class row in [`../shared/cli-detection.md`](../shared/cli-detection.md).
 
-### Step 3.0 — Bootstrap `spec/ideas/` if missing
+### Step 3.0 — Let the CLI bootstrap missing indexes
 
-Before invoking the CLI, check that `spec/ideas/` exists. If not:
-
-1. Create the directory.
-2. Create `spec/ideas/README.md` as a lint-clean Index artifact (title `# Ideas Index`, `**Status:** Stable`, empty Contents table, `Open Questions: None at this time.`, adherence footer). The CLI will append to this index when it scaffolds the artifact.
-3. Tell the user, e.g., *"Bootstrapped `spec/ideas/` and `spec/ideas/README.md` (this project didn't have an ideas tree yet)."*
-
-This step MUST NOT happen silently.
+Before invoking the CLI, you MAY note whether `spec/ideas/` is absent so the user is not surprised by extra paths in the checkpoint manifest. Do not create directories or indexes yourself. `specscore idea new <slug>` materializes the required ancestor indexes (`spec/README.md`, `spec/ideas/README.md`) when absent, using the canonical templates owned by the SpecScore CLI. For the read-only contract, see [`https://specscore.md/idea-specification`](https://specscore.md/idea-specification) and the CLI's `idea new` documentation; never copy those templates into this skill.
 
 ### Step 3a — Detect the CLI (per the shared convention)
 
@@ -188,11 +182,11 @@ After every successful artifact write or edit, build a checkpoint manifest conta
 
 ```bash
 spec/ideas/<slug>.md
-# plus any bootstrap files you created in Step 3.0
+# plus any CLI-created ancestor indexes reported by the creation/lint steps
 spec/ideas/README.md
 ```
 
-Resolve and apply [publication-policy.md](../shared/publication-policy.md) for `idea.drafted` before emitting that event. The disclosure must name the policy source when known, resolved actions, any branch-safety effect, and the manifest paths. If the policy includes `stage`, stage only manifest paths. If it includes `commit` or `push`, run the manifest and branch safety checks from the shared protocol first. If publication fails (no git repo, detached worktree, lock contention, branch refusal), surface the failure and continue without aborting the artifact write or bypassing the user review gate.
+Resolve and apply [publication-policy.md](../shared/publication-policy.md) for `idea.drafted` before emitting that event. The disclosure must name the policy source when known, resolved actions, any branch-safety effect, and the manifest paths. If the policy includes `stage`, stage only manifest paths, including CLI-created ancestor indexes reported by the creation/lint steps. If it includes `commit` or `push`, run the manifest and branch safety checks from the shared protocol first. If publication fails (no git repo, detached worktree, lock contention, branch refusal), surface the failure and continue without aborting the artifact write or bypassing the user review gate.
 
 ## Inline Self-Review
 

@@ -1,12 +1,6 @@
 ---
-type: sidekick-seed
-slug: support-a-single-plan-spanning-multiple-features
-captured_at: 2026-06-03T12:00:00Z
 captured_by: specstudio:plan
-captured_during: null
-trigger: explicit
 status: queued
-synchestra_task: null
 ---
 # Support a single Feature-sourced Plan spanning multiple Features
 

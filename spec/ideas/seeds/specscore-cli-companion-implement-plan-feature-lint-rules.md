@@ -1,12 +1,6 @@
 ---
-type: sidekick-seed
-slug: specscore-cli-companion-implement-plan-feature-lint-rules
-captured_at: 2026-05-19T17:42:47Z
 captured_by: specstudio:specify
-captured_during: spec/features/skills/plan
-trigger: explicit
 status: completed
-synchestra_task: null
 ---
 
 # specscore CLI companion: implement plan-Feature lint rules P-001..P-004 and parser support for Mode/Status/Depends-On task fields

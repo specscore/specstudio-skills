@@ -180,9 +180,9 @@ The skill never overwrites an existing seed, and it does **not** pre-scan the fi
 
 ## Creating the seed (required-CLI) (REQ `writes-seed-artifact`, REQ `seed-frontmatter-schema`)
 
-**Creation is required-CLI.** `specscore sidekick new` is the ONLY way to write the seed file — it produces a lint-clean seed (the closed 8-key `sidekick-seed` frontmatter + the `# <one-liner>` H1 body) by construction and bootstraps `spec/ideas/seeds/` and the ancestor indexes for you. The skill carries **no embedded seed template**: the CLI scaffold is the single source of truth for the seed's structure. This follows the Required-CLI Artifact Creation policy — see the **Creation-class row** in [`../shared/cli-detection.md`](../shared/cli-detection.md).
+**Creation is required-CLI.** `specscore sidekick new` is the ONLY way to write the seed file — it produces a lint-clean seed by construction and bootstraps `spec/ideas/seeds/` and the ancestor indexes for you. The skill carries **no embedded seed template**: the CLI scaffold is the single source of truth for the seed's structure. This follows the Required-CLI Artifact Creation policy — see the **Creation-class row** in [`../shared/cli-detection.md`](../shared/cli-detection.md). For a read-only format reference, use [`https://specscore.md/sidekick-seed-specification`](https://specscore.md/sidekick-seed-specification); never copy its shape into this skill.
 
-The skill still owns the *orchestration the CLI does not*: *where* the seed lands ([Destination resolution](#destination-resolution-multi-repo-workspaces) → `--project`), the capture metadata (`--captured-by`, `--captured-during`, `--trigger`), an optional slug override (`--slug` — a user-requested slug or a `-N` [collision](#collision-disambiguation-req-writes-seed-artifact) suffix; the CLI derives the slug otherwise), the [back-link](#source-artifact-back-link-reqs-writes-back-link-to-source-artifact-source-artifact-path-resolution-back-link-section-format-back-link-best-effort), and the [event](#event-emission-req-emits-captured-event-req-event-payload-schema). It passes these as flags rather than hand-writing the file.
+The skill still owns the *orchestration the CLI does not*: *where* the seed lands ([Destination resolution](#destination-resolution-multi-repo-workspaces) → `--project`), the supported capture metadata (`--captured-by`), an optional slug override (`--slug` — a user-requested slug or a `-N` [collision](#collision-disambiguation-req-writes-seed-artifact) suffix; the CLI derives the slug otherwise), the optional body (`--body`), the [back-link](#source-artifact-back-link-reqs-writes-back-link-to-source-artifact-source-artifact-path-resolution-back-link-section-format-back-link-best-effort), and the [event](#event-emission-req-emits-captured-event-req-event-payload-schema). It passes supported fields as CLI flags rather than hand-writing the file.
 
 ### Determining `captured_by`
 
@@ -190,15 +190,16 @@ The skill still owns the *orchestration the CLI does not*: *where* the seed land
 - If invoked directly by the user (typed `/sidekick`), `captured_by` is the literal string `user`.
 - The skill does not validate the format — the caller supplies the value, passed verbatim via `--captured-by`. (Free-form per REQ `seed-frontmatter-schema`.)
 
-### Determining `captured_during`
+### Determining source context
 
 - Invoking skill or caller supplies the spec path of the active artifact (e.g., `spec/features/skills/init`), or `null` if there is no active spec context (e.g., a bare `/sidekick` from the user outside a host session).
-- Pass it verbatim via `--captured-during` when present; **omit the flag** when it is `null` (the CLI then writes the literal `null`).
+- Do not pass this to `specscore sidekick new`; the current CLI does not accept `--captured-during`. Keep it in skill runtime state for the best-effort back-link and event payload only.
 
 ### Determining `trigger`
 
-- If the invocation came from a host skill's heuristic-capture path (matching a cue from `sidekick-capture.md`), `--trigger heuristic`.
-- If the invocation came from `/sidekick` (user-typed) or an explicit `specstudio:sidekick` invocation in any host context, `--trigger explicit`.
+- If the invocation came from a host skill's heuristic-capture path (matching a cue from `sidekick-capture.md`), runtime trigger is `heuristic`.
+- If the invocation came from `/sidekick` (user-typed) or an explicit `specstudio:sidekick` invocation in any host context, runtime trigger is `explicit`.
+- Do not pass this to `specscore sidekick new`; the current CLI does not accept `--trigger`. Keep it in skill runtime state for the event payload only.
 
 ### Invoke the creation call and branch on exit status
 
@@ -207,16 +208,14 @@ With `<destination-repo-root>` resolved, invoke the default call — **no `--slu
 ```bash
 specscore sidekick new "<one-liner>" \
   --project "<destination-repo-root>" \
-  --captured-by "<captured_by>" \
-  --trigger "<heuristic|explicit>"
-  # --captured-during "<active-spec-path>"   # add ONLY when captured_during is not null
-  # --body "<markdown>"                       # add ONLY when the host supplied --body
-  # --slug "<slug>"                           # add ONLY to override: a user-requested slug, or a -N collision suffix
+  --captured-by "<captured_by>"
+  # --body "<markdown>"   # add ONLY when the host supplied --body
+  # --slug "<slug>"       # add ONLY to override: a user-requested slug, or a -N collision suffix
 ```
 
 The one-liner becomes the `# <one-liner>` H1; the CLI emits the frontmatter and enforces the ≤500-char one-liner and ≤2000-char body caps (and validates any `--slug`). Do **not** run a standalone `command -v` probe, and do **not** pass `--force`. Branch on the exit status per the **Creation-class row** in [`../shared/cli-detection.md`](../shared/cli-detection.md) (which carries the per-outcome rationale): **`0`** → the CLI prints the seed path, continue to the back-link and event steps; **exit `1`** (Conflict — the slug is already taken) → resolve via [Collision disambiguation](#collision-disambiguation-req-writes-seed-artifact) (retry with `--slug <base>-N`); **`127`** → install message (`/specscore:install`), then **install-then-retry**; **exit `8`** → **upgrade-then-retry**, naming the missing `sidekick new` / `--slug`; **any other non-zero** → surface verbatim, **never** a direct-write fallback.
 
-After a successful write, read `captured_at` and `slug` back from the written seed's frontmatter — the [back-link](#source-artifact-back-link-reqs-writes-back-link-to-source-artifact-source-artifact-path-resolution-back-link-section-format-back-link-best-effort) and [event](#event-emission-req-emits-captured-event-req-event-payload-schema) steps need them, and the CLI owns the `captured_at` timestamp. The CLI's printed path (relative to `<destination-repo-root>`) is the skill's return value.
+After a successful write, use the CLI's printed path (relative to `<destination-repo-root>`) as the skill's return value and derive `<slug>` from that filename. Do not parse non-contractual seed frontmatter fields. Use the event emission time for event/back-link dates.
 
 ## Source-artifact back-link (REQs `writes-back-link-to-source-artifact`, `source-artifact-path-resolution`, `back-link-section-format`, `back-link-best-effort`)
 
@@ -251,10 +250,10 @@ Each entry is a single bullet line:
 
     - [<slug>](<relative path from source artifact to seed file>) — captured <YYYY-MM-DD> by <captured_by>
 
-- `<slug>` matches the seed's frontmatter `slug` (after any `-N` disambiguator).
+- `<slug>` is derived from the seed path returned by the CLI (after any `-N` disambiguator).
 - The relative path is computed from the source artifact's directory to `spec/ideas/seeds/<slug>.md`. For a source at `spec/features/foo/README.md`, the relative path is `../../ideas/seeds/<slug>.md`.
-- The date is the date portion of `captured_at` (YYYY-MM-DD only, no time).
-- `<captured_by>` is the verbatim frontmatter value.
+- The date is the date portion of the event emission timestamp (YYYY-MM-DD only, no time).
+- `<captured_by>` is the verbatim value passed to `--captured-by`.
 
 Append-only: newest entry at the bottom of the section. The skill MUST NOT reorder existing entries, remove entries, or modify any content in the source artifact outside this section.
 
@@ -271,13 +270,13 @@ If the back-link write fails (filesystem error, parse error, concurrent modifica
 
 On successful write — and only on successful write — emit `sidekick-idea.captured` via the convention in [`shared/events.md`](../shared/events.md).
 
-The event uses the standard envelope+payload structure. REQ `event-payload-schema` lists 8 conceptual fields; they map to the envelope and payload as follows:
+The event uses the standard envelope+payload structure. The seed path, runtime source context, runtime trigger, and content hash are recorded without requiring those fields to exist in seed frontmatter:
 
 ```yaml
 event: sidekick-idea.captured
 version: 1
 uuid: <generated>
-timestamp: <captured_at>
+timestamp: <event emission timestamp>
 actor:
   kind: skill | user
   id: <captured_by>          # e.g., "skill:specstudio:specify" or "user:<username>"
@@ -288,7 +287,7 @@ artifact:
   revision: <git SHA at time of emission, or "uncommitted">
 payload:
   slug: <slug>
-  captured_during: <captured_during or null>
+  captured_during: <runtime source context or null>
   trigger: <heuristic|explicit>
   content_hash: <SHA-256 lowercase hex of normalized one-liner>
 ```
@@ -347,6 +346,6 @@ These patterns indicate misuse of this skill; refuse or refactor:
 - [`shared/sidekick-capture.md`](../shared/sidekick-capture.md) — when and why hosts invoke this skill.
 - [`shared/destination-resolution.md`](../shared/destination-resolution.md) — the deliberation-prompt template invoked from "Destination resolution" step 2.
 - [`shared/events.md`](../shared/events.md) — event envelope and emission transport.
-- [`references/seed-template.md`](references/seed-template.md) — illustrative example only; `specscore sidekick new` is the authoritative source of seed structure.
+- [`https://specscore.md/sidekick-seed-specification`](https://specscore.md/sidekick-seed-specification) — read-only seed-format reference; `specscore sidekick new` is the authoritative creation path.
 - [Feature: `sidekick-capture`](../../spec/features/sidekick-capture/README.md) — the parent spec this skill implements.
 - [Feature: `sidekick-capture/destination-resolution`](../../spec/features/sidekick-capture/destination-resolution/README.md) — the sub-Feature for the multi-repo destination-resolution flow.

@@ -10,7 +10,7 @@ The `specstudio:init` Claude Code skill — bootstraps a SpecScore-managed proje
 
 Runs a 3–4-question wizard with defaults pre-filled from project-state detection, then idempotently scaffolds:
 
-1. `specscore.yaml` (via `specscore init` when the CLI is on PATH; AI-agent fallback otherwise) — line 1 is the canonical schema-pointer comment, the `project:` block is populated from flags / prompts / git-remote inference.
+1. `specscore.yaml` via `specscore init` only. There is no AI-agent scaffold fallback; when the CLI is missing, the skill delegates installation to `specscore:install` and retries the CLI path.
 2. `spec/{,ideas,features}/README.md` — lint-clean indexes per the canonical [Index Features](https://github.com/specscore/specscore/blob/main/spec/features/).
 3. The canonical Producer-shape instruction snippet, defined by [`spec/features/third-party-integration/`](../../spec/features/third-party-integration/README.md), pasted into the right platform agent-instructions file (`CLAUDE.md` / `AGENTS.md` / `GEMINI.md` / `.cursor/rules/specstudio.md`) per the explicit platform-detection rule. Always prompts for explicit consent before writing outside `spec/`.
 

@@ -1,12 +1,6 @@
 ---
-type: sidekick-seed
-slug: recap-drift-surface-near-zero-when-implementation-is-skill
-captured_at: 2026-05-22T13:01:39Z
 captured_by: user
-captured_during: spec/features/skills/recap
-trigger: explicit
 status: queued
-synchestra_task: null
 ---
 
 # Recap drift surface near-zero when implementation is SKILL.md authored from ACs — add confidence or coverage signal

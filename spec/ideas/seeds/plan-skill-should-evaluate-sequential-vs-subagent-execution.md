@@ -1,12 +1,6 @@
 ---
-type: sidekick-seed
-slug: plan-skill-should-evaluate-sequential-vs-subagent-execution
-captured_at: 2026-06-03T13:06:04Z
 captured_by: user
-captured_during: null
-trigger: explicit
 status: queued
-synchestra_task: null
 ---
 # Plan skill should evaluate sequential vs subagent execution
 
