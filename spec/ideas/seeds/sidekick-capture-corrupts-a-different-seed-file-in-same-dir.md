@@ -1,12 +1,6 @@
 ---
-type: sidekick-seed
-slug: sidekick-capture-corrupts-a-different-seed-file-in-same-dir
-captured_at: 2026-05-22T09:00:00Z
 captured_by: user
-captured_during: null
-trigger: explicit
 status: queued
-synchestra_task: null
 ---
 
 # sidekick capture corrupts a different seed file in same dir

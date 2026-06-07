@@ -154,25 +154,25 @@ Fired exactly once per successful seed write at `spec/ideas/seeds/<slug>.md`. Th
 event: sidekick-idea.captured
 version: 1
 uuid: <generated>
-timestamp: <ISO-8601 of capture moment; mirrors seed frontmatter `captured_at`>
+timestamp: <ISO-8601 of capture moment>
 actor:
   kind: skill | user
   id: <invoker — "<plugin>:<skill>" form for skills, "user:<username>" for direct user invocation>
 artifact:
   type: idea-seed
-  id: <slug>                         # matches the seed's frontmatter `slug` and filename
+  id: <slug>                         # matches the seed filename without `.md`
   path: <seed_path>                  # e.g., spec/ideas/seeds/persist-debug-logs.md
   revision: <git SHA at emission, or "uncommitted">
 payload:
   slug: <slug>                       # duplicated for direct consumer access
-  captured_during: <string or null>  # mirrors seed frontmatter; spec path or null
-  trigger: heuristic | explicit       # mirrors seed frontmatter
+  captured_during: <string or null>  # runtime source context; spec path or null
+  trigger: heuristic | explicit       # runtime capture source
   content_hash: <SHA-256 lowercase hex of normalized one-liner>
 ```
 
 **Normalization for `content_hash`:** the one-liner is trimmed (leading/trailing whitespace removed) and lowercased via Unicode default casefolding before hashing. Different emitters compute the same hash for the same idea, which lets the Phase 1 consilium dedupe panel runs across sessions.
 
-**Consumer:** the Phase 1 consilium subscribes here. It dedupes by `content_hash` over a rolling window, then enqueues a `consilium-review` task for the seed. Consumers that want a flat 8-field view (per Feature `sidekick-capture` REQ `event-payload-schema`) project: `event`, `seed_path` (from `artifact.path`), `slug`, `captured_at` (from `timestamp`), `captured_by` (from `actor.id`), `captured_during`, `trigger`, `content_hash`.
+**Consumer:** the Phase 1 consilium subscribes here. It dedupes by `content_hash` over a rolling window, then enqueues a `consilium-review` task for the seed. Consumers that want a flat view project: `event`, `seed_path` (from `artifact.path`), `slug` (from `artifact.id` or `payload.slug`), `captured_at` (from `timestamp`), `captured_by` (from `actor.id`), `captured_during`, `trigger`, `content_hash`.
 
 ## Events Emitted by `specstudio:consilium`
 

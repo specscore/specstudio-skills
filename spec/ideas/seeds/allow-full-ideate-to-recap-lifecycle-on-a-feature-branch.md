@@ -1,12 +1,6 @@
 ---
-type: sidekick-seed
-slug: allow-full-ideate-to-recap-lifecycle-on-a-feature-branch
-captured_at: 2026-06-03T12:30:00Z
 captured_by: user
-captured_during: null
-trigger: explicit
 status: queued
-synchestra_task: null
 ---
 # Allow full ideate-to-recap lifecycle on a feature branch without auto-merging to main
 

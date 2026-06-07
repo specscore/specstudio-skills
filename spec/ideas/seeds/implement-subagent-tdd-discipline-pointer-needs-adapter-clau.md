@@ -1,12 +1,6 @@
 ---
-type: sidekick-seed
-slug: implement-subagent-tdd-discipline-pointer-needs-adapter-clau
-captured_at: 2026-05-19T19:01:10Z
 captured_by: user
-captured_during: spec/features/skills/implement
-trigger: explicit
 status: queued
-synchestra_task: null
 ---
 
 # implement subagent TDD discipline pointer needs an adapter clause for tasks where TDD does not apply (docs, config, deletes)

@@ -1,12 +1,6 @@
 ---
-type: sidekick-seed
-slug: specstudio-implement-should-trust-go-toolchain-over-stale
-captured_at: 2026-05-23T08:00:00Z
 captured_by: user:alexander.trakhimenok
-captured_during: null
-trigger: explicit
 status: queued
-synchestra_task: null
 ---
 
 # specstudio:implement should trust Go toolchain over stale gopls diagnostics during parallel subagent dispatch

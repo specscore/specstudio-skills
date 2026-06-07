@@ -1,12 +1,6 @@
 ---
-type: sidekick-seed
-slug: move-sidekick-body-size-cap-enforcement-from-lint-time-to
-captured_at: 2026-05-20T17:22:37Z
 captured_by: user
-captured_during: null
-trigger: explicit
 status: queued
-synchestra_task: null
 ---
 
 # Move sidekick body-size cap enforcement from lint-time to capture-time

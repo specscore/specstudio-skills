@@ -1,12 +1,6 @@
 ---
-type: sidekick-seed
-slug: cross-repo-source-idea-references-should-be-supported-by-lin
-captured_at: 2026-05-20T18:19:40Z
 captured_by: user
-captured_during: null
-trigger: explicit
 status: queued
-synchestra_task: null
 ---
 
 # Cross-repo Source-Idea references should be supported by lint

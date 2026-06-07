@@ -1,12 +1,6 @@
 ---
-type: sidekick-seed
-slug: specstudio-implement-parallel-subagents-need-a-test-helper
-captured_at: 2026-05-23T08:00:00Z
 captured_by: user:alexander.trakhimenok
-captured_during: null
-trigger: explicit
 status: queued
-synchestra_task: null
 ---
 
 # specstudio:implement parallel subagents need a test-helper namespacing convention to avoid Go package-scope identifier collisions

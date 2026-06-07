@@ -1,12 +1,6 @@
 ---
-type: sidekick-seed
-slug: within-band-b-must-offer-an-actionable-path-to-grade-a
-captured_at: 2026-06-02T19:48:28Z
 captured_by: user
-captured_during: null
-trigger: explicit
 status: queued
-synchestra_task: null
 ---
 
 # Within-band B must offer an actionable path to grade A

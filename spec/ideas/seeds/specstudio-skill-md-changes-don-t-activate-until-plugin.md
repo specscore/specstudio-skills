@@ -1,12 +1,6 @@
 ---
-type: sidekick-seed
-slug: specstudio-skill-md-changes-don-t-activate-until-plugin
-captured_at: 2026-05-22T00:00:00Z
 captured_by: user
-captured_during: null
-trigger: explicit
 status: queued
-synchestra_task: null
 ---
 
 # specstudio SKILL.md changes don't activate until plugin republish

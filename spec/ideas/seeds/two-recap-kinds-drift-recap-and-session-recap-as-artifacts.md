@@ -1,12 +1,6 @@
 ---
-type: sidekick-seed
-slug: two-recap-kinds-drift-recap-and-session-recap-as-artifacts
-captured_at: 2026-06-01T13:38:48Z
 captured_by: user
-captured_during: null
-trigger: explicit
 status: queued
-synchestra_task: null
 ---
 
 # Two distinctly-named recap kinds — a code↔spec "drift recap" and a new "session recap" — saved as SpecScore artifacts

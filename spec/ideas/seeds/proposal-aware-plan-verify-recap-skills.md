@@ -1,12 +1,6 @@
 ---
-type: sidekick-seed
-slug: proposal-aware-plan-verify-recap-skills
-captured_at: 2026-05-25T12:00:00Z
 captured_by: user
-captured_during: spec/features/idea
-trigger: explicit
 status: queued
-synchestra_task: null
 ---
 
 # Plan, verify, and recap skills should be proposal-aware (change-request ideas update Feature definitions)
