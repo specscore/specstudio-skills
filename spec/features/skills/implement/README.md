@@ -82,6 +82,30 @@ The user-resolves-block workflow uses the canonical four-token Status set, not a
 
 Before computing the next batch, the skill MUST scan `git log --grep='^Verifies:'` for commits in the current branch's history and cross-check each task's `**Status:**` against the git-log evidence. When a task is marked `**Status:** done` but no commit references its `**Verifies:**` ACs in a `Verifies:` trailer, the skill MUST surface the divergence to the user as a warning before proceeding. When a task is marked `**Status:** pending` but a commit DOES reference its ACs, the skill MUST offer to update the task's Status to `done` (with user confirmation) before proceeding. The git log is **authoritative**; the Plan's `**Status:**` field is the at-a-glance signal.
 
+### Cross-repo master-plan execution
+
+When the supplied Plan is a **master plan** (sourced `**Source:** idea:<slug>`, with tasks that carry `**Sub-Plan:**` delegation refs instead of `**Verifies:**`), `implement` acts as the **outer coordinator** over per-repo sub-plans. It does not reimplement intra-repo execution — each sub-plan runs through the existing single-repo engine described in the rest of this Feature.
+
+#### REQ: master-plan-detection
+
+The skill MUST detect a master plan by its shape: a `**Source:** idea:<slug>` line (no `**Source Feature:**`) and tasks that carry `**Sub-Plan:** <plan-ref>` fields. For a master plan, the skill MUST treat each task as a delegation to the referenced sub-plan rather than as a unit of source code to implement directly.
+
+#### REQ: subplan-dispatch-via-existing-engine
+
+For each master task, the coordinator MUST execute the referenced sub-plan by running the ordinary per-sub-plan `implement` flow (batch computation, subagent dispatch, conflict detection, per-batch user-approval gate) within the sub-plan's own repo. The coordinator MUST NOT bypass or duplicate that engine; cross-repo coordination is a layer *above* single-repo execution, not a replacement for it.
+
+#### REQ: cross-repo-ordering-honored
+
+The coordinator MUST honor the master plan's task `**Depends-On:**` graph as the cross-sub-plan ordering: a sub-plan whose master task depends on another MUST NOT start until the depended-on sub-plan has reached a terminal success. This is how a bootstrapping CLI sub-plan is forced to land before the sub-plans that rely on its new lint/scaffolding.
+
+#### REQ: cross-repo-ref-resolution-at-execution
+
+Unlike lint (which treats cross-repo `<repo-slug>:<plan-slug>` references syntactically), the coordinator MAY resolve cross-repo sub-plan references to sibling repositories at execution time (via the sibling-repo detection used by destination resolution). When a referenced sub-plan or repo cannot be resolved, the coordinator MUST surface the unresolved reference to the user and halt that branch rather than silently skipping it.
+
+#### REQ: integration-and-tests-phase
+
+After all of a master plan's sub-plans reach terminal success, the coordinator MUST run a final **integration-and-tests phase** — a master-plan task (the last in the `**Depends-On:**` order) whose job is to verify the repos work together (cross-repo build/test). The master plan is not complete until this phase passes; its failure MUST be surfaced like any other blocked task.
+
 ### Subagent dispatch and parallelism
 
 The execution engine dispatches one subagent per task in the next executable batch, in parallel up to a cap.
@@ -544,6 +568,30 @@ The skill MUST NOT yes-machine weak Plans or silently retry blocked subagents. W
 **Given** any case where the skill detects a Status-vs-git-log inconsistency, a BLOCKED subagent return with a specific cause, a conflict between sibling subagents, or a source-Feature drift,
 **When** the skill processes the case,
 **Then** the skill names the specific problem with concrete evidence (commit SHA absence, AC slug, file:line, etc.), proposes the alternative resolution, and does not silently retry or auto-fix. The acceptance bar is honest disagreement, not performative agreement.
+
+### AC: master-plan-detected-and-delegated (verifies REQ:master-plan-detection, REQ:subplan-dispatch-via-existing-engine)
+
+**Given** a Plan sourced `**Source:** idea:<slug>` whose tasks carry `**Sub-Plan:**` refs and no `**Verifies:**`,
+**When** `specstudio:implement` runs it,
+**Then** the skill identifies it as a master plan and executes each referenced sub-plan through the ordinary per-sub-plan implement flow in that sub-plan's repo, without reimplementing or bypassing the single-repo engine.
+
+### AC: cross-repo-ordering-enforced (verifies REQ:cross-repo-ordering-honored)
+
+**Given** a master plan whose task for the CLI bootstrap sub-plan is a `**Depends-On:**` predecessor of the other sub-plans' tasks,
+**When** the coordinator runs,
+**Then** the dependent sub-plans do not start until the CLI bootstrap sub-plan reaches terminal success.
+
+### AC: unresolved-cross-repo-ref-halts (verifies REQ:cross-repo-ref-resolution-at-execution)
+
+**Given** a master plan whose `**Sub-Plan:** other-repo:some-plan` reference cannot be resolved to a sibling repo,
+**When** the coordinator reaches that branch,
+**Then** it surfaces the unresolved reference to the user and halts that branch rather than skipping it silently.
+
+### AC: integration-phase-gates-completion (verifies REQ:integration-and-tests-phase)
+
+**Given** a master plan whose sub-plans have all reached terminal success and whose final task is the integration-and-tests phase,
+**When** the coordinator runs that final task and the cross-repo tests fail,
+**Then** the master plan is reported incomplete with the integration task surfaced as blocked, exactly like any other blocked task.
 
 ## Open Questions
 
