@@ -8,6 +8,7 @@ status: Archived
 > [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/specscore/specstudio-skills/spec/features/skills/review?op=explore) | [Edit](https://specscore.studio/app/github.com/specscore/specstudio-skills/spec/features/skills/review?op=edit) | [Ask question](https://specscore.studio/app/github.com/specscore/specstudio-skills/spec/features/skills/review?op=ask) | [Request change](https://specscore.studio/app/github.com/specscore/specstudio-skills/spec/features/skills/review?op=request-change) |
 
 **Status:** Archived
+**Source Ideas:** —
 **Archive Reason:** Superseded by reviewer-gates — reviews are stage-internal under each producer's gate; no standalone review skill is required.
 
 ## Summary
