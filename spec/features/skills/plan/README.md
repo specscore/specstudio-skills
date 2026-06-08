@@ -146,6 +146,28 @@ The MVP plans against one Feature at a time.
 
 A Plan MUST reference exactly one source Feature via `**Source Feature:**`. Multi-Feature or roadmap-level planning is explicitly out of scope for the MVP and is a separate Idea. If the user asks to plan across two Features, the skill MUST say so and offer to write two Plans instead.
 
+**Exception — master plans.** A *master* plan in a cross-repo composition (see [Cross-repo plan composition](#cross-repo-plan-composition-mastersub-plans)) is sourced from an Idea, not a Feature, and coordinates sub-plans rather than verifying ACs directly; it carries no `**Source Feature:**` and the single-Feature rule does not apply to it. Each *sub-plan* it coordinates still references exactly one source Feature and remains subject to this rule.
+
+### Cross-repo plan composition (master/sub-plans)
+
+A single Idea may fan out into work across several repos. The skill MAY author a **master plan** that coordinates one **sub-plan per repo/Feature**, linked by the `**Parent:**` reference and (optionally) crossing repo boundaries. This is the authoring counterpart of the `plan`/`task` entity composition model in the `specscore` repo and the `**Parent:**` validation in `cli/spec/lint/plan-rules` (rule `P-005`).
+
+#### REQ: master-plan-authoring
+
+When the user asks to plan work that spans multiple repos or Features from a single Idea, the skill MAY author a **master plan** sourced from that Idea (`**Source:** idea:<slug>`). The master plan's tasks each delegate to a sub-plan via a `**Sub-Plan:** <plan-ref>` task field (a same-repo plan slug or a cross-repo `<repo-slug>:<plan-slug>` reference) rather than carrying a `**Verifies:**` line — the master coordinates, it does not verify ACs directly. The master plan MUST NOT itself carry a `**Parent:**` line (it is the root of its tree).
+
+#### REQ: subplan-parent-and-scaffold
+
+Each sub-plan the master coordinates MUST be a single-Feature plan that declares the master via a `**Parent:** <plan-ref>` body-metadata line. Sub-plans MUST be scaffolded with the required-CLI path `specscore plan new <slug> --parent <master-ref>` (per the `cli/plan/new` Feature), NOT by hand-authoring the `**Parent:**` line. Cross-repo masters are referenced as `<repo-slug>:<master-slug>`.
+
+#### REQ: cross-repo-ordering
+
+The master plan expresses execution order across its sub-plans through its tasks' `**Depends-On:**` graph (the same dependency mechanism used within a single plan). When a sub-plan must land before others — e.g., a CLI/bootstrap sub-plan that introduces the lint and scaffolding the other sub-plans rely on — the master's task graph MUST encode that ordering so `specstudio:implement` runs the sub-plans in a valid order.
+
+#### REQ: composition-soft-cross-repo
+
+Cross-repo `**Parent:**` / `**Sub-Plan:**` references are **soft**: the skill MUST NOT require the referenced sibling repo to be present to author or lint a plan, and MUST NOT scan sibling repos. Reference integrity for cross-repo links is best-effort (validated syntactically by `P-005`); same-repo references are fully validated by lint.
+
 ### Task dependencies and execution order
 
 The dependency graph encoded by `**Depends-On:**` is what enables parallel-batch execution by `specstudio:implement` while keeping the task-numbering stable as the human-readable presentation order.
@@ -516,6 +538,24 @@ The skill MUST NOT yes-machine weak Plans. When a task is too vague, an AC is un
 **Given** a Plan with task 2 marked `**Status:** done` whose `**Verifies:**` ACs do not appear in any commit's `Verifies:` trailer in the git log,
 **When** the reviewer subagent runs,
 **Then** the reviewer returns `Issues Found` with a blocker citing the inconsistency between Plan-stated Status and git-log authority, names the specific AC slug, and tells the user to either rerun `specstudio:implement` to refresh the Status or investigate why the commit is missing.
+
+### AC: master-plan-coordinates-subplans (verifies REQ:master-plan-authoring, REQ:cross-repo-ordering)
+
+**Given** an approved Idea whose work spans `specscore-cli`, `specscore`, and `specstudio-skills`,
+**When** the user asks the skill to plan the whole thing,
+**Then** the skill authors a master plan sourced `**Source:** idea:<slug>` (no `**Source Feature:**`, no `**Parent:**`) whose tasks each carry a `**Sub-Plan:** <plan-ref>` (no `**Verifies:**`), and whose `**Depends-On:**` graph orders the bootstrapping CLI sub-plan before the sub-plans that depend on it.
+
+### AC: subplan-scaffolded-with-parent (verifies REQ:subplan-parent-and-scaffold)
+
+**Given** the skill is authoring a sub-plan for a master in another repo,
+**When** it creates the sub-plan,
+**Then** it invokes `specscore plan new <slug> --parent <repo-slug>:<master-slug>` (rather than hand-writing the `**Parent:**` line), the sub-plan declares exactly one `**Source Feature:**`, and its `**Parent:**` value is the cross-repo master reference.
+
+### AC: composition-cross-repo-soft (verifies REQ:composition-soft-cross-repo)
+
+**Given** a master plan whose sub-plan references point at a sibling repo that is not checked out locally,
+**When** the skill authors and lints the plans,
+**Then** authoring and lint succeed without scanning or requiring the sibling repo, and the cross-repo references are left as best-effort syntactic links (validated by `P-005`, not resolved).
 
 ## Open Questions
 
