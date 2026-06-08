@@ -4,7 +4,7 @@
 
 AI skills (and a coming Web UI) for efficient spec-driven development — the full lifecycle: **ideate ⇒ specify ⇒ plan ⇒ implement ⇒ verify ⇒ recap ⇒ ship.** SpecStudio turns vague ideas into lintable, testable specifications and gates implementation on those specifications being clear, complete, and approved. Reviews are stage-internal — see [Reviewer Gates](spec/features/reviewer-gates/README.md).
 
-This repo (`specstudio-skills`) is the AI-agent plugin surface of SpecScore Studio: skills, commands, and supporting tooling for Claude Code, Codex, Gemini CLI, GitHub Copilot CLI, and Cursor. The web client lives at [`specstudio-web`](https://github.com/specscore/specstudio-web) (planned) and will deploy to [`specscore.studio`](https://specscore.studio).
+This repo (`specstudio-skills`) is the AI-agent plugin surface of SpecScore Studio: skills, commands, and supporting tooling for Claude Code, Codex, Gemini CLI, GitHub Copilot CLI, and Cursor. The landing/docs site lives at [`specscore-studio`](https://github.com/specscore/specscore-studio), and the `/app/` web client lives at [`specscore-studio-app`](https://github.com/specscore/specscore-studio-app).
 
 ## Why a studio
 
@@ -142,7 +142,8 @@ SpecStudio skills work standalone with Claude Code.
 The SpecStudio family follows the `specstudio-<role>` stem — every repo in the family is suffixed by its role; no member is unsuffixed:
 
 - `specstudio-skills` (this repo) — Claude Code plugin surface (skills, commands, hooks, supporting tooling)
-- `specstudio-web` — web client (planned)
+- `specscore-studio` — landing/docs site for `specscore.studio`
+- `specscore-studio-app` — `/app/` web client
 - `specstudio-api` — backend (planned)
 
 The wrapper-prefix `ai-plugin-*` (used by [`ai-plugin-specscore`](https://github.com/specscore/ai-plugin-specscore)) is reserved for thin CLI wrappers — SpecScore Studio is a product, not a wrapper.
