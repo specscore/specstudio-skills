@@ -153,6 +153,18 @@ In the MVP, task order is **strictly linear** — numbered 1..N with no gaps, no
 
 If the reviewer flags an ordering that violates an inferable dependency, the finding **must cite** the specific REQ slug or prose passage that establishes the dependency. Uncited dependency claims are not actionable.
 
+## Cross-Repo Master/Sub-Plan Composition
+
+When a single Idea fans out into work across multiple repos, author a **master plan** that coordinates one **sub-plan per repo/Feature**. This implements `skills/plan`'s `master-plan-authoring`, `subplan-parent-and-scaffold`, `cross-repo-ordering`, and `composition-soft-cross-repo` REQs. Only reach for this when the work genuinely spans repos or Features; a single-Feature plan stays a plain single-Feature plan.
+
+**Master plan.** Source it from the Idea (`**Source:** idea:<slug>`), not a Feature. Its tasks each delegate to a sub-plan via a `**Sub-Plan:** <plan-ref>` task field (a same-repo slug or a cross-repo `<repo-slug>:<plan-slug>` reference) **instead of** a `**Verifies:**` line — a master coordinates, it does not verify ACs directly. The master MUST NOT carry a `**Parent:**` line (it is the root). Because today's `P-002` rejects idea-sourced single-file plans, author the master as a **directory-form** plan (`spec/plans/<slug>/README.md`), which the `P-001`–`P-005` rules skip.
+
+**Sub-plans.** Each is an ordinary single-Feature plan that names the master through `**Parent:**`. Scaffold each one with the required-CLI path — `specscore plan new <slug> --parent <repo-slug>:<master-slug>` — never hand-author the `**Parent:**` line. The `--parent` value is recorded verbatim; lint rule `P-005` validates it.
+
+**Ordering.** Encode cross-sub-plan execution order in the master's task `**Depends-On:**` graph. When a bootstrapping sub-plan must land first (e.g., the CLI sub-plan that introduces the lint/scaffolding the others rely on), make every other master task depend on it.
+
+**Soft cross-repo refs.** Do NOT require a referenced sibling repo to be checked out, and do NOT scan sibling repos, to author or lint a plan. Cross-repo `**Parent:**` / `**Sub-Plan:**` references are best-effort (validated syntactically by `P-005`); same-repo references are fully validated.
+
 ## Lint and Self-Review
 
 Run `specscore spec lint` after every write. On failure:

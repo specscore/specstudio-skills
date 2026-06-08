@@ -89,6 +89,16 @@ No Feature or Plan exists. The skill resolves an Idea directly. Same single-pass
 
 All other single-pass behavior (no subagents, no batch dispatch, no task-status writes, lint, the `implementation.pre_commit`/`pre_push` gates, publication milestone) is identical to Feature-sourced.
 
+## Cross-Repo Master-Plan Execution
+
+When the supplied Plan is a **master plan** — sourced `**Source:** idea:<slug>` with tasks that carry `**Sub-Plan:** <plan-ref>` delegation refs (and no `**Verifies:**`) — `implement` acts as the **outer coordinator** over per-repo sub-plans. It does not reimplement intra-repo execution; each sub-plan runs through the ordinary single-repo flow. This implements `skills/implement`'s `master-plan-detection`, `subplan-dispatch-via-existing-engine`, `cross-repo-ordering-honored`, `cross-repo-ref-resolution-at-execution`, and `integration-and-tests-phase` REQs.
+
+1. **Detect.** Recognize a master plan by its shape (idea source + `**Sub-Plan:**` tasks). Treat each master task as a delegation, not as source code to edit.
+2. **Order.** Compute the cross-sub-plan order from the master's task `**Depends-On:**` graph. A sub-plan whose master task depends on another MUST NOT start until that predecessor sub-plan reaches terminal success — this is how the CLI/bootstrap sub-plan is forced to land first.
+3. **Resolve.** Resolve each `**Sub-Plan:** <repo-slug>:<plan-slug>` reference to a sibling repo at execution time (the sibling-repo detection used by destination resolution). On an unresolvable reference, surface it to the user and **halt that branch** — never silently skip it.
+4. **Dispatch.** Run the referenced sub-plan via the ordinary per-sub-plan `implement` flow (batch computation, subagent dispatch, conflict detection, per-batch user-approval gate) **inside the sub-plan's own repo**. Do not bypass or duplicate that engine.
+5. **Integrate.** After all sub-plans reach terminal success, run the master's final **integration-and-tests** task (last in `**Depends-On:**`) — the cross-repo build/test that proves the repos work together. The master plan is incomplete until it passes; its failure surfaces as a blocked task like any other.
+
 ## Checklist (per invocation)
 
 Create a task for each and complete in order:
