@@ -166,6 +166,10 @@ The whole tree lints clean against `specscore spec lint`.
 
 If you want to see the methodology applied at scale, this repo is the reference. If something in the spec tree is sloppy, that's also visible — and that's the point.
 
+## Code exploration & spec ↔ code linkage
+
+We use [Codegrapher](https://codegrapher.dev/) for efficient code exploration and bidirectional linkage between specifications and source code. Codegrapher indexes the codebase into a queryable knowledge graph of symbols and their relationships, letting the SpecStudio skills navigate and trace code quickly instead of grepping — and keep SpecScore specs and the code that implements them honest with each other, in both directions.
+
 ## Status
 
 **Version 0.0.7 — early.** The `ideate`, `specify`, `plan`, `implement`, `verify`, and `recap` skills are active enough to dogfood on real work. Expect sharp edges, breaking changes, and active iteration.
