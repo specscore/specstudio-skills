@@ -15,6 +15,11 @@ gates:
         description: Baseline SpecScore Feature reviewer — enforces six blocker categories
       - name: user-approval
         type: human
+  implementation.pre_commit:
+    reviewers:
+      - name: auto-approve
+        type: auto-approve
+        description: Autonomous commit checkpoint for specstudio:implement — no human review at pre-commit
 
 # ship: deploy delegation for specstudio:ship (optional).
 # When `delegate` is set, ship dispatches it once after its gates pass; when
