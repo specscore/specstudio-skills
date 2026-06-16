@@ -169,6 +169,38 @@ When the skill first presents the lint-clean Idea to the user for review, the sk
 
 On confirmed user approval (per `approval-explicit-phrase` or `approval-vague-confirmation`), the skill MUST update the artifact's `**Status:**` body-metadata line from `Under Review` to `Approved` and re-run lint to confirm the transition is still valid.
 
+### Open-questions resolution at the review gate
+
+When the lint-clean Idea is presented for review, the skill offers to resolve any unresolved entries in the artifact's `## Open Questions` section before the user approves.
+
+#### REQ: open-questions-prompt
+
+At the User Review Gate, after presenting the lint-clean artifact and **before** issuing the approval request (`user-approval-required`), when the `## Open Questions` section is non-empty the skill MUST: (a) state the count of open questions, (b) list them, and (c) offer the user three resolution modes via `AskUserQuestion` — **wizard**, **chat**, and **skip**.
+
+#### REQ: open-questions-skip-when-empty
+
+When the `## Open Questions` section is empty or contains only the canonical placeholder `None at this time.`, the skill MUST NOT show the resolution prompt and MUST proceed directly to the approval request. Emptiness is determined by an exact match against the canonical placeholder (or a section with no listed questions); the skill MUST NOT apply fuzzy "none"-detection heuristics.
+
+#### REQ: open-questions-wizard-mode
+
+In **wizard** mode, for each open question the skill MUST generate 2–4 plausible candidate answers and present them via `AskUserQuestion`, allowing the user to select one or supply their own answer. The skill MUST walk the open questions in their listed order.
+
+#### REQ: open-questions-chat-mode
+
+In **chat** mode, the skill MUST ask the open questions one at a time as free-form prompts, in their listed order, waiting for the user's answer to each before asking the next.
+
+#### REQ: open-questions-skip-mode
+
+In **skip** mode, the skill MUST leave the `## Open Questions` section untouched and MUST proceed directly to the approval request without folding any answers or emitting an event.
+
+#### REQ: open-questions-fold-answer
+
+For each open question the user answers (in wizard or chat mode), the skill MUST fold the answer into the most relevant existing Idea section and remove the resolved question from `## Open Questions`. When no existing section is a good fit, the skill MUST leave the question in `## Open Questions` annotated with its answer inline rather than discarding it. If the user stops partway through the walk, any unanswered questions MUST remain in `## Open Questions` unchanged. After folding, the `## Open Questions` section MUST remain lint-clean — if every question was resolved and removed, the skill MUST set the section body to `None at this time.`
+
+#### REQ: open-questions-relint-and-emit
+
+After folding one or more answers into the artifact (a write/edit), the skill MUST re-run `specscore spec lint` with the existing one-shot `--fix` recovery flow (`lint-failure-recovery`) and emit the status-appropriate lifecycle event per the existing event-emission rules (`event-drafted` / `event-updated`). This behavior introduces no new event type and changes none of the existing emission rules.
+
 ### Event emission
 
 The skill participates in the event vocabulary defined in [`shared/events.md`](../../../../skills/shared/events.md).
@@ -263,6 +295,47 @@ While `**Status:** Draft`, every successful lint pass after a write/edit emits `
 **Requirements:** ideate#req:approval-explicit-phrase, ideate#req:approval-vague-confirmation, ideate#req:user-approval-required
 
 The skill detects approval in two tiers: explicit phrases (`approve`, `approved`) trigger immediate transition without further confirmation; vague positive signals trigger a single explicit confirmation prompt. Silent transition on vague signals is a contract violation.
+
+### AC: open-questions-resolution
+
+**Requirements:** ideate#req:open-questions-prompt, ideate#req:open-questions-skip-when-empty, ideate#req:open-questions-wizard-mode, ideate#req:open-questions-chat-mode, ideate#req:open-questions-skip-mode, ideate#req:open-questions-fold-answer, ideate#req:open-questions-relint-and-emit
+
+```
+Scenario: Open Questions empty — prompt skipped
+Given a lint-clean Idea whose `## Open Questions` section contains only "None at this time."
+When the skill reaches the User Review Gate
+Then the skill issues the approval request directly without showing any open-questions resolution prompt
+
+Scenario: Open Questions non-empty — count, list, and menu shown before approval
+Given a lint-clean Idea whose `## Open Questions` section lists three questions
+When the skill reaches the User Review Gate
+Then the skill states "3 open questions", lists all three, and offers wizard / chat / skip via AskUserQuestion before issuing the approval request
+
+Scenario: Wizard mode folds an answer and removes the question
+Given the user chose wizard mode for an Idea with open questions
+When the skill presents 2–4 candidate answers for a question and the user selects one
+Then the skill folds that answer into the most relevant existing section, removes the resolved question from `## Open Questions`, and the `## Open Questions` body reads "None at this time." once the last question is resolved
+
+Scenario: Chat mode asks one at a time and folds answers
+Given the user chose chat mode for an Idea with two open questions
+When the skill asks the first question, waits for the answer, then asks the second
+Then each answered question is folded into the most relevant section and removed from `## Open Questions` in listed order
+
+Scenario: Answer with no fitting section stays annotated
+Given the user answers an open question whose answer maps to no existing section
+When the skill folds the answer
+Then the question remains in `## Open Questions` annotated inline with its answer rather than being discarded
+
+Scenario: Skip leaves Open Questions untouched
+Given the user chose skip mode
+When the skill proceeds
+Then the `## Open Questions` section is unchanged, no answer is folded, no event is emitted, and the skill issues the approval request
+
+Scenario: Folding re-lints and emits the status-appropriate event
+Given the skill folded at least one answer into a Draft Idea
+When the write completes
+Then the skill re-runs `specscore spec lint` with the one-shot `--fix` recovery and emits `idea.drafted` (or `idea.updated` when the Idea is already Approved), introducing no new event type
+```
 
 ### AC: lint-failure-recovery
 
