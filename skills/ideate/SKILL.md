@@ -67,7 +67,7 @@ Create a task for each and complete in order:
 6. **Lint** the artifact: `specscore spec lint`. On failure, run `specscore spec lint --fix` once, re-lint; surface remaining violations to the user.
 7. **Publication checkpoint** — add every file the CLI created and every file you edited (`spec/ideas/<slug>.md`, plus CLI-reported ancestor indexes if any) to the checkpoint manifest and apply [publication-policy.md](../shared/publication-policy.md) for the lifecycle event being emitted.
 8. **Inline self-review** — placeholders, contradictions, ambiguity, scope.
-9. **User review** — ask the user to review and approve the Recommended Direction. Recognize explicit approval phrases (`approve`, `approved`, `accept`, `accepted`, `lgtm`, plus their semantic equivalents in the user's language); treat vague positive signals as soft and ask one explicit confirmation question.
+9. **User review** — present the lint-clean artifact, then resolve any open questions before requesting approval (see [User Review Gate](#user-review-gate)): when `## Open Questions` is non-empty, state the count, list them, and offer wizard / chat / skip via `AskUserQuestion`, folding answers back into the artifact. Then ask the user to review and approve the Recommended Direction. Recognize explicit approval phrases (`approve`, `approved`, `accept`, `accepted`, `lgtm`, plus their semantic equivalents in the user's language); treat vague positive signals as soft and ask one explicit confirmation question.
 10. **Emit events** — `idea.drafted` on every successful lint pass while `**Status:** Draft`; `idea.approved` exactly once on approval; `idea.updated` on every successful lint pass while `**Status:** Approved`. Apply publication policy before emission so each event carries `publication_result`. Both `drafted` and `updated` payloads carry `changed_sections`, `previous_revision`, and a factual `change_summary` (≤2 sentences). See [events.md](../shared/events.md).
 11. **Throughout** — watch for sidekick ideas per [sidekick-capture.md](../shared/sidekick-capture.md). When an out-of-scope improvement surfaces, invoke `specstudio:sidekick` with a one-liner, acknowledge in one line, and return to the current checklist step immediately. Do not derail to discuss the sideline idea.
 
@@ -201,7 +201,23 @@ Fix inline. Don't re-review; move on.
 
 ## User Review Gate
 
-After lint + self-review pass:
+After lint + self-review pass, present the lint-clean artifact, then **resolve any open questions before requesting approval** (see below), and only then issue the approval request.
+
+### Resolve open questions first
+
+Read the artifact's `## Open Questions` section. If it is empty or contains only the canonical placeholder `None at this time.` (exact match — do NOT apply fuzzy "none"-detection heuristics), skip this step entirely and go straight to the approval request.
+
+Otherwise, before issuing the approval request:
+
+1. **State the count and list them.** E.g. "There are 3 open questions on this Idea:" followed by the list.
+2. **Offer three resolution modes via `AskUserQuestion`:**
+   - **Wizard** — walk the open questions in listed order; for each, generate 2–4 plausible candidate answers and present them via `AskUserQuestion` (the user picks one or supplies their own).
+   - **Chat** — ask the open questions one at a time in listed order, free-form, waiting for each answer before asking the next.
+   - **Skip** — leave `## Open Questions` untouched; fold nothing, emit no event; proceed directly to the approval request.
+3. **Fold each answer (wizard or chat).** For every question the user answers, fold the answer into the most relevant existing section and remove the resolved question from `## Open Questions`. When no section is a good fit, leave the question in place annotated inline with its answer rather than discarding it. If the user stops partway through the walk, leave the remaining questions unchanged. Keep `## Open Questions` lint-clean — if every question was resolved and removed, set the section body to `None at this time.`
+4. **Re-lint and emit.** After folding one or more answers (a write/edit), re-run `specscore spec lint` with the one-shot `--fix` recovery flow and emit the status-appropriate event per the existing rules (`idea.drafted` while `**Status:** Draft`/`Under Review`, `idea.updated` while `**Status:** Approved`). This introduces no new event type.
+
+### Request approval
 
 > "Idea drafted and lint-clean at `spec/ideas/<slug>.md`. Please review the Recommended Direction and MVP Scope. Approve to choose your next step (Specify, Plan, or Implement), or request changes."
 
@@ -310,6 +326,7 @@ Promotion bookkeeping (`**Promotes To:**`, `**Status:** Approved → Specified`)
 - [ ] ≥2 alternatives stress-tested
 - [ ] Assumptions audited across Must/Should/Might tiers
 - [ ] "Not Doing" list non-empty
+- [ ] When `## Open Questions` was non-empty, the count + list + wizard/chat/skip choice was offered before approval; answered questions were folded into the artifact and removed (re-lint + status-appropriate event); skip left the section untouched
 - [ ] User approved the Recommended Direction (explicit phrase OR vague-signal followed by explicit confirmation)
 - [ ] `**Status:**` is `Approved` (if approved) or `Draft` (if not yet)
 - [ ] Events emitted per state: `idea.drafted` while Draft; `idea.approved` once on transition; `idea.updated` while Approved
