@@ -12,7 +12,9 @@ The only existing `status: completed` seed (`specscore-cli-companion-implement-p
 
 ## Suggested direction
 
-Add a CLI verb (e.g. `specscore sidekick change-status <slug> --to=<status>`) and define the seed terminal-status vocabulary. Canonical seed terminals today are `promoted` (via `idea promote`) and `deprecated` (consilium reject); a third `completed`/`implemented` terminal is needed for seeds whose idea shipped directly without promotion (common for dogfood-finding seeds). Lint should recognize the chosen vocabulary.
+Add a CLI verb (e.g. `specscore sidekick change-status <slug> --to=<status>`) and define the seed terminal-status vocabulary. Canonical seed terminals today are `promoted` (via `idea promote`) and `deprecated` (consilium reject); a third `completed`/`implemented` terminal is needed for seeds whose idea shipped directly without promotion (common for dogfood-finding seeds). `--to=archived` should also move the seed to an archived path, mirroring `idea change-status --to=archived`. Lint should recognize the chosen vocabulary.
+
+CLI-side tracked at specscore/specscore-cli#72; the skill-side close flow is tracked by companion seed `should-there-be-a-close-lifecycle-skill-that-retires-an`.
 
 ## Provenance
 

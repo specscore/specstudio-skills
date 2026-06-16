@@ -14,9 +14,12 @@ Triggered while triaging the seed queue: several seeds were verified as implemen
 
 A close skill MUST change status via the CLI (specscore idea|feature change-status --to=<status>), never by hand-editing the **Status:** line or frontmatter. It would orchestrate: pick the right artifact + target status, invoke the CLI verb, re-lint, emit the lifecycle event, apply publication policy.
 
+## Decision (2026-06-16)
+
+Yes — close MUST cover seeds, not just Ideas/Features: closing a seed moves it to implemented or archived. Requires changes in BOTH layers — the seed change-status/close verb in specscore-cli (tracked: specscore/specscore-cli#72) AND the close skill here that drives it.
+
 ## Open questions
 
-- Scope: Ideas + Features only (CLI verbs exist), or also seeds? Seeds currently have NO CLI change-status verb (see companion seed cli-and-sidekick-skill-need-a-seed-change-status-close-verb) — a close skill for seeds is blocked until that ships.
 - Is close a new skill, or just guidance folded into existing skills (ship already does Implementing -> Stable for Features)?
 - Terminal vocabulary for 'closed because implemented' vs archived/deprecated/promoted.
 
