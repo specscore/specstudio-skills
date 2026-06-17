@@ -1,6 +1,7 @@
 ---
+type: sidekick-seed
 captured_by: user
-status: queued
+status: Implemented
 ---
 
 # implement skill: per-batch checklist is missing the Plan body-metadata Status transition step (Approved→Implementing on first dispatch; Implementing→Completed on final task)
@@ -26,3 +27,7 @@ In `skills/implement/SKILL.md`:
 Plan body Status is the at-a-glance signal for outside observers (Hub, future verify/review). Skipping intermediates makes history less debuggable.
 
 See commits `52c4a80` (missed) and `46612aa` (remedial).
+
+## Resolution
+
+Implemented in skills/implement/SKILL.md: step 4b (Plan body Status Approved → Implementing on first dispatch) and step 18 (Implementing → Completed on final task).

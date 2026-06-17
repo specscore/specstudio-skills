@@ -1,6 +1,7 @@
 ---
+type: sidekick-seed
 captured_by: user
-status: queued
+status: Implemented
 ---
 
 # Move sidekick body-size cap enforcement from lint-time to capture-time
@@ -28,4 +29,8 @@ The cap *value* stays at 2000 — it's a forcing function for the workflow bound
 - Changing the lint rule (lint should still catch seeds that somehow bypass capture-time enforcement)
 
 ---
+
+## Resolution
+
+Implemented: the 2000-char seed body cap is enforced at capture time by `specscore sidekick new` (CLI), not discovered at lint time.
 *This document follows the https://specscore.md/sidekick-seed-specification*

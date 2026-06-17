@@ -1,6 +1,7 @@
 ---
+type: sidekick-seed
 captured_by: user
-status: queued
+status: Implemented
 ---
 
 # implement pre-flight should require the Plan's Source Feature to exist in git HEAD, not just in the working tree
@@ -24,3 +25,7 @@ Add an AC: `Given a Plan whose Source Feature exists only in the working tree (u
 The `Verifies:` trailer is the spec↔code coherence guarantee. If the Feature it references doesn't exist at HEAD, downstream verify/recap/review can't resolve ACs, and P-002 will flag stale references. Surfacing at pre-flight prevents the silent break.
 
 Captured during the implement dogfood; see commits a354482 + 52c4a80.
+
+## Resolution
+
+Implemented in skills/implement/SKILL.md pre-flight step 2: confirms the Source Feature exists at git HEAD via `git cat-file -e HEAD:...` and refuses to dispatch when it exists only in the working tree.
