@@ -36,6 +36,8 @@ The skill MUST accept one artifact reference (a slug, feature-id, or path) and r
 
 The skill MUST perform every status transition exclusively via `specscore <kind> change-status <id> --to=<status> [--note <markdown>]`. It MUST NOT edit the body `**Status:**` line, frontmatter `status:`, the `type:` key, or any index row directly — not as a primary path and not as a fallback on CLI failure. This is the skill's load-bearing invariant; a hand-edit anywhere is a contract violation.
 
+**Single-call guardrail.** A close MUST be effected by a **single** `change-status` invocation — the `--note` flag folds the reason into that same call (see [`reason-for-negative-transitions`](#req-reason-for-negative-transitions)), so one artifact closes with one mutating CLI call (environmental install/upgrade retries on exit `127`/`8` aside). If a future requirement ever makes a single call insufficient to close atomically — e.g. multi-artifact or cross-repo close needing orchestration, or a transition the CLI cannot express as one verb — that is the signal to push the orchestration **down into the CLI** as a dedicated `specscore close` command (atomic in one process), **not** to have this skill issue multiple mutating CLI calls. The skill stays a thin single-call driver; multi-step orchestration belongs in the CLI.
+
 #### REQ: confirm-terminal-before-close
 
 Closing is terminal. Before invoking the verb, the skill MUST present the candidate terminal status(es) for the resolved kind (seed → `Implemented` | `Rejected` | `Archived`; Idea → its legal terminals; Feature → `Deprecated`) and obtain an explicit user choice/confirmation. It MUST NOT auto-select a terminal status.
