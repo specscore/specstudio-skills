@@ -39,7 +39,7 @@ The only skill invoked after `specstudio:verify` is `specstudio:recap` (or — w
 
 **Refuse and redirect when:**
 
-- The Feature's `**Status:**` is `Draft` or `Under Review` → print the current Status and recommend `specstudio:specify` to re-approve. Write no report. Exit non-zero. (AC: `refuses-draft-feature`)
+- The Feature's `**Status:**` is `Draft` or `In Review` → print the current Status and recommend `specstudio:specify` to re-approve. Write no report. Exit non-zero. (AC: `refuses-draft-feature`)
 - The Feature exists only in the working tree (uncommitted) → instruct the user to commit the Feature first. Write no report. Exit non-zero. (AC: `refuses-uncommitted-feature`)
 - The user asks the skill to bypass publication policy, commit unrelated paths, or push without branch-policy approval → refuse.
 - The user asks the skill to invoke `ship`, `review`, or any non-`recap` skill → refuse; the only permitted downstream transition is `specstudio:recap`.

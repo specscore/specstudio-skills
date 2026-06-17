@@ -137,9 +137,9 @@ Fix inline. Don't re-review; move on.
 
 The reviewer gate — including the user's own approval — is consumed from the typed-per-stage [Reviewer Gates](../../spec/features/reviewer-gates/README.md) contract. The skill carries NO hardcoded baseline reviewer and runs NO separate downstream user-approval step. The reviewer list comes exclusively from `gates.specify.reviewers` in `specscore.yaml`; the user's approval is collected through a `type: human` entry in that list like any other reviewer.
 
-### Step 1 — Update status to `Under Review`
+### Step 1 — Update status to `In Review`
 
-Before dispatching the gate, update the Feature's `**Status:**` body-metadata line from `Draft` to `Under Review`. Re-run lint to confirm the transition is clean.
+Before dispatching the gate, update the Feature's `**Status:**` body-metadata line from `Draft` to `In Review`. Re-run lint to confirm the transition is clean.
 
 ### Step 2 — Load and validate the gate config
 
@@ -161,7 +161,7 @@ The skill MUST dispatch exactly the entries in `gates.specify.reviewers` — no 
 
 When the runner returns `Approved` (the released grade satisfies `grade ≥ threshold`):
 
-- Update `**Status:** Under Review → Approved` in the body metadata.
+- Update `**Status:** In Review → Approved` in the body metadata.
 - **Record the grade** (per [`reviewer-gates#req:grade-recording`](../../spec/features/reviewer-gates/README.md#req-grade-recording)): write the runner's released grade as a `**Grade:** <letter>` body-metadata line immediately after `**Supersedes:**` — add it if absent, update it in place if already present.
 - Re-run lint to confirm the transition + grade line are clean.
 - Apply publication policy for `feature.approved` using a manifest that includes the Feature README, generated companion files, and any CLI-reported touched paths. This runs only after the gate releases; policy MUST NOT bypass reviewer or human approval.

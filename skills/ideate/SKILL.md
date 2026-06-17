@@ -215,7 +215,7 @@ Otherwise, before issuing the approval request:
    - **Chat** — ask the open questions one at a time in listed order, free-form, waiting for each answer before asking the next.
    - **Skip** — leave `## Open Questions` untouched; fold nothing, emit no event; proceed directly to the approval request.
 3. **Fold each answer (wizard or chat).** For every question the user answers, fold the answer into the most relevant existing section and remove the resolved question from `## Open Questions`. When no section is a good fit, leave the question in place annotated inline with its answer rather than discarding it. If the user stops partway through the walk, leave the remaining questions unchanged. Keep `## Open Questions` lint-clean — if every question was resolved and removed, set the section body to `None at this time.`
-4. **Re-lint and emit.** After folding one or more answers (a write/edit), re-run `specscore spec lint` with the one-shot `--fix` recovery flow and emit the status-appropriate event per the existing rules (`idea.drafted` while `**Status:** Draft`/`Under Review`, `idea.updated` while `**Status:** Approved`). This introduces no new event type.
+4. **Re-lint and emit.** After folding one or more answers (a write/edit), re-run `specscore spec lint` with the one-shot `--fix` recovery flow and emit the status-appropriate event per the existing rules (`idea.drafted` while `**Status:** Draft`/`In Review`, `idea.updated` while `**Status:** Approved`). This introduces no new event type.
 
 ### Request approval
 
