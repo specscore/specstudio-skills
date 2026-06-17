@@ -1,6 +1,7 @@
 ---
+type: sidekick-seed
 captured_by: user
-status: queued
+status: Implemented
 ---
 
 # implement subagent TDD discipline pointer needs an adapter clause for tasks where TDD does not apply (docs, config, deletes)
