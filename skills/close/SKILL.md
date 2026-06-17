@@ -51,9 +51,11 @@ the candidate terminal statuses:
 
 | Kind | Resolved at | Verb | Candidate terminals |
 |---|---|---|---|
-| Idea | `spec/ideas/<slug>.md` | `specscore idea change-status` | `Implemented`, `Archived` |
+| Idea | `spec/ideas/<slug>.md` | `specscore idea change-status` | `Implemented`, `Rejected`, `Stale` |
 | Feature | `spec/features/<id>/README.md` | `specscore feature change-status` | `Deprecated` |
-| sidekick seed | `spec/ideas/seeds/<slug>.md` | `specscore sidekick change-status` | `Implemented`, `Rejected`, `Archived` |
+| sidekick seed | `spec/ideas/seeds/<slug>.md` | `specscore sidekick change-status` | `Implemented`, `Rejected`, `Stale` |
+
+Archival is **orthogonal to status** — it is not a terminal status. An artifact is closed to one of the terminals above and *retains* that status when filed away; filing it out of active view is a separate archive action, never a `change-status --to=Archived` call.
 
 (Resolving the kind is a filesystem check — **not** a CLI call. `close` does not
 query the CLI and then call it again.)
@@ -71,13 +73,15 @@ query the CLI and then call it again.)
    user choice. Never auto-select a terminal status.
 
 3. **Capture the reason** (REQ `reason-for-negative-transitions`).
-   - For a **negative** transition (a seed `Rejected`), a reason is
+   - For a **negative** transition (an Idea or seed `Rejected`), a reason is
      **mandatory**. Collect it up front and pass it via `--note`. Do not invoke
      the verb without it — the CLI also enforces this with exit `2`, but
      collecting it first avoids a wasted round-trip.
-   - For a **positive/neutral** transition (`Implemented` / `Archived` /
-     `Deprecated`), OFFER to record an optional `--note` (the rationale or where
-     the work shipped).
+   - For a **passive-decay** transition (an Idea or seed `Stale` — nobody decided
+     against it, it simply was never carried forward), OFFER to record an
+     optional `--note` (e.g. why it lost relevance).
+   - For a **positive/neutral** transition (`Implemented` / `Deprecated`), OFFER
+     to record an optional `--note` (the rationale or where the work shipped).
    - **When `close` is invoked by another skill** (non-interactive), the reason
      MUST be supplied by the caller as an explicit argument. `close` MUST NOT
      fabricate or auto-generate a reason for a reason-required transition; if the

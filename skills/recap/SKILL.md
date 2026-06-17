@@ -42,7 +42,7 @@ The only skill invoked after `specstudio:recap` is `specstudio:review` (or — w
 
 **Refuse and redirect when:**
 
-- The Feature's `**Status:**` is `Draft` or `Under Review` → print the current Status and recommend `specstudio:specify` to re-approve. Write no report. Exit non-zero. (AC: `refuses-draft-feature`)
+- The Feature's `**Status:**` is `Draft` or `In Review` → print the current Status and recommend `specstudio:specify` to re-approve. Write no report. Exit non-zero. (AC: `refuses-draft-feature`)
 - The Feature exists only in the working tree (uncommitted) → instruct the user to commit the Feature first. Write no report. Exit non-zero. (AC: `refuses-uncommitted-feature`)
 - The Feature's `_verify/` directory does not exist or contains zero `<sha>.md` report files reachable at HEAD → recommend running `specstudio:verify <feature-slug>` first. Write no report. Exit non-zero. Recap-without-verify is a category error: there is nothing to recap against. (AC: `refuses-when-no-verify-report`)
 - The user asks the skill to bypass publication policy, commit unrelated paths, or push without branch-policy approval → refuse.

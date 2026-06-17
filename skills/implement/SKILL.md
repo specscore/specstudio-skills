@@ -36,28 +36,28 @@ The only skill invoked after `specstudio:implement` is `specstudio:verify` (or �
 
 ## When to Use
 
-- **Plan-sourced:** An approved Plan at `spec/plans/<slug>.md` is ready for implementation (`**Status:**` is `Approved` or `Implementing`).
+- **Plan-sourced:** An approved Plan at `spec/plans/<slug>.md` is ready for implementation (`**Status:**` is `Approved` or `Executing`).
 - **Plan-sourced:** The event `plan.approved` has fired and the user has confirmed they want to implement.
-- **Plan-sourced:** The user wants to resume an in-flight Plan after a prior `implement` session (Plan Status: `Implementing`).
+- **Plan-sourced:** The user wants to resume an in-flight Plan after a prior `implement` session (Plan Status: `Executing`).
 - **Feature-sourced:** A Feature at `spec/features/<slug>/README.md` has `**Status:** ∈ {Approved, Implementing, Stable}` and no Plan exists for it. The user wants to implement directly against the Feature's ACs without writing a Plan first.
 - **Idea-sourced:** An Idea at `spec/ideas/<slug>.md` has `**Status:** Approved` and no Feature or Plan exists for it. The user wants to implement directly against the Idea's Recommended Direction without writing a Feature or Plan first.
 
 **Refuse and redirect when:**
 
-- The Plan's `**Status:**` is `Draft`, `Under Review`, or `Completed` → tell the user to run `specstudio:plan` (or that there's nothing to implement).
-- The Plan's `**Source Feature:**` has regressed to `Draft` or `Under Review` → stop, surface the spec drift, recommend re-approving the Feature via `specstudio:specify` or reverting.
-- The Feature's `**Status:**` is `Draft` or `Under Review` → tell the user to run `specstudio:specify` first.
-- The Idea's `**Status:**` is `Draft` or `Under Review` → tell the user to run `specstudio:ideate` first.
+- The Plan's `**Status:**` is `Draft`, `In Review`, or `Implemented` → tell the user to run `specstudio:plan` (or that there's nothing to implement).
+- The Plan's `**Source Feature:**` has regressed to `Draft` or `In Review` → stop, surface the spec drift, recommend re-approving the Feature via `specstudio:specify` or reverting.
+- The Feature's `**Status:**` is `Draft` or `In Review` → tell the user to run `specstudio:specify` first.
+- The Idea's `**Status:**` is `Draft` or `In Review` → tell the user to run `specstudio:ideate` first.
 - The user asks the skill to commit or push before the consolidated diff is lint-clean and conflict-checked and its gate has released → refuse; the commit is available only after the `implementation.pre_commit` gate releases, and the push only after the `implementation.pre_push` gate releases (and publication-policy branch-safety passes).
 
 ## Pre-Flight
 
 1. **Input resolution.** Resolve the input to one of three entry modes, checked in priority order:
-   - **(a) Plan-sourced.** `spec/plans/<slug>.md` with `**Status:** ∈ {Approved, Implementing}`. Proceed with full batch-dispatch workflow.
+   - **(a) Plan-sourced.** `spec/plans/<slug>.md` with `**Status:** ∈ {Approved, Executing}`. Proceed with full batch-dispatch workflow.
    - **(b) Feature-sourced.** `spec/features/<slug>/README.md` with `**Status:** ∈ {Approved, Implementing, Stable}` and no Plan exists for this Feature. Proceed in single-pass mode (see Entry Modes below).
    - **(c) Idea-sourced.** `spec/ideas/<slug>.md` with `**Status:** Approved` and no Feature or Plan exists for this Idea. Proceed in single-pass mode (see Entry Modes below).
    Refuse if no artifact matches or Status is outside the accepted set for its type.
-2. **Source-Feature validity.** Read the Plan's `**Source Feature:**`. Confirm the referenced Feature is at `spec/features/<feature-slug>/README.md` with `**Status:** ∈ {Approved, Implementing, Stable}`. On regression to Draft/Under Review, stop and surface the drift. Additionally confirm the Feature exists at git HEAD via `git cat-file -e HEAD:spec/features/<feature-slug>/README.md`. If the Feature exists only in the working tree (uncommitted), refuse to dispatch and instruct the user to commit it first — the `Verifies:` trailer must reference a Feature that exists in git history.
+2. **Source-Feature validity.** Read the Plan's `**Source Feature:**`. Confirm the referenced Feature is at `spec/features/<feature-slug>/README.md` with `**Status:** ∈ {Approved, Implementing, Stable}`. On regression to Draft/In Review, stop and surface the drift. Additionally confirm the Feature exists at git HEAD via `git cat-file -e HEAD:spec/features/<feature-slug>/README.md`. If the Feature exists only in the working tree (uncommitted), refuse to dispatch and instruct the user to commit it first — the `Verifies:` trailer must reference a Feature that exists in git history.
 3. **Parse the Plan.** Use `specscore` CLI's Plan parser (do not re-implement). Surface: per-task `**Verifies:**`, `**Status:**`, `**Depends-On:**`, body (prose for `full`, placeholder `<!-- implement: pending -->` for `stub`). Parse failures stop the skill with the CLI's lint-rule citation.
 4. **Git-log cross-check.** Run `git log --grep='^Verifies:'` on the current branch. For each task: if Plan says `**Status:** done` but no commit references the task's ACs, surface the divergence as a warning. If Plan says `**Status:** pending` but a commit DOES reference its ACs, offer to update the Status (with user confirmation) before dispatching. **Git log is authoritative; Plan Status is the at-a-glance signal.**
 5. **Compute next batch.** Topological reduction of the dependency graph: batch = tasks where all `**Depends-On:**` predecessors are `**Status:** done` AND own `**Status:** pending`. Exclude tasks in `in-progress`, `done`, or `blocked` status.
@@ -104,11 +104,11 @@ When the supplied Plan is a **master plan** — sourced `**Source:** idea:<slug>
 Create a task for each and complete in order:
 
 1. **Pre-flight** (steps above).
-2. **If no executable batch** (all tasks done or blocked) → transition to `specstudio:verify` (or hand-back), update Plan `**Status:** Implementing → Completed`, stop.
+2. **If no executable batch** (all tasks done or blocked) → re-run `specscore spec lint --fix` so the Plan's execution-band `**Status:**` is derived from the task-status rollup, then transition to `specstudio:verify` (or hand-back), stop.
 3. **Dispatch the batch.** For each task in the next executable batch (cap at 5 concurrent — see Max-Parallel below), dispatch one subagent via the Agent tool with `subagent_type: general-purpose`. Construct an isolated prompt per posture (see Subagent Contract below). When the batch has > 5 tasks, queue the rest; dispatch each queued task as a slot frees.
 4. **Stage Status writes.**
    - **4a. Task Status.** As each subagent is dispatched, transition that task's `**Status:** pending → in-progress` on the Plan file. Stage via `git add`. (In `full` mode this is the only Plan-file change; in `stub` mode it will be joined by the post-return writeback.)
-   - **4b. Plan body-metadata Status (first dispatch only).** On the first task dispatched in this invocation, if the Plan's body-metadata `**Status:**` is `Approved`, transition it to `Implementing` and stage the edit. Idempotent — no-op if already `Implementing`. The counterpart `Implementing → Completed` transition is owned by step 18.
+   - **4b. Plan body-metadata Status (lint-derived, not hand-set).** The Plan's execution-band `**Status:**` (`Executing` / `Blocked` / `Implemented` / `Failed`) is **derived** by `specscore spec lint --fix` from the rollup of task statuses (the SpecScore status-vocabulary `plan-executing-derived` divergence). The skill MUST NOT hand-write the band. Once the first task is marked `in-progress` (4a) and lint runs (step 9), the band is derived to `Executing` automatically; staging the task-status edit is sufficient.
 5. **Wait for terminal returns.** Each subagent returns one of `DONE` / `DONE_WITH_CONCERNS` / `NEEDS_CONTEXT` / `BLOCKED`. `NEEDS_CONTEXT` → re-dispatch that specific subagent with augmented context (sibling subagents unaffected). `BLOCKED` → surface the cited cause to the user, do NOT silently retry.
 6. **Update Status fields.** `DONE` / `DONE_WITH_CONCERNS` → `**Status:** done`. `BLOCKED` (with user decision to defer) → `**Status:** blocked`. Stage all Plan-file edits.
 7. **Stub-mode writeback** (only when `**Mode:** stub`). For each `DONE` / `DONE_WITH_CONCERNS` task, replace the placeholder body `<!-- implement: pending -->` with the subagent's SHA-free 1–2 sentence "what landed" summary. Stage via `git add` as part of the same staging set as the code changes.
@@ -122,7 +122,7 @@ Create a task for each and complete in order:
 15. **Emit `implement.batch-completed`.** Payload: Plan slug, batch number, task numbers, commit SHA when one exists (from `git rev-parse HEAD` after the user commit or policy-created commit), `Verifies:` AC IDs covered, and `publication_result`.
 16. **Emit `plan.updated`.** Apply publication policy for `plan.updated` only to any Plan-file changes not already included in the batch milestone, then emit with `publication_result`. Payload's `changed_sections` lists every task slug whose Status or body changed in this batch. `change_summary` factual, ≤2 sentences.
 17. **Loop back to step 2.** Compute next batch; if none, transition.
-18. **Final transition.** When all tasks `**Status:** done`: update Plan body-metadata `**Status:** Implementing → Completed` (the counterpart to step 4b — this is the second body-metadata Status transition the skill writes), re-run lint, emit `plan.updated`, hand off to `specstudio:verify` (or, if `verify` is unshipped, recommend the user run their project's test/Rehearse suite manually).
+18. **Final transition.** When all tasks `**Status:** done`: re-run `specscore spec lint --fix` so the Plan's execution-band `**Status:**` is derived to `Implemented` from the all-done task rollup (the skill does not hand-write the band — see 4b), emit `plan.updated`, hand off to `specstudio:verify` (or, if `verify` is unshipped, recommend the user run their project's test/Rehearse suite manually).
 19. **Throughout** — watch for sidekick ideas. When an out-of-scope improvement surfaces (e.g., a Feature change, a refactoring opportunity), invoke `specstudio:sidekick` with a one-liner, acknowledge in one line, and return to the current checklist step. Do not derail.
 
 ## Subagent Contract
@@ -353,7 +353,7 @@ The next skill is `specstudio:verify`, and only `specstudio:verify`.
 
 When all tasks reach `**Status:** done` (no more eligible batches AND no pending/blocked tasks):
 
-1. Update Plan body-metadata `**Status:** Implementing → Completed` via `specscore feature change-status` (or the equivalent Plan-status CLI command).
+1. Re-run `specscore spec lint --fix` so the Plan's execution-band `**Status:**` is derived to `Implemented` from the all-done task rollup. The skill does not hand-write the band (see Checklist step 4b).
 2. Add CLI-reported `touched_paths` to the final checkpoint manifest.
 3. Re-run lint.
 4. Apply publication policy for `plan.updated`, preserving manifest and branch safety.
@@ -374,7 +374,7 @@ The skill MUST NOT yes-machine weak Plans or silently retry blocked subagents. W
 
 ## Verification
 
-- [ ] Pre-flight checks passed: input resolved to Plan (Status ∈ {Approved, Implementing}), Feature (Status ∈ {Approved, Implementing, Stable}), or Idea (Status: Approved)
+- [ ] Pre-flight checks passed: input resolved to Plan (Status ∈ {Approved, Executing}), Feature (Status ∈ {Approved, Implementing, Stable}), or Idea (Status: Approved)
 - [ ] Git-log cross-check ran; any Status-vs-git-log divergences were surfaced to the user before dispatch
 - [ ] Every batch dispatched ≤5 parallel subagents; queued tasks were dispatched as slots freed
 - [ ] Every subagent returned a terminal status (DONE / DONE_WITH_CONCERNS / BLOCKED) or was re-dispatched on NEEDS_CONTEXT
@@ -394,7 +394,7 @@ The skill MUST NOT yes-machine weak Plans or silently retry blocked subagents. W
 - [ ] In `full` mode: NO task body modified by the skill (only Status writes)
 - [ ] `specscore spec lint` passes after every batch (auto-recovery via `--fix` attempted at most once on initial failure)
 - [ ] All emitted events (`implement.batch-started`, `implement.batch-completed`, `plan.updated`) carry `changed_sections`, `previous_revision`, a factual `change_summary` where applicable, and `publication_result` after publication checkpoints
-- [ ] On Plan completion: Status transitioned `Implementing → Completed`; transition to `specstudio:verify` (or hand-back); no other skill invoked
+- [ ] On Plan completion: execution-band `**Status:**` derived to `Implemented` by `specscore spec lint --fix` (not hand-written); transition to `specstudio:verify` (or hand-back); no other skill invoked
 - [ ] In Feature-sourced mode: no subagent dispatch, no task-status writes, `Verifies:` trailer uses Feature AC IDs
 - [ ] In Idea-sourced mode: no subagent dispatch, no task-status writes, `Verifies:` trailer uses `idea:<slug>`
 

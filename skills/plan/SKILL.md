@@ -38,8 +38,8 @@ The only skill invoked after `specstudio:plan` is `specstudio:implement` (or —
 
 **Refuse and redirect when:**
 
-- The source Feature is `Draft` or `Under Review` → tell the user to run `specstudio:specify` to approve the Feature first. Do **not** plan against unapproved specs.
-- The source Idea is `Draft` or `Under Review` → tell the user to approve the Idea first. Do **not** plan against unapproved Ideas.
+- The source Feature is `Draft` or `In Review` → tell the user to run `specstudio:specify` to approve the Feature first. Do **not** plan against unapproved specs.
+- The source Idea is `Draft` or `In Review` → tell the user to approve the Idea first. Do **not** plan against unapproved Ideas.
 - The request spans two or more Features → say so and offer to write two separate Plans.
 - The user asks for a DAG / parallel-branch plan → linear-only is the MVP; offer a linearized best-effort order or defer.
 
@@ -65,12 +65,12 @@ Create a task for each and complete in order:
 6. **Checkpoint manifest** — add all created or edited Plan paths and CLI-reported touched paths to the publication manifest.
 7. **Lint** — `specscore spec lint`. On failure, run `specscore spec lint --fix` exactly once and re-lint; on persistent failure, surface violations with rule IDs and stop.
 8. **Inline self-review** — placeholders, empty `**Verifies:**` lines, AC IDs that look misspelled vs the source Feature, task-name vs `**Verifies:**` contradictions.
-9. **Status: Draft → Under Review.**
+9. **Status: Draft → In Review.**
 10. **Dispatch the baseline reviewer subagent** — see [reviewer-prompt.md](references/reviewer-prompt.md). Must return `Approved` before user review.
 11. **Dispatch additional registered reviewers** (if any) from `specscore.yaml`'s `reviewers:` extension key. AND composition — every reviewer must return `Approved`.
 12. **Publish + emit `plan.drafted`** after all reviewers Approved + lint passes: apply [publication-policy.md](../shared/publication-policy.md) for `plan.drafted`, then emit the event with `publication_result`.
 13. **User review gate** — present the Plan with the summary of deferred ACs (if any) and explicitly ask for approval.
-14. **On user approval** — status Under Review → Approved, re-run lint, apply publication policy for `plan.approved`, then emit `plan.approved` with `publication_result`.
+14. **On user approval** — status In Review → Approved, re-run lint, apply publication policy for `plan.approved`, then emit `plan.approved` with `publication_result`.
 15. **Transition to `specstudio:implement`** — or, while `implement` is unshipped, hand back with the recommendation that the user implement task-by-task using a general-purpose skill.
 16. **Throughout** — watch for sidekick ideas. When an out-of-scope improvement surfaces (e.g., a Feature change), invoke `specstudio:sidekick` with a one-liner, acknowledge in one line, and return to the current checklist step immediately. Do not derail.
 
@@ -230,7 +230,7 @@ Wait. If the user requests changes, fix, re-lint, re-review, re-gate. Only proce
 
 On confirmed approval:
 
-- Update `**Status:** Under Review → Approved`.
+- Update `**Status:** In Review → Approved`.
 - Re-run lint.
 - Apply publication policy for `plan.approved` using a manifest that includes the status-transition edit and any CLI-reported touched paths. This runs only after explicit user approval; policy MUST NOT bypass the gate.
 - Emit `plan.approved` event with `publication_result`.
@@ -331,7 +331,7 @@ The skill MUST NOT yes-machine weak Plans. When a task is vague, an AC is uncove
 - Defer-reasons like "later" or "TBD"
 - DAG-shaped task graphs (linear-only in MVP)
 - Multi-Feature scope in a single Plan
-- Planning against a Draft or Under Review Feature or Idea
+- Planning against a Draft or In Review Feature or Idea
 - Writing to `docs/plans/` instead of `spec/plans/`
 - Skipping the reviewer subagent or a registered third-party reviewer
 - Invoking any skill other than `specstudio:implement` on transition
