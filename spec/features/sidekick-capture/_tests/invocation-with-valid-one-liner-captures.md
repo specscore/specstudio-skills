@@ -12,7 +12,7 @@ format: https://specscore.md/scenario-specification
 
 **Given** a Claude Code session in a project where `specstudio:sidekick` is installed and `spec/ideas/seeds/` may or may not exist
 **When** the user invokes `/sidekick We should persist debug logs across restarts`
-**Then** a file is written at `spec/ideas/seeds/we-should-persist-debug-logs-across-restarts.md` with frontmatter containing exactly the eight keys from REQ `seed-frontmatter-schema`, `type: sidekick-seed`, `trigger: explicit`, `status: queued`, `synchestra_task: null`; the body's first non-blank line is an H1 (`# We should persist debug logs across restarts`) containing the verbatim one-liner; the total body length is ≤ 2000 characters; a `sidekick-idea.captured` event is emitted; the skill returns the relative seed path.
+**Then** a file is written at `spec/ideas/seeds/we-should-persist-debug-logs-across-restarts.md` with frontmatter containing exactly the eight keys from REQ `seed-frontmatter-schema`, `type: sidekick-seed`, `trigger: explicit`, `status: queued`, `synchestra_task: null`; the body's first non-blank line is an H1 (`# We should persist debug logs across restarts`) containing the verbatim one-liner; the total body length is ≤ 3000 characters (the queued cap); a `sidekick-idea.captured` event is emitted; the skill returns the relative seed path.
 
 ## Verification approach
 

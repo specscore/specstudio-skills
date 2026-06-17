@@ -52,7 +52,7 @@ The skill MUST accept a non-empty one-liner of at most 500 characters after trim
 
 #### REQ: writes-seed-artifact
 
-On valid input, the skill MUST write a new seed file at `spec/ideas/seeds/<slug>.md` containing (a) the YAML frontmatter defined in REQ `seed-frontmatter-schema` and (b) a body whose first non-blank line is an H1 heading (`# <one-liner>`) containing the verbatim one-liner as the heading text. The skill MAY accept an optional `--body <markdown>` argument (or its programmatic equivalent) that places additional markdown content below the H1; if absent, only the H1 is written. The total body length (everything after the closing `---` of the frontmatter, inclusive of the H1 line) MUST NOT exceed 2000 characters; over-length bodies MUST be rejected at the skill layer with a clear error, the same way over-length one-liners are. The skill MUST create `spec/ideas/seeds/` lazily if absent. On slug collision (per REQ `seed-slug-derivation`), the skill MUST disambiguate by appending `-2`, `-3`, … to the slug; it MUST NOT overwrite an existing seed file under any circumstance, even on collision. The skill MUST return the relative seed path to the caller.
+On valid input, the skill MUST write a new seed file at `spec/ideas/seeds/<slug>.md` containing (a) the YAML frontmatter defined in REQ `seed-frontmatter-schema` and (b) a body whose first non-blank line is an H1 heading (`# <one-liner>`) containing the verbatim one-liner as the heading text. The skill MAY accept an optional `--body <markdown>` argument (or its programmatic equivalent) that places additional markdown content below the H1; if absent, only the H1 is written. A captured seed is `status: queued`, so the total body length (everything after the closing `---` of the frontmatter, inclusive of the H1 line) MUST NOT exceed the queued hard cap of 3000 characters; over-length bodies MUST be rejected at the skill layer with a clear error, the same way over-length one-liners are. Authors are advised (via a `seed-lint-rule` warning) to keep a queued seed under 2500 characters and move deliberation into ideate. The skill MUST create `spec/ideas/seeds/` lazily if absent. On slug collision (per REQ `seed-slug-derivation`), the skill MUST disambiguate by appending `-2`, `-3`, … to the slug; it MUST NOT overwrite an existing seed file under any circumstance, even on collision. The skill MUST return the relative seed path to the caller.
 
 #### REQ: emits-captured-event
 
@@ -116,7 +116,7 @@ The seed slug is derived deterministically from the one-liner, but the derivatio
 
 #### REQ: seed-lint-rule
 
-`specscore spec lint` MUST recognize files matching `spec/ideas/seeds/*.md` — and any `type: sidekick-seed` file under `spec/ideas/archived/*.md` (a promoted seed, per REQ `seed-frontmatter-schema`) — as the `sidekick-seed` document type and validate them against REQ `seed-frontmatter-schema`. The rule MUST: (a) reject unknown frontmatter keys, treating the optional `promoted_to` key as recognized (not unknown), (b) reject missing required keys, (c) reject `type` values other than `sidekick-seed`, (d) reject `trigger` values outside the enumerated set, (e) require the body's first non-blank line to be an H1 heading (`# <text>`), (f) reject body content (after the frontmatter, inclusive of the H1 line) exceeding 2000 characters. A `type: sidekick-seed` file under `archived/` MUST NOT be validated against the Idea schema (it is a seed, not an archived Idea). The rule's CLI implementation may land cross-repo in `specscore`; this Feature specifies the rule contract and behavior, not its source location.
+`specscore spec lint` MUST recognize files matching `spec/ideas/seeds/*.md` — and any `type: sidekick-seed` file under `spec/ideas/archived/*.md` (a promoted seed, per REQ `seed-frontmatter-schema`) — as the `sidekick-seed` document type and validate them against REQ `seed-frontmatter-schema`. The rule MUST: (a) reject unknown frontmatter keys, treating the optional `promoted_to` key as recognized (not unknown), (b) reject missing required keys, (c) reject `type` values other than `sidekick-seed`, (d) reject `trigger` values outside the enumerated set, (e) require the body's first non-blank line to be an H1 heading (`# <text>`), (f) apply a status-dependent body-content cap (after the frontmatter, inclusive of the H1 line): a `queued` seed exceeding 3000 characters is an error, and a `queued` seed exceeding 2500 (but ≤ 3000) characters is a warning; a closed/terminal-status seed exceeding 5000 characters is an error. A `type: sidekick-seed` file under `archived/` MUST NOT be validated against the Idea schema (it is a seed, not an archived Idea). The rule's CLI implementation may land cross-repo in `specscore`; this Feature specifies the rule contract and behavior, not its source location.
 
 ### The event contract
 
@@ -227,7 +227,7 @@ The five components are loosely coupled. The skill produces the seed and the eve
 
 **Given** a Claude Code session in a project where `specstudio:sidekick` is installed and `spec/ideas/seeds/` may or may not exist
 **When** the user invokes `/sidekick We should persist debug logs across restarts`
-**Then** a file is written at `spec/ideas/seeds/we-should-persist-debug-logs-across-restarts.md` with frontmatter containing exactly the eight keys from REQ `seed-frontmatter-schema`, `type: sidekick-seed`, `trigger: explicit`, `status: queued`, `synchestra_task: null`; the body's first non-blank line is an H1 (`# We should persist debug logs across restarts`) containing the verbatim one-liner; the total body length is ≤ 2000 characters; a `sidekick-idea.captured` event is emitted; the skill returns the relative seed path.
+**Then** a file is written at `spec/ideas/seeds/we-should-persist-debug-logs-across-restarts.md` with frontmatter containing exactly the eight keys from REQ `seed-frontmatter-schema`, `type: sidekick-seed`, `trigger: explicit`, `status: queued`, `synchestra_task: null`; the body's first non-blank line is an H1 (`# We should persist debug logs across restarts`) containing the verbatim one-liner; the total body length is ≤ 3000 characters (the queued cap); a `sidekick-idea.captured` event is emitted; the skill returns the relative seed path.
 
 ### AC: empty-or-whitespace-input-rejected
 
@@ -244,8 +244,8 @@ The five components are loosely coupled. The skill produces the seed and the eve
 ### AC: over-length-body-rejected
 
 **Given** a Claude Code session
-**When** the user invokes `/sidekick` with a valid one-liner and an optional body that, combined with the H1 line, produces total body content of 2001 or more characters
-**Then** the skill exits with an error indicating the 2000-character body limit; the over-length body is not silently truncated; no seed file is created; no event is emitted.
+**When** the user invokes `/sidekick` with a valid one-liner and an optional body that, combined with the H1 line, produces total body content of 3001 or more characters
+**Then** the skill exits with an error indicating the 3000-character queued body limit; the over-length body is not silently truncated; no seed file is created; no event is emitted.
 
 ### AC: unknown-flag-rejected
 
@@ -291,7 +291,7 @@ The five components are loosely coupled. The skill produces the seed and the eve
 
 ### AC: lint-rejects-malformed-seed
 
-**Given** a seed file with any of: (a) an unknown frontmatter key, (b) a missing required key, (c) `type` other than `sidekick-seed`, (d) `trigger` outside the enumerated set, (e) a body whose first non-blank line is not an H1 heading, (f) a body exceeding 2000 characters
+**Given** a seed file with any of: (a) an unknown frontmatter key, (b) a missing required key, (c) `type` other than `sidekick-seed`, (d) `trigger` outside the enumerated set, (e) a body whose first non-blank line is not an H1 heading, (f) a `queued` body exceeding 3000 characters or a closed/terminal-status body exceeding 5000 characters
 **When** `specscore spec lint` is run on the project
 **Then** lint reports a violation pointing at the offending file and the specific rule fired; exit code is non-zero (per the SpecScore CLI exit-code contract).
 
@@ -353,7 +353,7 @@ The following are deliberately deferred to later Features or rejected outright:
 - **Hook ergonomics (auto-drain on `Stop`, `loop`-based scheduling).** Phase 3 Feature.
 - **Modifications to third-party skill files** (`agent-skills:build` SKILL.md, `superpowers:brainstorming` SKILL.md, etc.). Adoption is opt-in via the documented contract; this Feature does not edit foreign repos.
 - **Pre-creation of `spec/ideas/seeds/` by `specstudio:init`.** Lazy creation by the sidekick skill is sufficient; revisit only if discoverability complaints surface.
-- **Long-form prose, design docs, or essays in the seed body.** The body cap is 2000 characters (REQ `writes-seed-artifact`), enforced by lint (REQ `seed-lint-rule`). The optional body is for cases where a one-liner genuinely cannot capture the idea (a specific code snippet, a short list of affected places). Routine captures SHOULD use the H1-only form (REQ `write-and-continue-discipline`). Seeds that need more than 2000 characters of context have outgrown "seed" status and belong as a full SpecScore Idea via `specstudio:ideate`.
+- **Long-form prose, design docs, or essays in the seed body.** The queued body cap is 3000 characters with a 2500-character advisory (REQ `writes-seed-artifact`), enforced by lint (REQ `seed-lint-rule`); closed/terminal seeds get 5000 to fit a `## Resolution` note. The optional body is for cases where a one-liner genuinely cannot capture the idea (a specific code snippet, a short list of affected places). Routine captures SHOULD use the H1-only form (REQ `write-and-continue-discipline`). Seeds that need more than ~2500 characters of context have outgrown "seed" status and belong as a full SpecScore Idea via `specstudio:ideate`.
 - **Roster configuration for the consilium.** Not applicable at this layer; Phase 1.
 
 ## Rehearse Integration
