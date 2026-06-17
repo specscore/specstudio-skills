@@ -62,6 +62,7 @@ The `ship` skill is intended to run the pre-launch checklist, gated on `verify` 
 | [init](init/README.md) | The specstudio:init skill bootstraps a SpecScore-managed project in one wizard-driven step: scaffolds the spec/ tree, creates specscore.yaml, installs the canonical Producer-shape instruction snippet into the appropriate platform agent-instructions file, and runs synchestra init for orchestration-side setup. Prefers specscore init and synchestra init CLIs with AI-agent fallback. Delegates CLI installation to specscore:install and specscore:install. Idempotent rerun and --update mode for drift reconciliation. |
 | [lint-fix-staging](lint-fix-staging/README.md) | Specstudio skills stage exactly the files specscore spec lint --fix reports as modified, instead of inferring the change set from a git diff. |
 | [pull-request](pull-request/README.md) | TODO: Add description. |
+| [close](close/README.md) | The close skill retires a SpecScore artifact (Idea, Feature, or sidekick seed) by driving the appropriate specscore <kind> change-status CLI verb with a --note reason, never by hand-editing. Negative transitions (Rejected) require a reason. |
 
 ## Problem
 
