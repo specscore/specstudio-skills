@@ -23,3 +23,7 @@ Add an AC: `Given a Plan task whose Verifies: ACs all have Then clauses observab
 ## Why this matters
 
 The AC-verification adapter is the natural generalization of TDD: verify against the contract, degrade gracefully when no execution surface exists. Captured during the implement dogfood; all three subagents adapted (see commits 52c4a80, 46612aa).
+
+## Resolution
+
+Implemented in skills/implement/SKILL.md step 6: the discipline pointer substitutes an AC-verification adapter clause for tasks with no testable surface (docs, renames, deletes, formatting).
