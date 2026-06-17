@@ -10,7 +10,7 @@ format: https://specscore.md/scenario-specification
 
 ## Scenario (from AC)
 
-**Given** a seed file with any of: (a) an unknown frontmatter key, (b) a missing required key, (c) `type` other than `sidekick-seed`, (d) `trigger` outside the enumerated set, (e) a body whose first non-blank line is not an H1 heading, (f) a body exceeding 2000 characters
+**Given** a seed file with any of: (a) an unknown frontmatter key, (b) a missing required key, (c) `type` other than `sidekick-seed`, (d) `trigger` outside the enumerated set, (e) a body whose first non-blank line is not an H1 heading, (f) a `queued` body exceeding 3000 characters or a closed/terminal-status body exceeding 5000 characters
 **When** `specscore spec lint` is run on the project
 **Then** lint reports a violation pointing at the offending file and the specific rule fired; exit code is non-zero (per the SpecScore CLI exit-code contract).
 

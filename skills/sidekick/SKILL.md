@@ -34,7 +34,7 @@ The destination-resolution UX in multi-repo workspaces (see [Destination resolut
 The skill accepts:
 
 - **One-liner** (required): a string of 1–500 characters after trimming leading/trailing whitespace.
-- **`--body <markdown>`** (optional): additional markdown content that follows the H1 heading. Total body length (H1 line + body) MUST NOT exceed 2000 characters.
+- **`--body <markdown>`** (optional): additional markdown content that follows the H1 heading. A captured seed is `status: queued`, so total body length (H1 line + body) MUST NOT exceed 3000 characters (authors are advised to keep it under 2500).
 
 ## Validation rules (REQs `input-validation`, `writes-seed-artifact`)
 
@@ -44,7 +44,7 @@ Reject with a clear error message and exit non-zero in any of these cases:
 |---|---|
 | One-liner is empty or whitespace-only | `Empty one-liner. Provide a one-line description, 1–500 chars.` |
 | One-liner exceeds 500 chars after trimming | `One-liner too long (<N> chars). Max is 500.` |
-| Body, combined with the H1 line, exceeds 2000 chars total | `Body too long (<N> chars). Max body (incl. H1 line) is 2000 chars.` |
+| Body, combined with the H1 line, exceeds 3000 chars total (the queued cap) | `Body too long (<N> chars). Max body (incl. H1 line) is 3000 chars.` |
 | Unknown flag (anything starting with `--` that is not `--body`) | `Unknown flag: <flag>. Supported: --body.` |
 
 On rejection, the skill MUST NOT create any file, MUST NOT emit any event, and MUST exit non-zero.
@@ -213,7 +213,7 @@ specscore sidekick new "<one-liner>" \
   # --slug "<slug>"       # add ONLY to override: a user-requested slug, or a -N collision suffix
 ```
 
-The one-liner becomes the `# <one-liner>` H1; the CLI emits the frontmatter and enforces the ≤500-char one-liner and ≤2000-char body caps (and validates any `--slug`). Do **not** run a standalone `command -v` probe, and do **not** pass `--force`. Branch on the exit status per the **Creation-class row** in [`../shared/cli-detection.md`](../shared/cli-detection.md) (which carries the per-outcome rationale): **`0`** → the CLI prints the seed path, continue to the back-link and event steps; **exit `1`** (Conflict — the slug is already taken) → resolve via [Collision disambiguation](#collision-disambiguation-req-writes-seed-artifact) (retry with `--slug <base>-N`); **`127`** → install message (`/specscore:install`), then **install-then-retry**; **exit `8`** → **upgrade-then-retry**, naming the missing `sidekick new` / `--slug`; **any other non-zero** → surface verbatim, **never** a direct-write fallback.
+The one-liner becomes the `# <one-liner>` H1; the CLI emits the frontmatter and enforces the ≤500-char one-liner and ≤3000-char queued body caps (and validates any `--slug`). Do **not** run a standalone `command -v` probe, and do **not** pass `--force`. Branch on the exit status per the **Creation-class row** in [`../shared/cli-detection.md`](../shared/cli-detection.md) (which carries the per-outcome rationale): **`0`** → the CLI prints the seed path, continue to the back-link and event steps; **exit `1`** (Conflict — the slug is already taken) → resolve via [Collision disambiguation](#collision-disambiguation-req-writes-seed-artifact) (retry with `--slug <base>-N`); **`127`** → install message (`/specscore:install`), then **install-then-retry**; **exit `8`** → **upgrade-then-retry**, naming the missing `sidekick new` / `--slug`; **any other non-zero** → surface verbatim, **never** a direct-write fallback.
 
 After a successful write, use the CLI's printed path (relative to `<destination-repo-root>`) as the skill's return value and derive `<slug>` from that filename. Do not parse non-contractual seed frontmatter fields. Use the event emission time for event/back-link dates.
 
