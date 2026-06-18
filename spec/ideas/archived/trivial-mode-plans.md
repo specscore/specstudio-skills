@@ -1,6 +1,7 @@
 # Idea: Trivial-mode plans: skeleton-up-front, journal-in-implement
 
-**Status:** Archived
+**Status:** Stale
+**Archived:** true
 **Date:** 2026-05-19
 **Owner:** alexander.trakhimenok
 **Promotes To:** —

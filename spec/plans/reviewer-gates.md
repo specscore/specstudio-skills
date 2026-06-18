@@ -1,6 +1,6 @@
 # Plan: Reviewer Gates MVP
 
-**Status:** Completed
+**Status:** Implemented
 **Source Feature:** reviewer-gates
 **Date:** 2026-05-22
 **Owner:** alex
