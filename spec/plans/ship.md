@@ -1,6 +1,6 @@
 # Plan: Ship Skill
 
-**Status:** Completed
+**Status:** Implemented
 **Source Feature:** skills/ship
 **Date:** 2026-06-03
 **Owner:** alexander.trakhimenok
