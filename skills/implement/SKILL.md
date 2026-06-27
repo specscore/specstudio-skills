@@ -59,9 +59,9 @@ The only skill invoked after `specstudio:implement` is `specstudio:verify` (or �
    Refuse if no artifact matches or Status is outside the accepted set for its type.
 2. **Source-Feature validity.** Read the Plan's `**Source Feature:**`. Confirm the referenced Feature is at `spec/features/<feature-slug>/README.md` with `**Status:** ∈ {Approved, Implementing, Stable}`. On regression to Draft/In Review, stop and surface the drift. Additionally confirm the Feature exists at git HEAD via `git cat-file -e HEAD:spec/features/<feature-slug>/README.md`. If the Feature exists only in the working tree (uncommitted), refuse to dispatch and instruct the user to commit it first — the `Verifies:` trailer must reference a Feature that exists in git history.
 3. **Parse the Plan.** Use `specscore` CLI's Plan parser (do not re-implement). Surface: per-task `**Verifies:**`, `**Status:**`, `**Depends-On:**`, body (prose for `full`, placeholder `<!-- implement: pending -->` for `stub`). Parse failures stop the skill with the CLI's lint-rule citation.
-4. **Git-log cross-check.** Run `git log --grep='^Verifies:'` on the current branch. For each task: if Plan says `**Status:** done` but no commit references the task's ACs, surface the divergence as a warning. If Plan says `**Status:** pending` but a commit DOES reference its ACs, offer to update the Status (with user confirmation) before dispatching. **Git log is authoritative; Plan Status is the at-a-glance signal.**
-5. **Compute next batch.** Topological reduction of the dependency graph: batch = tasks where all `**Depends-On:**` predecessors are `**Status:** done` AND own `**Status:** pending`. Exclude tasks in `in-progress`, `done`, or `blocked` status.
-6. **Pre-existing-Plan catch-up.** If the Plan pre-dates the plan-Feature revision (no `**Status:**` fields), initialize: scan git log for `Verifies:` trailers; mark matched-AC tasks `done`, rest `pending`. Save these initializations as a Plan-file edit that will land in the first batch's staging.
+4. **Git-log cross-check.** Run `git log --grep='^Verifies:'` on the current branch. For each task: if Plan says `**Status:** complete` but no commit references the task's ACs, surface the divergence as a warning. If Plan says `**Status:** planning` but a commit DOES reference its ACs, offer to update the Status (with user confirmation) before dispatching. **Git log is authoritative; Plan Status is the at-a-glance signal.**
+5. **Compute next batch.** Topological reduction of the dependency graph: batch = tasks where all `**Depends-On:**` predecessors are `**Status:** complete` AND own `**Status:** planning`. As these tasks become batch-eligible they transition `planning → queued`. Exclude tasks already in `queued`, `in_progress`, `complete`, or `blocked` status.
+6. **Pre-existing-Plan catch-up.** If the Plan pre-dates the plan-Feature revision (no `**Status:**` fields), initialize: scan git log for `Verifies:` trailers; mark matched-AC tasks `complete`, rest `planning`. Save these initializations as a Plan-file edit that will land in the first batch's staging.
 
 ## Entry Modes
 
@@ -104,17 +104,17 @@ When the supplied Plan is a **master plan** — sourced `**Source:** idea:<slug>
 Create a task for each and complete in order:
 
 1. **Pre-flight** (steps above).
-2. **If no executable batch** (all tasks done or blocked) → re-run `specscore spec lint --fix` so the Plan's execution-band `**Status:**` is derived from the task-status rollup, then transition to `specstudio:verify` (or hand-back), stop.
+2. **If no executable batch** (all tasks complete or blocked) → re-run `specscore spec lint --fix` so the Plan's execution-band `**Status:**` is derived from the task-status rollup, then transition to `specstudio:verify` (or hand-back), stop.
 3. **Dispatch the batch.** For each task in the next executable batch (cap at 5 concurrent — see Max-Parallel below), dispatch one subagent via the Agent tool with `subagent_type: general-purpose`. Construct an isolated prompt per posture (see Subagent Contract below). When the batch has > 5 tasks, queue the rest; dispatch each queued task as a slot frees.
 4. **Stage Status writes.**
-   - **4a. Task Status.** As each subagent is dispatched, transition that task's `**Status:** pending → in-progress` on the Plan file. Stage via `git add`. (In `full` mode this is the only Plan-file change; in `stub` mode it will be joined by the post-return writeback.)
-   - **4b. Plan body-metadata Status (lint-derived, not hand-set).** The Plan's execution-band `**Status:**` (`Executing` / `Blocked` / `Implemented` / `Failed`) is **derived** by `specscore spec lint --fix` from the rollup of task statuses (the SpecScore status-vocabulary `plan-executing-derived` divergence). The skill MUST NOT hand-write the band. Once the first task is marked `in-progress` (4a) and lint runs (step 9), the band is derived to `Executing` automatically; staging the task-status edit is sufficient.
+   - **4a. Task Status.** As each subagent is dispatched, transition that task's `**Status:** queued → in_progress` on the Plan file. Stage via `git add`. (In `full` mode this is the only Plan-file change; in `stub` mode it will be joined by the post-return writeback.)
+   - **4b. Plan body-metadata Status (lint-derived, not hand-set).** The Plan's execution-band `**Status:**` (`Executing` / `Blocked` / `Implemented` / `Failed`) is **derived** by `specscore spec lint --fix` from the rollup of task statuses (the SpecScore status-vocabulary `plan-executing-derived` divergence). The skill MUST NOT hand-write the band. Once the first task is marked `in_progress` (4a) and lint runs (step 9), the band is derived to `Executing` automatically; staging the task-status edit is sufficient.
 5. **Wait for terminal returns.** Each subagent returns one of `DONE` / `DONE_WITH_CONCERNS` / `NEEDS_CONTEXT` / `BLOCKED`. `NEEDS_CONTEXT` → re-dispatch that specific subagent with augmented context (sibling subagents unaffected). `BLOCKED` → surface the cited cause to the user, do NOT silently retry.
-6. **Update Status fields.** `DONE` / `DONE_WITH_CONCERNS` → `**Status:** done`. `BLOCKED` (with user decision to defer) → `**Status:** blocked`. Stage all Plan-file edits.
+6. **Update Status fields.** `DONE` / `DONE_WITH_CONCERNS` → `**Status:** complete`. `BLOCKED` (with user decision to defer) → `**Status:** blocked`. Stage all Plan-file edits.
 7. **Stub-mode writeback** (only when `**Mode:** stub`). For each `DONE` / `DONE_WITH_CONCERNS` task, replace the placeholder body `<!-- implement: pending -->` with the subagent's SHA-free 1–2 sentence "what landed" summary. Stage via `git add` as part of the same staging set as the code changes.
 8. **Conflict detection.** Run `git diff --staged`. Detect line-overlap between sibling subagents' changes on the same file. On conflict: surface to user with file paths and line ranges; offer three resolutions (rewrite Plan with explicit `**Depends-On:**`, manual `git restore --staged` + re-run, abort). On user choice of rewrite-Plan or abort: unstage all batch changes, revert Statuses, stop.
 9. **Lint.** Run `specscore spec lint`. On failure (typically Plan-file edits the skill produced), run `specscore spec lint --fix` exactly once, re-lint. On persistent failure: unstage Plan-file changes (`git restore --staged spec/plans/<slug>.md`), surface violations with rule IDs, stop the batch.
-10. **Inline self-review.** Scan staged Plan-file changes for: (a) Status transitions violating the state machine (e.g., `done → in-progress` without user action), (b) writeback bodies still containing placeholder tokens (`<!-- implement: pending -->`, `TBD`, `TODO`), (c) Status values outside the canonical four-token set. Findings stop the batch.
+10. **Inline self-review.** Scan staged Plan-file changes for: (a) Status transitions violating the state machine (e.g., `complete → in_progress` without user action), (b) writeback bodies still containing placeholder tokens (`<!-- implement: pending -->`, `TBD`, `TODO`), (c) Status values outside the canonical lifecycle set. Findings stop the batch.
 11. **Emit `implement.batch-started`** (already done on step 3 — confirm payload was emitted: Plan slug, batch number, task numbers, dispatched count).
 12. **Present consolidated diff.** User-facing message contains: per-task status summary (including any `DONE_WITH_CONCERNS` concerns or `BLOCKED` reports), the staged diff (or per-file summary if very large), and the proposed commit-message template with mandatory `Verifies:` trailer listing every AC ID covered by **successful** tasks (DONE / DONE_WITH_CONCERNS only; BLOCKED tasks' ACs NOT included). This consolidated diff is the artifact the `implementation.pre_commit` gate (step 13) reviews; when that gate includes a `type: human` reviewer the message also carries the explicit approval instruction the human responds to (when the gate is `auto-approve`/`deterministic`-only, no approval prompt is needed). Also state that publication policy will be resolved at the checkpoint and may leave the change unstaged, stage it, commit it, or commit and push it.
 13. **`implementation.pre_commit` gate (before the commit).** Approval is gate-config-driven — the skill carries no hardcoded per-batch user-approval step. Fire the `implementation.pre_commit` gate-point event ([events.md](../shared/events.md), multi-fire — once per commit) and evaluate `gates.implementation.pre_commit`: load + validate the gate's reviewer list via [reviewer-gates/loader.md](../shared/reviewer-gates/loader.md) (event key `implementation.pre_commit`), then run it via [reviewer-gates/runner.md](../shared/reviewer-gates/runner.md). The consolidated staged diff is the artifact under review; a `type: human` reviewer, if configured, reviews that diff and the runner uses this skill's existing approval-phrase recognizer (`approve`/`approved`/`accept`/`accepted`/`lgtm` or semantic equivalents → `Approved`; a vague positive like `looks good`/`ship it`/`🚀` → ask one explicit confirmation question, never silently advance; an explicit change request → `Issues Found`). Proceed to step 14 **only when the gate releases (`Approved`)**. On `Issues Found`: block the commit, surface the gate's `Blocker` findings to the user, and do not advance. With a `auto-approve`/`deterministic`-only gate (no `type: human`) the gate releases autonomously and the commit happens with no human prompt; with a `type: human` reviewer the skill stops for that human before committing. Because `implementation.pre_commit` is multi-fire, each commit is an independent gate evaluation (a fresh first-pass run per the runner's per-occurrence contract). The boundary at which commits are produced (per-task / per-batch / per-plan) is resolved per the `autonomy:` namespace — see [Commit Cadence and the `autonomy:` Namespace](#commit-cadence-and-the-autonomy-namespace) — not here.
@@ -122,7 +122,7 @@ Create a task for each and complete in order:
 15. **Emit `implement.batch-completed`.** Payload: Plan slug, batch number, task numbers, commit SHA when one exists (from `git rev-parse HEAD` after the user commit or policy-created commit), `Verifies:` AC IDs covered, and `publication_result`.
 16. **Emit `plan.updated`.** Apply publication policy for `plan.updated` only to any Plan-file changes not already included in the batch milestone, then emit with `publication_result`. Payload's `changed_sections` lists every task slug whose Status or body changed in this batch. `change_summary` factual, ≤2 sentences.
 17. **Loop back to step 2.** Compute next batch; if none, transition.
-18. **Final transition.** When all tasks `**Status:** done`: re-run `specscore spec lint --fix` so the Plan's execution-band `**Status:**` is derived to `Implemented` from the all-done task rollup (the skill does not hand-write the band — see 4b), emit `plan.updated`, hand off to `specstudio:verify` (or, if `verify` is unshipped, recommend the user run their project's test/Rehearse suite manually).
+18. **Final transition.** When all tasks `**Status:** complete`: re-run `specscore spec lint --fix` so the Plan's execution-band `**Status:**` is derived to `Implemented` from the all-complete task rollup (the skill does not hand-write the band — see 4b), emit `plan.updated`, hand off to `specstudio:verify` (or, if `verify` is unshipped, recommend the user run their project's test/Rehearse suite manually).
 19. **Throughout** — watch for sidekick ideas. When an out-of-scope improvement surfaces (e.g., a Feature change, a refactoring opportunity), invoke `specstudio:sidekick` with a one-liner, acknowledge in one line, and return to the current checklist step. Do not derail.
 
 ## Subagent Contract
@@ -154,9 +154,9 @@ c. **Inference-and-summary instruction.** "Infer your implementation approach fr
 
 | Status | Meaning | Parent skill behavior |
 |---|---|---|
-| `DONE` | Task complete, changes staged, no concerns | Keep staged; mark Plan `**Status:** done`; include in batch commit |
-| `DONE_WITH_CONCERNS` | Task complete + staged, but subagent flagged observations (e.g., "this file is getting large") | Keep staged; mark Plan `**Status:** done`; surface concerns to user in consolidated diff |
-| `NEEDS_CONTEXT` | Subagent needs information not provided | Re-dispatch this subagent with augmented context; siblings unaffected; Plan Status stays `in-progress` |
+| `DONE` | Task complete, changes staged, no concerns | Keep staged; mark Plan `**Status:** complete`; include in batch commit |
+| `DONE_WITH_CONCERNS` | Task complete + staged, but subagent flagged observations (e.g., "this file is getting large") | Keep staged; mark Plan `**Status:** complete`; surface concerns to user in consolidated diff |
+| `NEEDS_CONTEXT` | Subagent needs information not provided | Re-dispatch this subagent with augmented context; siblings unaffected; Plan Status stays `in_progress` |
 | `BLOCKED` | Subagent cannot complete the task as specified (cites specific cause) | Surface to user with full report; offer revise-Feature / mark-blocked / abort; do NOT silently retry |
 
 ## Max Parallel
@@ -193,7 +193,7 @@ The resolved cadence determines how many commits a run produces, and `implementa
 
 1. Surface to user: offending task numbers, file path, overlapping line range.
 2. Offer three resolutions: (a) rewrite Plan with explicit `**Depends-On:**` that serializes the conflicting tasks, (b) manual `git restore --staged <path>` + re-run, (c) abort and investigate.
-3. On (a) or (c): unstage ALL batch changes (`git restore --staged` per touched file), revert each task's `**Status:** in-progress → pending` (or → `blocked` if conflict implies a missing dependency), stop.
+3. On (a) or (c): unstage ALL batch changes (`git restore --staged` per touched file), revert each task's `**Status:** in_progress → planning` (or → `blocked` if conflict implies a missing dependency), stop.
 
 **Mixed terminal statuses are NOT conflicts.** A batch where 3 subagents are DONE and 2 are BLOCKED is a partial success: present the 3 DONE subagents' diff, run it through the `implementation.pre_commit` gate, and commit on release, mark the 2 BLOCKED tasks `**Status:** blocked` (with cited causes), advance. Atomic-rollback semantics apply only to *line-overlap conflicts*, not to mixed-terminal batches. (A BLOCKED subagent is also an anomaly-halt trigger — see [Anomaly Halts and Re-arm](#anomaly-halts-and-re-arm).)
 
@@ -289,10 +289,13 @@ The skill MUST NOT enforce the user's actual commit message format (that's the u
 
 | When | Transition | Apply in postures |
 |---|---|---|
-| Subagent dispatched | `pending → in-progress` | both |
-| Subagent returns `DONE` or `DONE_WITH_CONCERNS` | `in-progress → done` | both |
-| Subagent returns `BLOCKED` (user defers) | `in-progress → blocked` | both |
-| User manually resolves a `blocked` task | (user edit) `blocked → pending` | both |
+| Task's `**Depends-On:**` predecessors all `complete` (becomes batch-eligible) | `planning → queued` | both |
+| Subagent dispatched | `queued → in_progress` | both |
+| Subagent returns `DONE` or `DONE_WITH_CONCERNS` | `in_progress → complete` | both |
+| Subagent returns `BLOCKED` (user defers) | `in_progress → blocked` | both |
+| User manually resolves a `blocked` task | (user edit) `blocked → planning` | both |
+
+The canonical task-status lifecycle is `planning → queued → in_progress → complete`, with `blocked`/`failed`/`aborted` as the other available terminal/interrupt outcomes. The full vocabulary is `{planning, queued, in_progress, blocked, complete, failed, aborted}`.
 
 `**Status:**` writes apply identically to `full` and `stub` Plans. The body-writeback exclusion in `full` mode is specifically about task bodies, not about Status.
 
@@ -316,9 +319,9 @@ After every batch's staging phase, before presenting the consolidated diff to th
 1. **Lint.** Run `specscore spec lint`. On failure: run `specscore spec lint --fix` exactly **once**, re-lint. If still failing: unstage Plan-file changes (`git restore --staged spec/plans/<slug>.md`), surface remaining violations with rule IDs, stop the batch. The skill MUST NOT loop `--fix`.
 
 2. **Inline self-review.** Scan staged Plan-file changes for:
-   - State-machine-violating Status transitions (e.g., `done → in-progress` without explicit user action).
+   - State-machine-violating Status transitions (e.g., `complete → in_progress` without explicit user action).
    - Writeback bodies still containing placeholder tokens (`<!-- implement: pending -->`, `TBD`, `TODO`).
-   - Status values outside the canonical four-token set `{pending, in-progress, done, blocked}`.
+   - Status values outside the canonical lifecycle set `{planning, queued, in_progress, blocked, complete, failed, aborted}`.
 
 Findings stop the batch and prompt the user — never auto-fix beyond the one `--fix` pass above.
 
@@ -351,9 +354,9 @@ The next skill is `specstudio:verify`, and only `specstudio:verify`.
 
 #### Transition
 
-When all tasks reach `**Status:** done` (no more eligible batches AND no pending/blocked tasks):
+When all tasks reach `**Status:** complete` (no more eligible batches AND no planning/queued/blocked tasks):
 
-1. Re-run `specscore spec lint --fix` so the Plan's execution-band `**Status:**` is derived to `Implemented` from the all-done task rollup. The skill does not hand-write the band (see Checklist step 4b).
+1. Re-run `specscore spec lint --fix` so the Plan's execution-band `**Status:**` is derived to `Implemented` from the all-complete task rollup. The skill does not hand-write the band (see Checklist step 4b).
 2. Add CLI-reported `touched_paths` to the final checkpoint manifest.
 3. Re-run lint.
 4. Apply publication policy for `plan.updated`, preserving manifest and branch safety.
@@ -389,7 +392,7 @@ The skill MUST NOT yes-machine weak Plans or silently retry blocked subagents. W
 - [ ] After an anomaly-halt, autonomous execution resumed only on an explicit `continue` re-arm, scoped to the current run
 - [ ] At a `pre_push` gate with a `type: human` reviewer, the cumulative set of run commits (consolidated diff, or per-commit summary when large) was presented — not just the final commit
 - [ ] Approved staged set was committed before the next batch dispatched, either by the user or by policy-created commit after the `implementation.pre_commit` gate released
-- [ ] Plan `**Status:**` field updated correctly per the state machine (no fifth tokens; no auto-fix violating the canonical four-token set)
+- [ ] Plan `**Status:**` field updated correctly per the state machine (no out-of-vocabulary tokens; no auto-fix violating the canonical lifecycle set `{planning, queued, in_progress, blocked, complete, failed, aborted}`)
 - [ ] In `stub` mode: every successful task's placeholder body replaced with a SHA-free 1–2 sentence summary; bundled with code in one staging set
 - [ ] In `full` mode: NO task body modified by the skill (only Status writes)
 - [ ] `specscore spec lint` passes after every batch (auto-recovery via `--fix` attempted at most once on initial failure)
@@ -413,7 +416,7 @@ The skill MUST NOT yes-machine weak Plans or silently retry blocked subagents. W
 - Placing autonomy knobs under a workflow-step top-level key (e.g., `implement:`) instead of `autonomy.implement.*`
 - Auto-advancing past a `BLOCKED` subagent without surfacing to the user
 - Silently retrying a `BLOCKED` task without user resolution
-- Introducing a fifth `**Status:**` token (anything outside `{pending, in-progress, done, blocked}`)
+- Introducing an out-of-vocabulary `**Status:**` token (anything outside `{planning, queued, in_progress, blocked, complete, failed, aborted}`)
 - Writeback body that references a commit SHA (the SHA doesn't exist at writeback time; linkage lives in the event payload)
 - Body writeback applied to a `full`-mode Plan (writeback is stub-only)
 - Atomic rollback applied to a mixed-terminal batch (rollback is for conflicts only)
@@ -421,7 +424,7 @@ The skill MUST NOT yes-machine weak Plans or silently retry blocked subagents. W
 - Dispatching a code-quality reviewer subagent inside the loop (deferred to `specstudio:review`)
 - Auto-switching the Plan's `**Mode:**` (posture is one-way; user creates a successor Plan)
 - Looping `specscore spec lint --fix` more than once
-- Speculating about user intent in `change_summary` ("User chose...", "Important changes...") instead of factual ("Tasks 3, 5 transitioned to done; task 5 body journaled.")
+- Speculating about user intent in `change_summary` ("User chose...", "Important changes...") instead of factual ("Tasks 3, 5 transitioned to complete; task 5 body journaled.")
 - Using batch dispatch or task-status writes in Feature-sourced or Idea-sourced mode (single-pass only)
 - Using `Verifies: idea:<slug>` when a Feature exists (use Feature AC IDs instead)
 - Using Feature AC IDs when only an Idea exists (use `Verifies: idea:<slug>` instead)
