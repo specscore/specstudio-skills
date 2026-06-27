@@ -22,7 +22,7 @@ The dependency graph (declared via `**Depends-On:**`) yields four execution batc
 ### Task 1: Gate-config loader and load-time validator
 
 **Verifies:** reviewer-gates#ac:gates-block-preserved, reviewer-gates#ac:untyped-entry-refused, reviewer-gates#ac:unknown-type-refused, reviewer-gates#ac:ai-entry-shape-violations-refused, reviewer-gates#ac:human-entry-min-approvers-cap, reviewer-gates#ac:human-entry-rejects-prompt, reviewer-gates#ac:missing-gates-block-refuses-with-error
-**Status:** done
+**Status:** complete
 **Depends-On:** —
 
 Implement a shared gate-config loader that reads `gates.<skill>.reviewers` from `specscore.yaml` and validates every entry per the Feature's REQs: `reviewer-entry-required-fields` (name + type required), `mvp-type-set` (`{ai, human}` only), `ai-entry-shape` (prompt inside repo working tree + documented blocker/advisory taxonomy), `human-entry-shape` (no prompt, `min_approvers: 1` cap), `no-untyped-entry`. On any violation the loader refuses with a clear error pointing at this Feature, dispatches nothing, exits non-zero. Also handles the three missing/empty states from `missing-gates-block-refuses` (no `gates:` key, no sub-key, empty `reviewers: []`). The loader's output is a validated, ordered reviewer-entry list ready for the runner (Task 2).
@@ -30,7 +30,7 @@ Implement a shared gate-config loader that reads `gates.<skill>.reviewers` from 
 ### Task 2: Gate runner — serial dispatch, AND composition with halt-after-first-failure, rerun policy
 
 **Verifies:** reviewer-gates#ac:serial-dispatch-observed, reviewer-gates#ac:and-composition-blocks-on-any-issues-found, reviewer-gates#ac:rerun-policy-applies-on-structural-fix
-**Status:** done
+**Status:** complete
 **Depends-On:** 1
 
 Implement the gate runner that consumes Task 1's validated reviewer list and executes the dispatch loop: one reviewer at a time in list order, never concurrent, halt-after-first-`Issues Found` within a pass (per the tightened `and-composition` REQ). `type: ai` entries dispatch via the consumer skill's Agent tool with the prompt file as system prompt; `type: human` entries dispatch via the existing approval-phrase recognizer used by `ideate`/`specify`. Aggregate verdicts under AND; surface the first `Issues Found` finding to the user; never silently downgrade Blocker to Advisory. Implement the rerun-policy: on `Issues Found`, after the user's fix re-dispatch every reviewer that previously returned `Issues Found`, AND every reviewer that previously returned `Approved` if the fix touched a structural section (`## Behavior`, `## Architecture`, `## Acceptance Criteria` for Feature artifacts). **Test-harness for `serial-dispatch-observed`:** use a mocked Agent-tool spy that records dispatch start/end timestamps per reviewer entry, then asserts (a) no two start/end intervals overlap, and (b) start order equals registry order — matches the AC's literal "instrumentation that records dispatch start/end timestamps" language and rules out the looser list-order-only reading. Also add a code comment confirming the per-artifact-type extension story for `rerun-policy` (currently scoped to Feature artifacts; other artifact types use their spec's structurally-load-bearing sections).
@@ -38,7 +38,7 @@ Implement the gate runner that consumes Task 1's validated reviewer list and exe
 ### Task 3: Wire `specstudio:specify` to consume `gates.specify`
 
 **Verifies:** reviewer-gates#ac:specify-loads-gate-not-builtin
-**Status:** done
+**Status:** complete
 **Depends-On:** 1, 2
 
 Modify `skills/specify/SKILL.md` to resolve its reviewer list exclusively from `gates.specify.reviewers` via Task 1's loader and dispatch via Task 2's runner. Remove the hardcoded baseline-reviewer dispatch from the skill body. Remove the separate "User Review Gate" step — the user-approval phrase is now collected via a `type: human` entry in the gate's reviewer list. The existing reviewer prompt at `skills/specify/references/reviewer-prompt.md` stays in place; it is referenced by a `type: ai` entry users add to their own `specscore.yaml`. Update this repo's `specscore.yaml` with a minimal `gates.specify` config that registers the baseline-reviewer entry + a human entry, so dogfooding this Plan's own subsequent `plan.updated` cycles keeps working.
@@ -46,7 +46,7 @@ Modify `skills/specify/SKILL.md` to resolve its reviewer list exclusively from `
 ### Task 4: Revise `third-party-integration` — carve out the Reviewer shape
 
 **Verifies:** reviewer-gates#ac:third-party-integration-revised
-**Status:** done
+**Status:** complete
 **Depends-On:** —
 
 Edit `spec/features/third-party-integration/README.md` in place: (a) remove the six REQs `reviewer-registration-mechanism`, `reviewer-registry-entry-shape`, `reviewer-prompt-location`, `reviewer-contract`, `reviewer-composition`, `reviewer-no-canonical-writes`; (b) remove the AC `reviewer-registration-and-composition`; (c) remove the `### Reviewer shape` section and all references to `reviewers:` in `specscore.yaml`; (d) add a row to the `## Interaction with Other Features` table pointing at `reviewer-gates`; (e) remove the `spec/reviewers/<name>/` row from the path table. Confirm `specscore spec lint` passes after the edit; the Producer + Capability shapes and the snippet-versioning AC remain intact.
@@ -54,7 +54,7 @@ Edit `spec/features/third-party-integration/README.md` in place: (a) remove the 
 ### Task 5: Revise the `specify` Feature — remove legacy reviewer REQs and collapse the gate topics
 
 **Verifies:** reviewer-gates#ac:specify-feature-revised
-**Status:** done
+**Status:** complete
 **Depends-On:** —
 
 Edit `spec/features/skills/specify/README.md` in place: (a) remove the five REQs `reviewer-subagent-required`, `reviewer-baseline-blockers`, `reviewer-extension-hook`, `reviewer-composition`, `user-approval-required`; (b) remove or replace the dependent ACs — at minimum replace `reviewer-then-user` with a single new AC that asserts `gates.specify` consumption; (c) collapse the two topic sections `### Reviewer subagent gate` and `### User Review Gate` into one `### Reviewer gate` topic that delegates to the `reviewer-gates` Feature via a link. All other REQs and ACs in `specify` remain unchanged. Confirm `specscore spec lint` passes.
@@ -62,7 +62,7 @@ Edit `spec/features/skills/specify/README.md` in place: (a) remove the five REQs
 ### Task 6: Archive the draft `review` Feature
 
 **Verifies:** reviewer-gates#ac:review-feature-archived
-**Status:** done
+**Status:** complete
 **Depends-On:** —
 
 Transition `spec/features/skills/review/README.md` to `**Status:** Archived` via `specscore feature change-status review --to=archived` (or equivalent in-place edit if the CLI requires it for a Draft Feature). Add `**Archive Reason:** Superseded by reviewer-gates — reviews are stage-internal under each producer's gate; no standalone review skill is required.` Confirm `specscore spec lint` passes. No replacement skill is created.
@@ -70,7 +70,7 @@ Transition `spec/features/skills/review/README.md` to `**Status:** Archived` via
 ### Task 7: Wire visibility links — root `README.md`, skill docs, features index
 
 **Verifies:** reviewer-gates#ac:root-readme-link-present, reviewer-gates#ac:skill-doc-cross-links-present
-**Status:** done
+**Status:** complete
 **Depends-On:** 5
 
 Edit four files: (1) repo-root `README.md` — add at least one link whose href resolves to `spec/features/reviewer-gates/README.md`, and update the pipeline-overview sentence to remove the standalone `review` step (since reviews become stage-internal). (2) `skills/specify/SKILL.md` — add at least one link to the `reviewer-gates` Feature in its reviewer-dispatch section. (3) `spec/features/skills/specify/README.md` — add at least one link to the `reviewer-gates` Feature (likely in the new `### Reviewer gate` topic written in Task 5; coordinate to avoid duplicate linking). (4) `spec/features/README.md` — verify the existing index row for `reviewer-gates` (added when this Feature was approved) has a one-line description; if not, edit to include one. Confirm `specscore spec lint` passes.
@@ -78,7 +78,7 @@ Edit four files: (1) repo-root `README.md` — add at least one link whose href 
 ### Task 8: Grade increment — grade-as-verdict-currency
 
 **Verifies:** reviewer-gates#ac:grade-band-by-blocker-count, reviewer-gates#ac:threshold-default-reproduces-today, reviewer-gates#ac:threshold-resolution-order, reviewer-gates#ac:invalid-threshold-refused, reviewer-gates#ac:lenient-threshold-tolerates-blocker, reviewer-gates#ac:worst-wins-union-across-reviewers, reviewer-gates#ac:within-band-letter-derivation, reviewer-gates#ac:ba-lens-problem-traceability-blocker, reviewer-gates#ac:grade-recorded-on-release
-**Status:** done
+**Status:** complete
 **Depends-On:** 2
 
 The grade increment added by the grade-as-verdict-currency revision (see the Feature's `### Grade and threshold` topic and `spec/research/reviewer-gates-grade-design.md`). It is a distinct, later implementation pass and is **not** part of the original Batches 1–4 — it begins only after the binary gate (Tasks 1–7) is shipped. Scope: (a) extend the gate runner (Task 2) to compute an A–F grade from the worst-wins union of `Blocker` findings across reviewers and lenses, mapping count→band (`C`=1, `D`=2–3, `F`=4+) and zero-Blocker→pass band (`A`/`B` by within-band judgment) per `grade-band-mapping` and `grade-aggregation`; (b) resolve the Approve threshold per `threshold-config` (per-stage `gates.<stage>.threshold` → top-level `grade.threshold` → default `B`) and validate it at load time per Task 1's loader, deriving the verdict `Approved` iff `grade ≥ threshold` per `threshold-derived-verdict`; (c) author the multi-role reviewer prompt (BA/dev/QA lenses, per-lens sub-assessment, within-band letter, and the BA problem→requirements traceability `Blocker` category) per `multi-role-reviewer`. Test via fixtures: blocker-count→grade mapping, default-threshold migration parity, threshold resolution order, invalid-threshold refusal, lenient-threshold release, worst-wins union, and a mocked multi-role reviewer that emits the BA traceability Blocker. The judgment-quality portion of `ba-lens-problem-traceability-blocker` is validated at the assumption layer, not as a deterministic fixture.
@@ -88,7 +88,7 @@ Implementation status (done): the protocol/prose changes are complete — `skill
 ### Task 9: Event-keyed gates revision
 
 **Verifies:** reviewer-gates#ac:legacy-command-key-rejected, reviewer-gates#ac:deterministic-verdict-from-exit, reviewer-gates#ac:auto-approve-always-approves, reviewer-gates#ac:pre-commit-gate-fires-per-occurrence
-**Status:** done
+**Status:** complete
 **Depends-On:** 1, 2
 
 Implements the event-keyed revision of the contract added after the original MVP shipped: migrate gate keys from command names to events (`gates.feature.approved`, plus the gate-point events `implementation.pre_commit` / `implementation.pre_push`), reject legacy command-keyed gates with a migration error, and add the `deterministic` (tool-backed; verdict derived from exit code, diagnostics captured as `Blocker`s) and `auto-approve` (always-approve placeholder) reviewer types in the loader/validator (Task 1) and the gate runner (Task 2). Register the gate-point events `implementation.pre_commit` / `implementation.pre_push` in the canonical `skills/shared/events.md` catalog (currently only lifecycle events are listed). Evaluate multi-occurrence gate-point events independently per occurrence (no single-shot caching). Test via fixtures: legacy-command-key rejection, deterministic exit-code→verdict mapping, auto-approve always-approves, and per-occurrence multi-fire of `implementation.pre_commit`. Wiring an actual `implement` run to *fire* these gate-points is a downstream Feature (the implement-autonomy layer), not this task.
@@ -96,14 +96,14 @@ Implements the event-keyed revision of the contract added after the original MVP
 ### Task 10: Optional `when:` branch-pattern gate-entry condition
 
 **Verifies:** reviewer-gates#ac:when-condition-masks-by-branch
-**Status:** done
+**Status:** complete
 **Depends-On:** 1, 2, 9
 
 Add the optional `when: "branch =~ <anchored-regex>"` field to a gate reviewer entry (any type): present means the entry participates only if the current branch matches the anchored regex; absent means it always participates. Pin the match grammar as anchored regex (no glob alternative) in the `reviewer-gates` Feature so the gates layer and the autonomy layer share one dialect. The loader (Task 1, Step 3-when) validates the `branch =~ <regex>` shape, allows `when:` alongside each type's recognized fields, and carries it through to the normalized record; the runner (Task 2, Step 1.5) resolves the current branch and masks the dispatch set so a non-matching entry is neither dispatched nor counted toward the verdict. This is the home for per-branch autonomy masks consumed by the [approval-autonomy](../features/approval-autonomy/README.md) Feature (its `branch-mask-via-gate-when` REQ).
 
 ### Task 11: Optional reviewer `name:` — default to `type:`, refuse duplicate effective names
 
-**Status:** done
+**Status:** complete
 **Depends-On:** 1
 
 **Verifies:** reviewer-gates#ac:name-defaults-to-type, reviewer-gates#ac:duplicate-effective-name-refused

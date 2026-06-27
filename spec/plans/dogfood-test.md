@@ -25,7 +25,7 @@ The Plan does not depend on any cross-task file overlap, so the post-batch confl
 ### Task 1: Create CONTRIBUTING.md
 
 **Verifies:** dogfood-test#ac:contributing-doc-exists
-**Status:** done
+**Status:** complete
 **Depends-On:** —
 
 Create a new file `CONTRIBUTING.md` at repo root with a top-level `# Contributing` heading, an `## Overview` H2 section briefly explaining the SpecScore Studio contribution model (one-paragraph), and a `## Development workflow` H2 section listing the lifecycle skills (`ideate ⇒ specify ⇒ plan ⇒ implement ⇒ verify ⇒ recap ⇒ review ⇒ ship`) and pointing readers at `PRINCIPLES.md` and `skills/shared/philosophy.md` as required reading.
@@ -33,7 +33,7 @@ Create a new file `CONTRIBUTING.md` at repo root with a top-level `# Contributin
 ### Task 2: Create CHANGELOG.md
 
 **Verifies:** dogfood-test#ac:changelog-doc-exists
-**Status:** done
+**Status:** complete
 **Depends-On:** —
 
 Create a new file `CHANGELOG.md` at repo root with a top-level `# Changelog` heading and a `## 0.0.5` H2 section summarizing this session's user-visible changes: PRINCIPLES.md added, plan Feature revised (Mode/Status/Depends-On), implement skill shipped. One-sentence bullets per item; no version comparison links yet (Keep-a-Changelog format is overkill for v0.0.5).
@@ -41,7 +41,7 @@ Create a new file `CHANGELOG.md` at repo root with a top-level `# Changelog` hea
 ### Task 3: Add Contributing section to README
 
 **Verifies:** dogfood-test#ac:readme-cross-references-both
-**Status:** done
+**Status:** complete
 **Depends-On:** 1, 2
 
 Add a new `## Contributing` H2 section to root `README.md`, placed after the existing `## Status` section and before the `## License` section. Body text: one paragraph linking to both `CONTRIBUTING.md` (for the contribution workflow) and `CHANGELOG.md` (for release history) via relative markdown links. Keep it brief — a discoverability pointer, not a manifesto.

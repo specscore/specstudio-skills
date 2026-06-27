@@ -20,7 +20,7 @@ Order is linear and dependency-respecting. Tasks 1–2 are in-place revisions to
 ### Task 1: Add the `when:` branch-pattern gate-entry condition to reviewer-gates
 
 **Verifies:** approval-autonomy#ac:branch-mask-as-gate-when
-**Status:** done
+**Status:** complete
 **Depends-On:** —
 
 Revise the `reviewer-gates` Feature and its loader/runner in place to add an optional `when: <branch-pattern>` field on a gate reviewer entry: when present, the entry participates in the gate only if the current branch matches; when absent, it always participates. Pin the match grammar (regex vs glob) in `reviewer-gates` so both layers agree. This is the home for per-branch autonomy masks.
@@ -28,7 +28,7 @@ Revise the `reviewer-gates` Feature and its loader/runner in place to add an opt
 ### Task 2: Reconcile current-branch protected-branch confirmation to gate-at-promote (Option B)
 
 **Verifies:** approval-autonomy#ac:current-branch-reconciled
-**Status:** done
+**Status:** complete
 **Depends-On:** —
 
 Revise `implement-execution-topology/current-branch` in place so REQ `protected-branch-commit-confirmation` no longer requires human confirmation before committing onto a protected branch; the protected-branch checkpoint moves to promote/push (`implementation.pre_push` + publication-policy push-safety). Preserve the clean-tree precondition and pre-run revert ref.
@@ -36,7 +36,7 @@ Revise `implement-execution-topology/current-branch` in place so REQ `protected-
 ### Task 3: Fire the gate-point events from implement (no hardcoded approval)
 
 **Verifies:** approval-autonomy#ac:fires-pre-commit-and-pre-push, approval-autonomy#ac:no-hardcoded-approval
-**Status:** done
+**Status:** complete
 **Depends-On:** 1, 2
 
 Wire `implement` to fire `implementation.pre_commit` before each commit and `implementation.pre_push` before promote, proceeding only when the gate releases. Remove any hardcoded per-batch user-approval step: the per-batch human checkpoint exists iff a `type: human` reviewer is configured on `pre_commit`. Depends on the gate-point events existing (reviewer-gates Task 9).
@@ -44,7 +44,7 @@ Wire `implement` to fire `implementation.pre_commit` before each commit and `imp
 ### Task 4: Commit cadence + autonomy config namespace
 
 **Verifies:** approval-autonomy#ac:cadence-default-and-config, approval-autonomy#ac:pre-commit-fires-per-commit, approval-autonomy#ac:config-under-autonomy-namespace
-**Status:** done
+**Status:** complete
 **Depends-On:** 3
 
 Resolve `autonomy.implement.commit_cadence` (`task`/`batch`/`plan`, default `batch`) across the publication-policy scope ladder, under a top-level `autonomy:` namespace (no workflow-step names at top level). Commit at the resolved boundary and fire `pre_commit` once per commit produced (multi-fire).
@@ -52,7 +52,7 @@ Resolve `autonomy.implement.commit_cadence` (`task`/`batch`/`plan`, default `bat
 ### Task 5: Anomaly-halts
 
 **Verifies:** approval-autonomy#ac:halts-on-each-anomaly, approval-autonomy#ac:halt-surfaces-cause-no-autoresolve
-**Status:** done
+**Status:** complete
 **Depends-On:** 3
 
 Halt the run on any of sibling merge conflict, BLOCKED subagent, lint failure unresolved after one `--fix`, or source-Feature drift — regardless of gate config — surfacing the specific cause and performing no auto-resolution.
@@ -60,7 +60,7 @@ Halt the run on any of sibling merge conflict, BLOCKED subagent, lint failure un
 ### Task 6: Explicit re-arm after a halt
 
 **Verifies:** approval-autonomy#ac:re-arm-required, approval-autonomy#ac:re-arm-scoped-to-run
-**Status:** done
+**Status:** complete
 **Depends-On:** 3
 
 Require an explicit re-arm signal before resuming autonomous execution after an anomaly-halt (no auto-resume); scope the re-armed state to the current run only.
@@ -68,7 +68,7 @@ Require an explicit re-arm signal before resuming autonomous execution after an 
 ### Task 7: Cumulative review at the push gate
 
 **Verifies:** approval-autonomy#ac:cumulative-review-presented
-**Status:** done
+**Status:** complete
 **Depends-On:** 3
 
 When `implement` fires `implementation.pre_push` and that gate has a `type: human` reviewer, present the cumulative set of commits accumulated during the run (commits + consolidated diff, or a per-commit summary when very large) as the reviewer's context.
@@ -76,7 +76,7 @@ When `implement` fires `implementation.pre_push` and that gate has a `type: huma
 ### Task 8: Preserve push branch-safety
 
 **Verifies:** approval-autonomy#ac:push-still-branch-safe
-**Status:** done
+**Status:** complete
 **Depends-On:** 3
 
 Route every promote/push through `change-publication-policy` push branch-safety (deny `main`/`master`/`release/*` by default); autonomy never bypasses it. A `deterministic` branch-safety reviewer on `pre_push` complements, not replaces, the publication-policy check.
