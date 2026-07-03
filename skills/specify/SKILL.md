@@ -282,6 +282,18 @@ If the user has `obra/superpowers` installed, we may reuse its browser-based vis
 - Hard-coding stage-only handoff behavior instead of resolving publication policy for `feature.specified` or `feature.approved`
 - Letting publication policy bypass the reviewer gate or the `type: human` approval entry
 
+## Autonomous Mode (decide-and-record)
+
+When a **run-scoped autonomy signal** is active (an autonomous run driven by `specstudio:autopilot` — see [autonomy-autopilot.md](../shared/autonomy-autopilot.md)), the clarifying/approach/section questions are **not** asked via `AskUserQuestion`. Instead, take the documented default and record it:
+
+- **Scope check:** proceed-not-decompose when the intent is single-scope (only a genuine multi-subsystem scope still stops, as an anomaly rather than a question).
+- **Approach proposal:** pick the **recommended** approach from the 2–3 proposal without prompting.
+- **Section review:** accept each spec section as drafted.
+- **Record the trail:** every auto-made choice is written as one bullet in a `## Autonomous Decisions` section on the Feature (H2 near the end; *what — alternatives — why the default*). Omit the section entirely when no decision was auto-made; keep the Feature lint-clean.
+- **The reviewer gate still runs.** Under autonomy the `type: human` entry on `gates.feature.approved` is masked by the reviewer-gates runner (Step 1.6), but the `type: ai` reviewer still dispatches and still blocks on `Issues Found`. Autonomy releases approval, never quality.
+
+Non-autonomous runs are unchanged — this branch only applies while the signal is active.
+
 ## References
 
 - [Reviewer Gates Feature](../../spec/features/reviewer-gates/README.md) — canonical typed-per-stage `gates:` schema, reviewer entry shape, AND-composition, and rerun policy.

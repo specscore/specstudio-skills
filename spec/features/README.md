@@ -27,6 +27,7 @@ Feature specifications for the SpecStudio plugin. This index lists every top-lev
 | [cli-detection-convention](cli-detection-convention/README.md) | Approved | One mechanism for skills to detect the specscore CLI — call and branch on exit code — with a per-skill-class response policy, plus a CLI-required artifact-creation mandate for producer skills (no embedded schemas; install-then-retry, no direct-write fallback). |
 | [seed-to-idea-promotion](seed-to-idea-promotion/README.md) | Approved | Promote a sidekick seed into a lint-clean Idea via a deterministic specscore idea promote verb (same-repo git mv + body transform + back-link reconcile; cross-repo keep+promoted), with a skill-side consilium-offer handshake for unreviewed manually-picked seeds. |
 | [detached-background-implement](detached-background-implement/README.md) | Approved | TODO: Add description. |
+| [autopilot](autopilot/README.md) | Approved | A thin orchestrator skill that drives an idea from any pipeline entry point (a cold raw prompt included) to one open MVP pull request, pausing only at a single Idea checkpoint and halting on genuine anomalies. |
 
 ### skills
 

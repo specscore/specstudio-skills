@@ -304,6 +304,16 @@ When the user wants to change an existing Plan:
 
 The skill MUST NOT silently delete or rewrite an existing Plan without the user's explicit choice between revise-in-place and supersede.
 
+## Autonomous Mode (decide-and-record)
+
+When a **run-scoped autonomy signal** is active (an autonomous run driven by `specstudio:autopilot` — see [autonomy-autopilot.md](../shared/autonomy-autopilot.md)), the task-breakdown and existing-plan questions are **not** asked via `AskUserQuestion`. Instead, take the documented default and record it:
+
+- **Existing-plan check:** revise-in-place. For a fresh plan, accept the generated task breakdown and deferred-AC set as computed.
+- **Record the trail:** every auto-made choice is written as one bullet in a `## Autonomous Decisions` section on the Plan (H2 near the end; *what — alternatives — why the default*). Omit the section when no decision was auto-made; keep the Plan lint-clean.
+- **Reviewer + coverage still enforced.** Under autonomy the User Review Gate's `type: human` approval is masked, but the baseline plan reviewer still runs and the P-001 AC-coverage contract still holds. Autonomy releases approval, never the coverage discipline.
+
+Non-autonomous runs are unchanged — this branch only applies while the signal is active.
+
 ## Tone
 
 The skill MUST NOT yes-machine weak Plans. When a task is vague, an AC is uncovered without justification, the task order violates a clear dependency, or the user asks to span multiple Features, say so with specificity and propose the alternative. Honest disagreement, not performative agreement.
