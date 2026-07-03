@@ -24,7 +24,7 @@ Bottom-up: establish the config namespace and the run-scoped autonomy signal fir
 
 **Verifies:** autopilot#ac:knobs-under-autonomy-autopilot
 **Depends-On:** —
-**Status:** planning
+**Status:** complete
 
 Define the `autonomy.autopilot` config block (`publish_ceiling` default `pr`, `confirm_idea` default `true`, `stop_on` including a non-removable `conflict`) and its defaults-when-absent resolution, and specify the run-scoped autonomy signal set on the `change-publication-policy` scope ladder at run scope (evaporating at run end). This is the shared foundation every later task reads.
 

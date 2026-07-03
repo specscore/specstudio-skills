@@ -53,3 +53,19 @@ gates:
 #   delegate:
 #     skill: commit-push-pr
 #     args: ""
+
+# autonomy: execution knobs for the autonomous run orchestrator (optional).
+# `autonomy.autopilot` tunes specstudio:autopilot; it is a sibling of
+# `autonomy.implement` (commit_cadence). All three knobs default when absent —
+# a repo with NO autonomy.autopilot block resolves exactly as shown below.
+# See skills/shared/autonomy-autopilot.md for the full contract. Values resolve
+# across the run → session → project → user scope ladder; the verbal trigger
+# ("do it autonomously") sets the run-scoped autonomy signal, which evaporates
+# at run end and overrides nothing durable.
+#
+# autonomy:
+#   autopilot:
+#     publish_ceiling: pr        # stage | commit | pr   (default: pr — commits + one PR)
+#     confirm_idea: true         # pause once to approve a run-created Idea (default: true)
+#     stop_on:                   # halts even under autonomy; `conflict` is non-removable
+#       - conflict
