@@ -13,6 +13,7 @@ Pre-spec one-pagers for SpecStudio. Each Idea is the output of `specstudio:ideat
 | Idea | Status | Date | Owner | Promotes To |
 |------|--------|------|-------|-------------|
 | [approval-autonomy](approval-autonomy.md) | Specified | 2026-06-02 | alexander.trakhimenok | approval-autonomy |
+| [autopilot](autopilot.md) | Specified | 2026-07-03 | alexander.trakhimenok | autopilot |
 | [autostage-lint-fix-modified-files](autostage-lint-fix-modified-files.md) | Specified | 2026-06-02 | alexander.trakhimenok | skills/lint-fix-staging |
 | [cli-detection-convention](cli-detection-convention.md) | Specified | 2026-06-03 | alexander.trakhimenok | cli-detection-convention |
 | [configurable-change-publication-policy](configurable-change-publication-policy.md) | Specifying | 2026-05-31 | alex | change-publication-policy |
