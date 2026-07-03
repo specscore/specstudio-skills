@@ -48,7 +48,7 @@ Add an "if the autonomy signal is active" branch to the clarifying-question step
 
 **Verifies:** autopilot#ac:enters-at-furthest-artifact, autopilot#ac:chains-producers-in-order, autopilot#ac:armed-once-for-run
 **Depends-On:** 1, 2, 3
-**Status:** planning
+**Status:** complete
 
 Author `skills/autopilot/SKILL.md`: entry-point detection (resolve the furthest-along artifact; refuse only an empty ask), in-order invocation of `ideate → specify → plan → implement → pull-request` advancing only on each stage's success, and single-arming (arm the run-scoped signal once; `implement` still inherits `approval-autonomy`'s post-anomaly re-arm). Reimplements no producer logic.
 
