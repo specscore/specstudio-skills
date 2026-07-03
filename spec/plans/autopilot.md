@@ -4,7 +4,7 @@ status: Approved
 ---
 # Plan: Autopilot
 
-**Status:** Approved
+**Status:** Implemented
 **Source Feature:** autopilot
 **Date:** 2026-07-03
 **Owner:** alex
@@ -56,7 +56,7 @@ Author `skills/autopilot/SKILL.md`: entry-point detection (resolve the furthest-
 
 **Verifies:** autopilot#ac:pauses-once-at-idea
 **Depends-On:** 4
-**Status:** planning
+**Status:** complete
 
 Implement the one human-approval stop: when the run auto-creates an Idea and `confirm_idea` is not `false`, pause once for explicit Idea approval before `specify`; skip the pause when `confirm_idea: false` or when the run enters at/after an already-Approved Idea.
 
@@ -64,7 +64,7 @@ Implement the one human-approval stop: when the run auto-creates an Idea and `co
 
 **Verifies:** autopilot#ac:ceiling-is-one-pr
 **Depends-On:** 4
-**Status:** planning
+**Status:** complete
 
 Wire the publish ceiling: commits land via the existing `implementation.pre_commit` gate, then invoke `specstudio:pull-request` exactly once to push the branch and open a single PR. Bar merge, deploy, `ship`, a second PR, and delegate retry.
 
@@ -72,7 +72,7 @@ Wire the publish ceiling: commits land via the existing `implementation.pre_comm
 
 **Verifies:** autopilot#ac:discloses-before-running, autopilot#ac:hands-back-pr-and-log
 **Depends-On:** 4
-**Status:** planning
+**Status:** complete
 
 Implement the single pre-run disclosure message (entry point, stages, gate-masking except the Idea checkpoint, decide-and-record, local-commit + one-PR ceiling) and the completion handback (artifact paths, commit SHAs, PR URL, aggregated Autonomous Decisions log), with no auto-invocation of `verify`/`ship`.
 

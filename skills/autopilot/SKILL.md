@@ -90,3 +90,54 @@ Autonomy masks *human approval*, never *quality*. Autopilot stops and hands back
 - a `stop_on` decision class fires (`conflict` is always in the set and not removable).
 
 On any halt, autopilot names the specific cause, performs no auto-resolution, and does not advance. The user fixes it and re-triggers (or issues `implement`'s `continue` re-arm for an implement-stage anomaly).
+
+## Idea Checkpoint (`confirm_idea`)
+
+When the run **auto-creates an Idea** (entry at or before the Idea stage), autopilot pauses **exactly once** — the single human-approval stop of an otherwise unbroken run. This is the cheapest, highest-leverage place to bound drift: a raw one-line prompt is the most ambiguous possible input, and a 30-second Idea read catches divergence before it propagates downstream.
+
+- **Default on.** With `autonomy.autopilot.confirm_idea` unset or `true`, after `ideate` crystallizes the Idea autopilot presents it and waits for explicit approval before invoking `specify`. The `idea.approved` human review gate is **not** masked at this checkpoint — it is deliberately preserved. Recognize approval with the standard explicit-approval phrase set; a vague positive gets one confirmation question.
+- **Opt-out.** With `confirm_idea: false`, the checkpoint is masked like every other human gate and the cold-start run is fully unbroken.
+- **Not applicable when the Idea pre-exists.** When the run enters at or after an **already-`Approved` Idea**, no checkpoint fires — the human already approved that Idea. The checkpoint is specifically for Ideas the run itself shaped.
+
+On explicit approval (or when `confirm_idea: false`), continue to `specify`. On a change request, fold it into the Idea and re-present — the run does not proceed past an unapproved run-created Idea.
+
+## Publish Ceiling
+
+Autopilot's ceiling is **local commits + exactly one pull request**, resolved from `autonomy.autopilot.publish_ceiling` (default `pr`):
+
+- Commits land during `implement` via the existing `implementation.pre_commit` gate (autonomous per `approval-autonomy`). `implementation.pre_push` is masked in the implement stage — the push happens once, at the PR stage.
+- After `implement` completes, autopilot invokes `specstudio:pull-request` **exactly once** to push the feature branch and open a single PR (built-in `git push` + `gh pr create`, or the project's configured `pull_request.delegate`). Its `pull_request.pre_dispatch` `type: human` entry is masked; a `type: deterministic` verify gate there is **not** masked and can still block.
+- `publish_ceiling: commit` stops after local commits (no PR); `publish_ceiling: stage` stops after staging.
+
+Autopilot MUST NOT merge, deploy, invoke `ship`, open more than one PR, or retry a failed PR delegate. The push safety floor (`main`/`master`/`release/*` denied by default) still applies — autonomy never weakens it.
+
+## Disclosure
+
+Before any stage runs, autopilot emits **one** disclosure message so the user knows exactly what the run will do unattended. It states:
+
+- the **resolved entry point** and the **stages** that will run;
+- that human-approval gates are **masked for the run**, *except* the single `confirm_idea` checkpoint (named explicitly);
+- that clarifying decisions will be **auto-made and recorded** to each artifact's decision log;
+- that the run will **commit locally and open one PR**, and will **not** merge or deploy.
+
+The disclosure is informational — it is not a per-stage approval prompt. The run proceeds immediately after it.
+
+## Handback
+
+On successful completion, autopilot hands back a single summary — the primary review surface, meant to be read first:
+
+- the **resolved entry point** and stages run;
+- the created **artifact paths** (Idea / Feature / Plan);
+- the local **commit SHAs**;
+- the opened **PR URL**;
+- the **aggregated Autonomous Decisions log** — every decide-and-record entry from every stage (Idea `## Key Assumptions` additions + Feature/Plan `## Autonomous Decisions`), collected in one place.
+
+Autopilot does **not** auto-invoke `specstudio:verify` or `specstudio:ship`; it MAY recommend the user run them next.
+
+## References
+
+- [autonomy-autopilot.md](../shared/autonomy-autopilot.md) — the `autonomy.autopilot` config namespace, the run-scoped autonomy signal, and the decide-and-record + `## Autonomous Decisions` contract.
+- [reviewer-gates/runner.md](../shared/reviewer-gates/runner.md) — Step 1.6, the run-scoped human-gate mask this skill arms.
+- [approval-autonomy Feature](../../spec/features/approval-autonomy/README.md) — the reused implement/plan gate layer, anomaly-halts, and `continue` re-arm.
+- [publication-policy.md](../shared/publication-policy.md) — the scope ladder the run-scoped signal sits on, and the push safety floor.
+- Producer skills: [ideate](../ideate/SKILL.md), [specify](../specify/SKILL.md), [plan](../plan/SKILL.md), [implement](../implement/SKILL.md), [pull-request](../pull-request/SKILL.md).
