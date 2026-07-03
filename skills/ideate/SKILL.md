@@ -356,6 +356,16 @@ Promotion bookkeeping (`**Promotes To:**`, `**Status:** Approved → Specified`)
 - `change_summary` longer than two sentences
 - Including `changed_sections` line numbers (consumers compute lines from `git diff <previous_revision>..<revision>` — payload carries section names only)
 
+## Autonomous Mode (decide-and-record)
+
+When a **run-scoped autonomy signal** is active (an autonomous run driven by `specstudio:autopilot` — see [autonomy-autopilot.md](../shared/autonomy-autopilot.md)), the Phase 1/Phase 2 clarifying questions are **not** asked via `AskUserQuestion`. Instead, take the documented default and record it:
+
+- **Divergent/convergent questions:** do not prompt. Choose the highest-conviction Recommended Direction, auto-fill MVP Scope / Not Doing / Key Assumptions, and resolve every `## Open Questions` item to a stated assumption in `## Key Assumptions` rather than surfacing the wizard.
+- **Record the trail:** each auto-made assumption is written into the Idea's `## Key Assumptions`, which is the Idea-stage home for the decide-and-record trail.
+- **The one stop that remains:** the `confirm_idea` checkpoint. Even under autonomy, a run-created Idea still stops once for approval at the User Review Gate unless `autonomy.autopilot.confirm_idea: false`. Decide-and-record replaces the *clarifying* questions, not that single approval.
+
+Non-autonomous runs are unchanged — this branch only applies while the signal is active.
+
 ## Tone
 
 Direct, thoughtful, slightly provocative. A sharp thinking partner, not a facilitator reading from a script.

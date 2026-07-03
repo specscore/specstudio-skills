@@ -32,7 +32,7 @@ Define the `autonomy.autopilot` config block (`publish_ceiling` default `pr`, `c
 
 **Verifies:** autopilot#ac:masks-human-entries-run-scoped, autopilot#ac:quality-gates-still-block
 **Depends-On:** 1
-**Status:** planning
+**Status:** complete
 
 Generalize the `skills/shared/reviewer-gates/runner.md` mask from branch-scoped (`when:`) to also honor the run-scoped autonomy signal from Task 1: a `type: human` entry is neither dispatched nor counted and the gate releases on its remaining entries. Mask only `type: human` entries — `type: ai`/`type: deterministic` reviewers, lint, and conflict detection still run and still block on `Issues Found`/non-zero/conflict.
 
@@ -40,7 +40,7 @@ Generalize the `skills/shared/reviewer-gates/runner.md` mask from branch-scoped 
 
 **Verifies:** autopilot#ac:auto-decides-without-asking, autopilot#ac:records-decisions-in-artifact
 **Depends-On:** 1
-**Status:** planning
+**Status:** complete
 
 Add an "if the autonomy signal is active" branch to the clarifying-question steps of `skills/ideate`, `skills/specify`, and `skills/plan` that selects each skill's documented default instead of calling `AskUserQuestion`, and define the lint-clean, omit-when-empty `## Autonomous Decisions` section (Feature/Plan) plus the Idea `## Key Assumptions` placement for recorded decisions.
 

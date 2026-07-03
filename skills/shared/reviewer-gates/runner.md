@@ -35,6 +35,7 @@ This runner implements the following REQs from the [reviewer-gates Feature](../.
 | Calling skill's approval-phrase recognizer | For `type: human` entries. The same recognizer used by `specstudio:ideate` and `specstudio:specify` for user-approval gates (`approve` / `approved` / `accept` / `accepted` / `lgtm` / direct semantic equivalents → `Approved`; explicit change requests → `Issues Found` with the user's text captured as a single `Blocker` finding). | Yes |
 | Resolved Approve threshold | The whole-letter threshold (`A`–`F`, default `B`) returned by [`loader.md`](./loader.md) Step 2.5. The gate releases iff `grade ≥ threshold`. | Yes |
 | Current branch name | The name of the branch the run is on (e.g., `main`, `feature/x`). Used only to evaluate entries that carry a `when:` branch condition (Step 1.5). When no entry in the list carries a `when:`, this input is unused. | Yes (when any entry carries `when:`) |
+| Run-scoped autonomy signal | Active / inactive (default inactive). When active — set by `specstudio:autopilot` at run scope — Step 1.6 masks every `type: human` entry for the duration of the run. When inactive, Step 1.6 is a no-op. | No (defaults to inactive) |
 | Previous-pass verdict map (rerun only) | A map of `<reviewer-name> → <last-verdict>` from the previous pass, used only when this is a rerun. On the first pass the map is empty. | Yes (may be empty) |
 | Structural-fix flag (rerun only) | Boolean. `true` when the user's fix between passes touched a structural section of the artifact under review (see Step 5 for what counts as structural per artifact type). On the first pass, this flag is unused. | Yes (may be `false`) |
 
@@ -79,7 +80,20 @@ Before evaluating any entry, mask the dispatch set by each entry's optional `whe
   - **Match** → the entry **participates**: keep it in the dispatch set in its declared position.
   - **No match** → the entry **does NOT participate**: remove it from the dispatch set for this pass. It is **neither dispatched nor counted toward the verdict** — it contributes no `Blocker` (and no `Approved`/`Issues Found` entry to the verdict map), exactly as if it were absent from the list on this branch. A `when:`-masked `type: human` entry that does not match therefore means the human is not asked, and the gate can release on its remaining (matching) entries alone.
 
-Masking does not reorder the surviving entries — their declared order is preserved into Step 2. The resulting `when:`-masked dispatch set is what Steps 2/2-det/2-auto-approve/2.9 evaluate. This is the home for per-branch autonomy masks (e.g., a `type: human` entry on `implementation.pre_commit` with `when: "branch =~ ^(main|master|release/)"` is asked before commit on `main` but not on a feature branch — the per-branch behavior comes entirely from the gate-entry `when:` condition).
+Masking does not reorder the surviving entries — their declared order is preserved into Step 2. The resulting `when:`-masked dispatch set is what Step 1.6 then narrows. This is the home for per-branch autonomy masks (e.g., a `type: human` entry on `implementation.pre_commit` with `when: "branch =~ ^(main|master|release/)"` is asked before commit on `main` but not on a feature branch — the per-branch behavior comes entirely from the gate-entry `when:` condition).
+
+### Step 1.6 — Apply the run-scoped autonomy mask
+
+The `when:` condition of Step 1.5 is a **branch-scoped** autonomy mask. The **run-scoped** autonomy signal is its sibling: where `when:` masks by branch, the run-scoped signal masks for the duration of one autonomous run (see [`../autonomy-autopilot.md`](../autonomy-autopilot.md)). Both are *the same masking mechanism* applied on a different axis — this step introduces **no new verdict type** and no new gate semantics.
+
+The runner takes an optional **run-scoped autonomy signal** input (active / inactive; default inactive, set by `specstudio:autopilot` at run scope). After Step 1.5, for each entry still in the dispatch set:
+
+- If the autonomy signal is **inactive**: no change — every surviving entry participates as Step 1.5 left it. (Non-autonomous runs behave exactly as before; this step is a no-op.)
+- If the autonomy signal is **active**: mask every **`type: human`** entry. A masked `type: human` entry **does NOT participate** — it is **neither dispatched nor counted toward the verdict**, contributing no `Blocker` and no `Approved`/`Issues Found` entry to the verdict map, exactly as a non-matching `when:` masks it in Step 1.5. The gate then releases on its remaining (`type: ai` / `type: deterministic` / `type: auto-approve`) entries alone.
+
+The run-scoped mask applies **only** to `type: human` entries. It MUST NOT mask `type: ai`, `type: deterministic`, or `type: auto-approve` entries — those still dispatch, still contribute to the grade, and still block the gate on `Issues Found` / non-zero. Autonomy releases *human approval*, never *quality gates*.
+
+The two masks **compose**: an entry is in the final dispatch set only if it survives both Step 1.5 (its `when:`, if any, matches the current branch) and Step 1.6 (it is not a `type: human` entry masked by an active autonomy signal). Masking does not reorder survivors — declared order is preserved. The resulting dispatch set is what Steps 2/2-det/2-auto-approve/2.9 evaluate.
 
 ### Step 2 — Automated phase: evaluate every automated reviewer (serial, no early-halt)
 
