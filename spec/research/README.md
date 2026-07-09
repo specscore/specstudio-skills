@@ -8,6 +8,7 @@ Long-form research notes informing SpecStudio's design. These are not Features �
 
 | Note | Topic |
 |------|-------|
+| [`studio-design-2026-07/`](studio-design-2026-07/README.md) | SpecScore Studio product design (19 deliverables): answer-layer vision, evidence model, IA, traceability, stack integration, wireframes, roadmap — Sneat ecosystem as the research dataset |
 | [competitors/](./competitors/README.md) | How SpecStudio skills sit alongside other SDD and agent-discipline tools (Spec Kit, Superpowers, agent-skills). Entry point for skill-layer competitive comparisons; competitor dossiers live underneath. |
 | [ideate-vs-brainstorming-skills-analysis.md](./ideate-vs-brainstorming-skills-analysis.md) | Deep comparison between `specstudio:ideate` / `specstudio:specify` and `obra/superpowers/brainstorming` — the upstream pattern this lifecycle was derived from |
 
