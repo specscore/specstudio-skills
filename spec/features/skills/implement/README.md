@@ -153,6 +153,26 @@ c. An explicit instruction that the subagent MUST infer its own implementation a
 
 The full task body verbatim is NOT included (it's a placeholder) — the subagent must derive its work from the ACs and the Plan's `## Approach`, not from a pre-authored body.
 
+### Source-symbol and executable-test links
+
+The commit `Verifies:` trailer records which AC motivated a change, but it cannot answer which current symbol implements a REQ or which current test verifies an AC. The implementation skill closes that durable traceability gap in the source itself.
+
+#### REQ: implementation-symbol-links
+
+For every REQ implemented by a task, the subagent prompt MUST instruct the agent to add `specscore:implements <canonical-specscore-url>#req:<slug>` immediately above the narrowest durable implementation symbol changed for that REQ. The agent MUST NOT bulk-link unchanged code outside the task scope. When no durable symbol can carry the annotation, the task report MUST name the concrete exception.
+
+#### REQ: executable-test-links
+
+For every executable test that directly verifies a task AC, the subagent prompt MUST instruct the agent to add `specscore:verifies <canonical-specscore-url>#ac:<slug>` immediately above that test symbol. A standalone REQ MAY be the target when no useful AC grouping exists. Documentation review, static analysis, and line coverage MUST NOT be represented as an executable-test link.
+
+#### REQ: suggestions-are-not-evidence
+
+When CodeGrapher or an agent proposes candidate code/REQ or test/AC pairs, the implementing agent MUST inspect each pair before adding its annotation. Suggested pairs MUST remain distinguishable from committed links and MUST NOT count as verification evidence by themselves.
+
+#### REQ: changed-scope-link-validation
+
+Before presenting a batch, the skill MUST validate SpecScore source references in the changed implementation and test scope with the installed SpecScore CLI. Invalid or dangling targets MUST stop the batch. If the installed CLI cannot parse typed relations, the skill MUST report the missing capability as a blocker and MUST NOT remove the links to make validation pass.
+
 ### Subagent status protocol (SDD-style)
 
 Each subagent returns one of four terminal statuses, derived from `superpowers:subagent-driven-development`.
@@ -377,6 +397,8 @@ The skill MUST NOT yes-machine weak Plans or silently retry blocked subagents. W
 |---|---|
 | [Plan Skill](../plan/README.md) | `implement` is the downstream consumer of `plan`. It consumes the approved Plan, parses the dependency graph from `**Depends-On:**`, dispatches per the graph, and writes back `**Status:**` (both postures) and task bodies (stub only). The `plan.approved` event triggers `implement` (with user confirmation). |
 | [Specify Skill](../specify/README.md) | `implement` reads the source Feature's `## Acceptance Criteria` section to construct subagent prompts. If the source Feature has drifted to `Draft` since Plan approval (`REQ:requires-approved-source-feature`), `implement` refuses to proceed and redirects to `specify`. |
+| [SpecScore Source References](https://github.com/specscore/specscore/tree/main/spec/features/source-references) | Defines the `implements`, `verifies`, and `references` relation grammar that implementation agents write. |
+| [CodeGrapher](https://github.com/code-grapher/codegrapher) | May suggest candidate symbol and test pairs and validate exact-revision backlinks; suggestions remain advisory until committed as source directives. |
 | [Verify Skill](../verify/README.md) | `implement` is the upstream gate of `verify`. `verify` runs the source Feature's Rehearse scenarios against the implemented code; `implement` never invokes `verify` itself — `transition-to-verify` is the explicit handoff. |
 | [Third-Party Integration](../../third-party-integration/README.md) | The `Verifies:` commit-message trailer is the lint-enforceable convention that `verify`, `recap`, and `review` all consume. Third-party tooling (commit hooks, dashboards) may also parse the trailer; the format is fixed by `REQ:trailer-format`. |
 | Synchestra Events | Emits `implement.batch-started`, `implement.batch-completed`, and `plan.updated`, all with change-context payloads. Consumers (including Hub and downstream skills) observe these to advance their own state. |
@@ -592,6 +614,24 @@ The skill MUST NOT yes-machine weak Plans or silently retry blocked subagents. W
 **Given** a master plan whose sub-plans have all reached terminal success and whose final task is the integration-and-tests phase,
 **When** the coordinator runs that final task and the cross-repo tests fail,
 **Then** the master plan is reported incomplete with the integration task surfaced as blocked, exactly like any other blocked task.
+
+### AC: implementation-and-test-links-staged (verifies REQ:implementation-symbol-links, REQ:executable-test-links)
+
+**Given** a task that implements `checkout#req:totals` and adds an executable test for `checkout#ac:discounted-total`,
+**When** its implementation agent stages the completed change,
+**Then** the narrowest durable implementation symbol carries an accepted `specscore:implements` link to the REQ and the executable test symbol carries an accepted `specscore:verifies` link to the AC. The commit's `Verifies:` trailer remains present as separate change-provenance evidence.
+
+### AC: inferred-pairs-reviewed (verifies REQ:suggestions-are-not-evidence)
+
+**Given** CodeGrapher or an agent suggests three possible code/REQ or test/AC pairs,
+**When** the implementation agent evaluates the candidates,
+**Then** only inspected and accepted pairs are committed as source directives, while rejected or uncertain candidates remain suggestions and do not satisfy traceability or verification completeness.
+
+### AC: changed-links-validated (verifies REQ:changed-scope-link-validation)
+
+**Given** a staged batch with typed source directives in changed implementation and test files,
+**When** the skill reaches its validation step,
+**Then** it validates only the changed source/test scope with the installed SpecScore CLI and stops on invalid or dangling targets. If typed relations are unsupported by that CLI, the skill reports the missing capability instead of deleting the directives or scanning the whole repository repeatedly.
 
 ## Open Questions
 
