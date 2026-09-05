@@ -9,12 +9,12 @@ description: |
   gate-config-driven (a `type: human` reviewer is the human
   checkpoint; a `auto-approve` gate commits autonomously). Applies
   publication policy at approved implementation
-  milestones; provides a Verifies: commit-message trailer template.
+  milestones; provides a Verifies: commit-message trailer template and
+  links implementation symbols to REQs and executable tests to ACs.
   Also accepts a Feature directly (no Plan) or an Idea directly
   (no Feature or Plan) for single-pass conversational implementation.
   Trigger: "implement", "/implement", "implement this plan",
   "specstudio:implement", or event `plan.approved`.
-aliases: [implement]
 ---
 
 # Implement
@@ -59,6 +59,7 @@ The only skill invoked after `specstudio:implement` is `specstudio:verify` (or �
    Refuse if no artifact matches or Status is outside the accepted set for its type.
 2. **Source-Feature validity.** Read the Plan's `**Source Feature:**`. Confirm the referenced Feature is at `spec/features/<feature-slug>/README.md` with `**Status:** ∈ {Approved, Implementing, Stable}`. On regression to Draft/In Review, stop and surface the drift. Additionally confirm the Feature exists at git HEAD via `git cat-file -e HEAD:spec/features/<feature-slug>/README.md`. If the Feature exists only in the working tree (uncommitted), refuse to dispatch and instruct the user to commit it first — the `Verifies:` trailer must reference a Feature that exists in git history.
 3. **Parse the Plan.** Use `specscore` CLI's Plan parser (do not re-implement). Surface: per-task `**Verifies:**`, `**Status:**`, `**Depends-On:**`, body (prose for `full`, placeholder `<!-- implement: pending -->` for `stub`). Parse failures stop the skill with the CLI's lint-rule citation.
+   For every referenced AC, also resolve its `**Requirements:**` list. These REQ IDs are the implementation-link targets; the AC ID is the executable-test-link target.
 4. **Git-log cross-check.** Run `git log --grep='^Verifies:'` on the current branch. For each task: if Plan says `**Status:** complete` but no commit references the task's ACs, surface the divergence as a warning. If Plan says `**Status:** planning` but a commit DOES reference its ACs, offer to update the Status (with user confirmation) before dispatching. **Git log is authoritative; Plan Status is the at-a-glance signal.**
 5. **Compute next batch.** Topological reduction of the dependency graph: batch = tasks where all `**Depends-On:**` predecessors are `**Status:** complete` AND own `**Status:** planning`. As these tasks become batch-eligible they transition `planning → queued`. Exclude tasks already in `queued`, `in_progress`, `complete`, or `blocked` status.
 6. **Pre-existing-Plan catch-up.** If the Plan pre-dates the plan-Feature revision (no `**Status:**` fields), initialize: scan git log for `Verifies:` trailers; mark matched-AC tasks `complete`, rest `planning`. Save these initializations as a Plan-file edit that will land in the first batch's staging.
@@ -112,8 +113,9 @@ Create a task for each and complete in order:
 5. **Wait for terminal returns.** Each subagent returns one of `DONE` / `DONE_WITH_CONCERNS` / `NEEDS_CONTEXT` / `BLOCKED`. `NEEDS_CONTEXT` → re-dispatch that specific subagent with augmented context (sibling subagents unaffected). `BLOCKED` → surface the cited cause to the user, do NOT silently retry.
 6. **Update Status fields.** `DONE` / `DONE_WITH_CONCERNS` → `**Status:** complete`. `BLOCKED` (with user decision to defer) → `**Status:** blocked`. Stage all Plan-file edits.
 7. **Stub-mode writeback** (only when `**Mode:** stub`). For each `DONE` / `DONE_WITH_CONCERNS` task, replace the placeholder body `<!-- implement: pending -->` with the subagent's SHA-free 1–2 sentence "what landed" summary. Stage via `git add` as part of the same staging set as the code changes.
-8. **Conflict detection.** Run `git diff --staged`. Detect line-overlap between sibling subagents' changes on the same file. On conflict: surface to user with file paths and line ranges; offer three resolutions (rewrite Plan with explicit `**Depends-On:**`, manual `git restore --staged` + re-run, abort). On user choice of rewrite-Plan or abort: unstage all batch changes, revert Statuses, stop.
-9. **Lint.** Run `specscore spec lint`. On failure (typically Plan-file edits the skill produced), run `specscore spec lint --fix` exactly once, re-lint. On persistent failure: unstage Plan-file changes (`git restore --staged spec/plans/<slug>.md`), surface violations with rule IDs, stop the batch.
+8. **Validate source links.** For changed implementation and test paths, run `specscore code deps --check --path <changed-scope>` with the installed SpecScore CLI. Invalid or dangling targets stop the batch. If the installed CLI cannot parse typed relations, report the missing SpecScore CLI capability as a blocker; do not strip the links to make the check pass.
+9. **Conflict detection.** Run `git diff --staged`. Detect line-overlap between sibling subagents' changes on the same file. On conflict: surface to user with file paths and line ranges; offer three resolutions (rewrite Plan with explicit `**Depends-On:**`, manual `git restore --staged` + re-run, abort). On user choice of rewrite-Plan or abort: unstage all batch changes, revert Statuses, stop.
+10. **Lint.** Run `specscore spec lint`. On failure (typically Plan-file edits the skill produced), run `specscore spec lint --fix` exactly once, re-lint. On persistent failure: unstage Plan-file changes (`git restore --staged spec/plans/<slug>.md`), surface violations with rule IDs, stop the batch.
 10. **Inline self-review.** Scan staged Plan-file changes for: (a) Status transitions violating the state machine (e.g., `complete → in_progress` without user action), (b) writeback bodies still containing placeholder tokens (`<!-- implement: pending -->`, `TBD`, `TODO`), (c) Status values outside the canonical lifecycle set. Findings stop the batch.
 11. **Emit `implement.batch-started`** (already done on step 3 — confirm payload was emitted: Plan slug, batch number, task numbers, dispatched count).
 12. **Present consolidated diff.** User-facing message contains: per-task status summary (including any `DONE_WITH_CONCERNS` concerns or `BLOCKED` reports), the staged diff (or per-file summary if very large), and the proposed commit-message template with mandatory `Verifies:` trailer listing every AC ID covered by **successful** tasks (DONE / DONE_WITH_CONCERNS only; BLOCKED tasks' ACs NOT included). This consolidated diff is the artifact the `implementation.pre_commit` gate (step 13) reviews; when that gate includes a `type: human` reviewer the message also carries the explicit approval instruction the human responds to (when the gate is `auto-approve`/`deterministic`-only, no approval prompt is needed). Also state that publication policy will be resolved at the checkpoint and may leave the change unstaged, stage it, commit it, or commit and push it.
@@ -138,9 +140,15 @@ Subagent prompt contains, in this order:
 3. **AC full text.** For each referenced AC, the complete `Given / When / Then` text quoted verbatim from the source Feature at `spec/features/<feature-slug>/README.md`.
 4. **Authored task body.** The 1–3 sentence prose from the Plan task body, verbatim.
 5. **Commit-message trailer convention.** `Verifies: <feature-slug>#ac:<ac-slug>, ...` listing every AC ID from this task's `**Verifies:**`.
-6. **Discipline pointer.** For tasks involving behavior change: the TDD pointer — reference `agent-skills:test-driven-development` or `superpowers:test-driven-development` when available; otherwise an in-skill TDD instruction (write failing test → minimal fix → refactor). For tasks with no testable surface (pure-documentation edits, file renames, deletions, formatting-only changes): substitute the AC-verification adapter clause — "re-read the artifact after editing and confirm each predicate in the AC's `Then` clause directly." The adapter preserves the verification discipline while honoring the actual task shape.
-7. **Return-shape contract.** One of `DONE` / `DONE_WITH_CONCERNS` / `NEEDS_CONTEXT` / `BLOCKED`, with required fields per status.
-8. **Stage-only instruction.** "Stage your changes with `git add`. Do NOT run `git commit`. The parent skill aggregates the approved batch and handles the commit gate."
+6. **Source-link contract.** Include the AC's resolved REQ IDs and instruct the agent to:
+   - add `specscore:implements <canonical-specscore-url>#req:<slug>` immediately above the narrowest durable implementation symbol for each implemented REQ;
+   - add `specscore:verifies <canonical-specscore-url>#ac:<slug>` immediately above every executable test that directly verifies the AC, or link the standalone REQ when no useful AC grouping exists;
+   - preserve the clickable canonical URL, never substitute a file-and-line backlink;
+   - use CodeGrapher candidate pairs when available as suggestions, inspect each pair, and commit only accepted links. Inferred candidates never count as verification evidence;
+   - avoid bulk-linking unchanged code outside the task's scope.
+7. **Discipline pointer.** For tasks involving behavior change: the TDD pointer — reference `agent-skills:test-driven-development` or `superpowers:test-driven-development` when available; otherwise an in-skill TDD instruction (write failing test → minimal fix → refactor). For tasks with no testable surface (pure-documentation edits, file renames, deletions, formatting-only changes): substitute the AC-verification adapter clause — "re-read the artifact after editing and confirm each predicate in the AC's `Then` clause directly." The adapter preserves the verification discipline while honoring the actual task shape. Documentation-only work uses a general `specscore:references` link when a durable source location benefits from one; it does not invent an executable-test link.
+8. **Return-shape contract.** One of `DONE` / `DONE_WITH_CONCERNS` / `NEEDS_CONTEXT` / `BLOCKED`, with required fields per status. A successful return lists the accepted implementation and test links it staged.
+9. **Stage-only instruction.** "Stage your changes with `git add`. Do NOT run `git commit`. The parent skill aggregates the approved batch and handles the commit gate."
 
 ### Stub posture (`**Mode:** stub`)
 
@@ -382,6 +390,9 @@ The skill MUST NOT yes-machine weak Plans or silently retry blocked subagents. W
 - [ ] Every batch dispatched ≤5 parallel subagents; queued tasks were dispatched as slots freed
 - [ ] Every subagent returned a terminal status (DONE / DONE_WITH_CONCERNS / BLOCKED) or was re-dispatched on NEEDS_CONTEXT
 - [ ] Conflict detection ran post-batch; conflicts surfaced and resolved per the three resolution paths
+- [ ] Every implemented REQ has an accepted `specscore:implements` link on the narrowest durable changed symbol, unless the task report names a concrete exception
+- [ ] Every executable test that directly verifies a task AC has an accepted `specscore:verifies` link to that AC (or its standalone REQ)
+- [ ] `specscore code deps --check` passed for the changed source/test scope; suggested CodeGrapher pairs remain distinguishable from committed links
 - [ ] Consolidated batch diff presented with: per-task status summary, staged diff (or summary), `Verifies:` trailer template covering only successful tasks' AC IDs
 - [ ] `implementation.pre_commit` fired before each commit and released (`Approved`) before committing; on `Issues Found` the commit was blocked and findings surfaced. Approval was gate-config-driven (a `auto-approve`/`deterministic`-only gate committed with no human prompt; a `type: human` reviewer stopped for that human) — no hardcoded per-batch user-approval step ran
 - [ ] `implementation.pre_push` fired before any push/promote and released (`Approved`) before pushing; on `Issues Found` the push was blocked and findings surfaced
@@ -428,6 +439,9 @@ The skill MUST NOT yes-machine weak Plans or silently retry blocked subagents. W
 - Using batch dispatch or task-status writes in Feature-sourced or Idea-sourced mode (single-pass only)
 - Using `Verifies: idea:<slug>` when a Feature exists (use Feature AC IDs instead)
 - Using Feature AC IDs when only an Idea exists (use `Verifies: idea:<slug>` instead)
+- Claiming an AC is verified from line coverage alone, without a passing executable test carrying an accepted `specscore:verifies` link
+- Treating CodeGrapher or agent-suggested pairs as accepted links without inspecting and committing the corresponding source directive
+- Omitting code/test annotations while relying only on the commit-message `Verifies:` trailer; the trailer records change provenance, while source directives record durable symbol traceability
 
 ## References
 
