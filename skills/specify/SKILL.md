@@ -1,5 +1,5 @@
 ---
-name: specify
+name: specstudio-specify
 description: |
   Turns an approved SpecScore Idea (or a clear buildable intent) into a
   SpecScore Feature with requirements and Given/When/Then acceptance

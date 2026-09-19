@@ -1,5 +1,5 @@
 ---
-name: init
+name: specstudio-init
 description: |
   Bootstraps a SpecScore-managed project in one wizard-driven step. Detects
   current project state by direct repo inspection, asks 3-4 batched wizard

@@ -1,5 +1,5 @@
 ---
-name: ship
+name: specstudio-ship
 description: |
   Terminal skill of the SpecStudio pipeline. Enforces spec-aware release
   gates for a single Feature, dispatches the deploy to a project-configured

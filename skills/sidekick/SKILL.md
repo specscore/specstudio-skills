@@ -1,5 +1,5 @@
 ---
-name: sidekick
+name: specstudio-sidekick
 description: |
   Captures a sideline idea as a lint-clean seed at spec/ideas/seeds/<slug>.md
   without derailing the host task. Validates a one-liner, writes the seed with

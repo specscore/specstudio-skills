@@ -1,5 +1,5 @@
 ---
-name: pull-request
+name: specstudio-pull-request
 description: |
   Gate-and-create-one-PR twin of the ship skill. Enforces the project's
   pre-PR gates on the current branch via the shared reviewer-gates layer,

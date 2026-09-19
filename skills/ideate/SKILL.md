@@ -1,5 +1,5 @@
 ---
-name: ideate
+name: specstudio-ideate
 description: |
   Refines raw ideas into SpecScore Idea artifacts through structured
   divergent and convergent thinking. Produces a lintable pre-spec

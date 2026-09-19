@@ -1,5 +1,5 @@
 ---
-name: score
+name: specstudio-score
 description: |
   Manually re-invokes the configured reviewer-gates dispatch pipeline against
   one or more SpecScore artifacts (Ideas, Features, Plans), outside the

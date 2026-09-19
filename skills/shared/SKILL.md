@@ -1,5 +1,5 @@
 ---
-name: shared
+name: specstudio-shared
 description: |
   Internal SpecStudio reference material used by the lifecycle skills. Do not
   invoke directly; load specific files from this directory only when another

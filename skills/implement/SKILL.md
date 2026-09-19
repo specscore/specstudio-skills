@@ -1,5 +1,5 @@
 ---
-name: implement
+name: specstudio-implement
 description: |
   Turns an approved SpecScore Plan into focused, AC-traceable
   source-code changes by dispatching one subagent per task in parallel

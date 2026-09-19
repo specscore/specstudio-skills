@@ -1,5 +1,5 @@
 ---
-name: plan
+name: specstudio-plan
 description: |
   Turns an approved SpecScore Feature or Idea into a lint-clean Plan artifact
   at spec/plans/<slug>.md — an ordered list of tasks where each task

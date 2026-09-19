@@ -1,5 +1,5 @@
 ---
-name: close
+name: specstudio-close
 description: |
   Retires a single SpecScore artifact — an Idea, Feature, or sidekick seed —
   by driving the appropriate `specscore <kind> change-status` CLI verb with an

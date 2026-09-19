@@ -1,5 +1,5 @@
 ---
-name: autopilot
+name: specstudio-autopilot
 description: |
   Drives an idea from any pipeline entry point — a cold raw prompt included —
   to one open MVP pull request in a single autonomous run, pausing only at a

@@ -1,5 +1,5 @@
 ---
-name: consilium
+name: specstudio-consilium
 description: |
   Drains captured sidekick (sideline-idea) seeds and produces deterministic
   verdicts via a 5-stage pipeline: CLI gather → researcher agent → 9-role

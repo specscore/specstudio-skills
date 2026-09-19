@@ -1,5 +1,5 @@
 ---
-name: survey
+name: specstudio-survey
 description: |
   Produces a fast architecture survey for an existing codebase without reading
   source implementation files. Scans the file tree, reads only allowlisted

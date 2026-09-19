@@ -1,5 +1,5 @@
 ---
-name: verify
+name: specstudio-verify
 description: |
   Consumes an approved SpecScore Feature and produces a machine-checkable
   per-AC verdict report at spec/features/<feature-slug>/_verify/<sha>.md.

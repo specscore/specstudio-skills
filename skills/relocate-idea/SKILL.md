@@ -1,5 +1,5 @@
 ---
-name: relocate-idea
+name: specstudio-relocate-idea
 description: |
   Thin wrapper over the `specscore idea relocate` CLI verb. Relocates
   an Idea or sidekick-seed artifact from the current repo to another

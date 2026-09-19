@@ -1,5 +1,5 @@
 ---
-name: recap
+name: specstudio-recap
 description: |
   Consumes an approved SpecScore Feature plus the latest `specstudio:verify`
   report at HEAD and produces a per-AC drift report at
